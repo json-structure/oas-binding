@@ -1,3 +1,4 @@
+
 *.html
 *.pdf
 *.redxml
@@ -9,16 +10,17 @@
 /*-[0-9][0-9].xml
 /.*.mk
 /.gems/
+/.idea/
 /.refcache
 /.venv/
 /.vscode/
-/.idea/
+/lib
 /node_modules/
 /versioned/
-Gemfile.lock
 archive.json
+draft-vasters-json-structure-oas-binding.xml
+Gemfile.lock
 package-lock.json
 report.xml
-!requirements.txt
-
 tracker.log
+!requirements.txt
