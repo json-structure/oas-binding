@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>JSON Structure: OpenAPI Binding</title>
+<meta content="Clemens Vasters" name="author">
+<meta content="
+       This document defines a binding that allows an OpenAPI Specification (OAS)
+  Schema Object to be expressed as a JSON Structure  
+schema, using the schema-dialect selection mechanism — the  $schema  keyword
+and the  jsonSchemaDialect  field, introduced in OAS 3.1 — that OAS already
+provides. The binding is strictly additive and opt-in on a per-Schema-Object
+basis. It introduces no new OpenAPI keywords, objects, or namespaces, and it
+does not modify, fork, or republish the OpenAPI Specification. 
+    " name="description">
+<meta content="xml2rfc 3.34.0" name="generator">
+<meta content="Internet-Draft" name="keyword">
+<meta content="draft-vasters-json-structure-oas-binding-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.11.0
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.2
+-->
+<link href="draft-vasters-json-structure-oas-binding.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">JSON Structure OAS Binding</td>
+<td class="right">August 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Vasters</td>
+<td class="center">Expires 13 February 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Building Blocks for HTTP APIs</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-vasters-json-structure-oas-binding-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-08-12" class="published">12 August 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-02-13">13 February 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">C. Vasters</div>
+<div class="org">Microsoft Corporation</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">JSON Structure: OpenAPI Binding</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines a binding that allows an OpenAPI Specification (OAS)
+<span>[<a href="#OAS" class="cite xref">OAS</a>]</span> Schema Object to be expressed as a JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>
+schema, using the schema-dialect selection mechanism — the <code>$schema</code> keyword
+and the <code>jsonSchemaDialect</code> field, introduced in OAS 3.1 — that OAS already
+provides. The binding is strictly additive and opt-in on a per-Schema-Object
+basis. It introduces no new OpenAPI keywords, objects, or namespaces, and it
+does not modify, fork, or republish the OpenAPI Specification.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://json-structure.github.io/oas-binding/draft-vasters-json-structure-oas-binding.html">https://json-structure.github.io/oas-binding/draft-vasters-json-structure-oas-binding.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-vasters-json-structure-oas-binding/">https://datatracker.ietf.org/doc/draft-vasters-json-structure-oas-binding/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3"></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/json-structure/oas-binding">https://github.com/json-structure/oas-binding</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 13 February 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-terminology" class="internal xref">Conventions and Terminology</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-scope-and-relationship-to-t" class="internal xref">Scope and Relationship to the OpenAPI Specification</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-declaring-a-json-structure-" class="internal xref">Declaring a JSON Structure Schema Object</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-dialect-selection" class="internal xref">Dialect Selection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-json-structure-meta-schema-" class="internal xref">JSON Structure Meta-Schema URIs</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-tooling-requirements" class="internal xref">Tooling Requirements</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-default-id-construction" class="internal xref">Default <code>$id</code> Construction</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-materializing-defaults-for-" class="internal xref">Materializing Defaults for Standalone Validation</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-type-system" class="internal xref">Type System</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-inheritance" class="internal xref">Inheritance</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-discriminated-unions" class="internal xref">Discriminated Unions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-conditional-composition" class="internal xref">Conditional Composition</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-construct-mapping" class="internal xref">Construct Mapping</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-reference-model" class="internal xref">Reference Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-ref-names-a-type-not-a-node" class="internal xref"><code>$ref</code> Names a Type, Not a Node</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-cross-schema-reuse-with-imp" class="internal xref">Cross-Schema Reuse with <code>$import</code> and <code>$importdefs</code></a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-resolving-imports-within-a-" class="internal xref">Resolving Imports within a Description</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-resolving-external-imports" class="internal xref">Resolving External Imports</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-activating-add-ins-with-use" class="internal xref">Activating Add-ins with <code>$uses</code></a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-code-generation-and-runtime" class="internal xref">Code Generation and Runtime Validation</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-examples" class="internal xref">Examples</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-a-single-json-structure-sch" class="internal xref">A Single JSON Structure Schema Object</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-using-jsonschemadialect-as-" class="internal xref">Using <code>jsonSchemaDialect</code> as the Document Default</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.3">
+                <p id="section-toc.1-1.10.2.3.1"><a href="#section-10.3" class="auto internal xref">10.3</a>.  <a href="#name-cross-schema-reuse-with-impo" class="internal xref">Cross-Schema Reuse with <code>$import</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.4">
+                <p id="section-toc.1-1.10.2.4.1"><a href="#section-10.4" class="auto internal xref">10.4</a>.  <a href="#name-importing-an-external-type-" class="internal xref">Importing an External Type Library</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-conformance" class="internal xref">Conformance</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">The OpenAPI Specification <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> (OAS) describes the data of requests,
+responses, parameters, headers, and other message components with <strong>Schema
+Objects</strong>. By default a Schema Object is a JSON Schema (Draft 2020-12) document
+expressed in the OAS dialect.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Since OAS 3.1, the version that introduced Schema Object dialect selection,
+OAS does not hard-wire that default. A Schema Object can declare a
+different <strong>dialect</strong> through the <code>$schema</code> keyword, or inherit a
+document-wide default through the OpenAPI Object's <code>jsonSchemaDialect</code> field.
+This document uses that existing seam, and nothing else, to let a Schema
+Object be a JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> schema.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">The result is a strictly additive, opt-in binding:<a href="#section-1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-4.1">
+          <p id="section-1-4.1.1">Adoption is per Schema Object. A single Schema Object, an entire
+<code>components.schemas</code> map, or a whole Description can use JSON Structure; the
+rest of the Description is unaffected.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-4.2">
+          <p id="section-1-4.2.1">No new OpenAPI fields, objects, or namespaces are introduced. A JSON
+Structure Schema Object appears wherever a Schema Object is allowed and is
+referenced with an ordinary OpenAPI <code>$ref</code>.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-4.3">
+          <p id="section-1-4.3.1">JSON Structure's precise type system, inheritance model, discriminated
+unions, cross-document reuse (<code>$import</code>), and unit annotations become
+available to API designers and to code generators.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-5">This document defines how conforming tooling recognizes such a Schema Object,
+how it is processed, and how its references resolve.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-1-6.1">
+          <p id="section-1-6.1.1"><strong>Note:</strong> This document adds no fields to the OpenAPI Specification. It
+defines how JSON Structure is used within the Schema Object dialect
+mechanism that OAS has provided since version 3.1. OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> remains
+authoritative for everything this document does not modify.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="conventions-and-terminology">
+<section id="section-2">
+      <h2 id="name-conventions-and-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-terminology" class="section-name selfRef">Conventions and Terminology</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses the following terms:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">Schema Object:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">
+          <p id="section-2-3.2.1">An OpenAPI Schema Object as defined by the OpenAPI Specification's Schema
+Object section <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Dialect, meta-schema:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">
+          <p id="section-2-3.4.1">The URI, carried in <code>$schema</code>, that identifies the language and version a
+schema resource is written in, as used by the OAS dialect-selection rules
+("Specifying Schema Dialects") <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">JSON Structure Schema Object:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">
+          <p id="section-2-3.6.1">A Schema Object whose effective dialect (<a href="#declaring-a-json-structure-schema-object" class="auto internal xref">Section 4</a>)
+is one of the JSON Structure meta-schema URIs. Such a Schema Object is a
+JSON Structure schema and is processed per the JSON Structure
+specifications.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">Schema resource:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">
+          <p id="section-2-3.8.1">A self-contained JSON Structure schema identified by an <code>$id</code>, within which
+<code>$ref</code>, <code>$extends</code>, and <code>$import</code> are resolved.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.9">Add-in:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.10">
+          <p id="section-2-3.10.1">An optional JSON Structure keyword vocabulary (for example
+<code>JSONStructureValidation</code>, <code>JSONStructureUnits</code>) that a schema activates
+through <code>$uses</code>, subject to what its meta-schema offers.<a href="#section-2-3.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.11">Description:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.12">
+          <p id="section-2-3.12.1">An OpenAPI Description (OAD) <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>: the complete set of documents
+describing an API.<a href="#section-2-3.12.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="scope">
+<section id="section-3">
+      <h2 id="name-scope-and-relationship-to-t">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-scope-and-relationship-to-t" class="section-name selfRef">Scope and Relationship to the OpenAPI Specification</a>
+      </h2>
+<p id="section-3-1">This document is a profile, or binding, layered on OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, applicable to
+any OpenAPI Description whose OAS version provides Schema Object dialect
+selection through <code>$schema</code> and <code>jsonSchemaDialect</code> — introduced in OAS 3.1
+and retained in every subsequent OAS 3.x version. It is normative only where
+it states requirements about JSON Structure Schema Objects. In all other
+respects, the OpenAPI Object, Paths, Operations, Media Types, Parameters,
+Responses, Components, references between Objects, serialization, and
+security schemes, OAS applies unchanged and is authoritative.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Where this document and OAS both describe the behavior of a Schema Object,
+this document governs only those Schema Objects whose dialect is a JSON
+Structure meta-schema (<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 4.2</a>). A Schema Object
+that does not select a JSON Structure meta-schema is a plain OAS Schema
+Object and is outside the scope of this document.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">This document does not modify, fork, or republish the OpenAPI Specification.<a href="#section-3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="declaring-a-json-structure-schema-object">
+<section id="section-4">
+      <h2 id="name-declaring-a-json-structure-">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-declaring-a-json-structure-" class="section-name selfRef">Declaring a JSON Structure Schema Object</a>
+      </h2>
+<div id="dialect-selection">
+<section id="section-4.1">
+        <h3 id="name-dialect-selection">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-dialect-selection" class="section-name selfRef">Dialect Selection</a>
+        </h3>
+<p id="section-4.1-1">A Schema Object is a JSON Structure Schema Object when its effective dialect
+is a JSON Structure meta-schema URI. The effective dialect is determined
+exactly as in the OAS dialect-selection rules (Section 4.24.7,
+"Specifying Schema Dialects", of <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>):<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.1-2">
+<li id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1">If the Schema Object is a schema-resource root and carries <code>$schema</code>, that
+value is the dialect.<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.1-2.2">
+            <p id="section-4.1-2.2.1">Otherwise, the OpenAPI Object's <code>jsonSchemaDialect</code> value, if present, is
+the dialect.<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.1-2.3">
+            <p id="section-4.1-2.3.1">Otherwise, the OAS dialect applies and the Schema Object is NOT a JSON
+Structure Schema Object.<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.1-3">A <code>$schema</code> value on a resource-root Schema Object always overrides the
+document default. Because JSON Structure schemas natively carry <code>$schema</code>, a
+JSON Structure Schema Object is typically self-describing: pasting a JSON
+Structure schema into a Schema Object position, with its <code>$schema</code> intact, is
+sufficient.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="json-structure-meta-schema-uris">
+<section id="section-4.2">
+        <h3 id="name-json-structure-meta-schema-">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-json-structure-meta-schema-" class="section-name selfRef">JSON Structure Meta-Schema URIs</a>
+        </h3>
+<p id="section-4.2-1">The following URIs identify the JSON Structure dialects:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Meta-schema URI</th>
+              <th class="text-left" rowspan="1" colspan="1">Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/core/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core types and keywords only.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/extended/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">Core plus the <code>JSONStructureImport</code> add-in active by default, and offering (for opt-in through the schema's own <code>$uses</code>) the <code>JSONStructureAlternateNames</code>, <code>JSONStructureUnits</code>, <code>JSONStructureValidation</code>, and <code>JSONStructureConditionalComposition</code> add-ins.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>https://json-structure.org/meta/validation/v0/#</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">The extended meta-schema with all add-ins, including validation and conditional composition, active by default.</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.2-3">The extended meta-schema is <span class="bcp14">RECOMMENDED</span> as the document default for API
+design, because it makes <code>$import</code> available while keeping validation and
+composition opt-in.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">These three URIs are the canonical JSON Structure dialects, but they are not
+the only meta-schema URIs a Description may encounter. JSON Structure Core
+permits a custom meta-schema to extend one of the canonical meta-schemas —
+adding organization-specific keywords or add-ins — by giving the derived
+meta-schema its own <code>$id</code> and using <code>$import</code> to pull in the foundational
+meta-schema's definitions (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, "Meta-Schemas"). A Schema Object
+whose <code>$schema</code> names such a derived meta-schema is a JSON Structure Schema
+Object in every respect that matters to this binding, but its URI will not
+appear in the table above and cannot be recognized by exact-match comparison
+alone. <a href="#tooling-requirements" class="auto internal xref">Section 4.3</a> states how conforming tooling handles this
+case.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="tooling-requirements">
+<section id="section-4.3">
+        <h3 id="name-tooling-requirements">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-tooling-requirements" class="section-name selfRef">Tooling Requirements</a>
+        </h3>
+<ul class="normal">
+<li class="normal" id="section-4.3-1.1">
+            <p id="section-4.3-1.1.1">Tooling that supports this binding <span class="bcp14">MUST</span> recognize the three URIs in
+<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 4.2</a> and <span class="bcp14">MUST</span> process a Schema Object bearing
+one of them as a JSON Structure schema.<a href="#section-4.3-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-1.2">
+            <p id="section-4.3-1.2.1">Tooling that does not recognize a JSON Structure meta-schema URI <span class="bcp14">MUST</span> treat
+the Schema Object as an unknown dialect. It <span class="bcp14">MUST NOT</span> process the Schema
+Object as an OAS-dialect (JSON Schema Draft 2020-12) schema, because the
+keywords are interpreted differently (<a href="#type-system" class="auto internal xref">Section 5</a>).<a href="#section-4.3-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-1.3">
+            <p id="section-4.3-1.3.1">Matching against the URIs in <a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 4.2</a> <span class="bcp14">MUST</span> be
+exact, byte-for-byte string comparison; tooling <span class="bcp14">MUST NOT</span> apply URI
+normalization, trailing-slash equivalence, or version-range matching. A
+future JSON Structure Core version that defines new meta-schema URIs is out
+of scope for this document and requires a new or updated binding.<a href="#section-4.3-1.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-1.4">
+            <p id="section-4.3-1.4.1">A <code>$schema</code> value naming a custom meta-schema that extends one of the three
+canonical meta-schemas (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, "Meta-Schemas") does not satisfy
+exact-match recognition and is out of scope for the <span class="bcp14">MUST</span>-recognize
+requirement above. Tooling <span class="bcp14">MAY</span> be separately configured to recognize
+specific custom meta-schema URIs — typically by resolving the meta-schema
+document once, offline, and confirming that it imports one of the three
+canonical meta-schemas — and, once so configured, <span class="bcp14">MUST</span> process Schema
+Objects bearing that URI as JSON Structure schemas under the canonical
+dialect it extends. Tooling that is not so configured <span class="bcp14">MUST</span> apply the
+unknown-dialect rule above rather than guess at the custom meta-schema's
+semantics.<a href="#section-4.3-1.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-1.5">
+            <p id="section-4.3-1.5.1">A resource-root JSON Structure Schema Object <span class="bcp14">SHOULD</span> carry <code>$schema</code>
+explicitly, even when the document default already selects a JSON Structure
+dialect, so that the schema remains self-describing when extracted from the
+Description.<a href="#section-4.3-1.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-1.6">
+            <p id="section-4.3-1.6.1">Tooling <span class="bcp14">MUST</span> construct and materialize default <code>$schema</code> and <code>$id</code> values
+per <a href="#default-id-construction" class="auto internal xref">Section 4.4</a> and <a href="#materializing-defaults" class="auto internal xref">Section 4.5</a> whenever a
+Schema Object lacking one or both keywords is extracted for standalone
+processing.<a href="#section-4.3-1.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="default-id-construction">
+<section id="section-4.4">
+        <h3 id="name-default-id-construction">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-default-id-construction" class="section-name selfRef">Default <code>$id</code> Construction</a>
+        </h3>
+<p id="section-4.4-1">A resource-root JSON Structure Schema Object <span class="bcp14">SHOULD</span> carry its own <code>$id</code>. When
+it does not, tooling still needs a stable, unique identifier for it — for
+example, to run the Schema Object through a standalone JSON Structure
+validator, or to resolve it as an <code>$import</code> target (<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>).
+This section defines how tooling <span class="bcp14">MUST</span> construct that default, by combining
+the Description's base URI with the Schema Object's location inside the
+Description.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-2"><strong>Find the Description's base URI.</strong> Tooling <span class="bcp14">MUST</span> try the following sources
+in order, using the first one that applies. This is the same precedence OAS
+itself uses for base URI determination (Appendix F, "Examples of Base URI
+Determination and Reference Resolution", of <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>):<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.4-3">
+<li id="section-4.4-3.1">
+            <p id="section-4.4-3.1.1">the OpenAPI Object's <code>$self</code> field, if present (OAS Appendix F.1);<a href="#section-4.4-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.2">
+            <p id="section-4.4-3.2.1">otherwise, the base URI of an encapsulating entity, if any — for example,
+a <code>multipart/related</code> archive (OAS Appendix F.2);<a href="#section-4.4-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.3">
+            <p id="section-4.4-3.3.1">otherwise, the Description's retrieval URI: the URI it was actually
+fetched from (OAS Appendix F.3);<a href="#section-4.4-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.4-3.4">
+            <p id="section-4.4-3.4.1">otherwise, an application-specific default base URI, if the tooling
+defines one (OAS Appendix F.4).<a href="#section-4.4-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.4-4">If none of these applies — for example, the Description was authored offline
+and never assigned a location or a <code>$self</code> value — tooling <span class="bcp14">MUST</span> require an
+explicit <code>$id</code> on the Schema Object and <span class="bcp14">MUST NOT</span> proceed with extraction,
+import resolution, or standalone validation until one is supplied.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
+<p id="section-4.4-5"><strong>Find the Schema Object's location.</strong> Tooling <span class="bcp14">MUST</span> determine the JSON
+Pointer <span>[<a href="#RFC6901" class="cite xref">RFC6901</a>]</span> from the Description's document root to the Schema
+Object, for example <code>/components/schemas/TelemetryMessage</code>.<a href="#section-4.4-5" class="pilcrow">¶</a></p>
+<p id="section-4.4-6"><strong>Combine the two.</strong> The default <code>$id</code> is the base URI with that JSON Pointer
+appended as a fragment:<a href="#section-4.4-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.4-7">
+<pre>
+&lt;base-URI&gt;#&lt;JSON-Pointer&gt;
+</pre><a href="#section-4.4-7" class="pilcrow">¶</a>
+</div>
+<p id="section-4.4-8">For example, if the Description's base URI is
+<code>https://example.com/api/openapi.yaml</code> and the Schema Object is at
+<code>/components/schemas/TelemetryMessage</code>, the default <code>$id</code> is
+<code>https://example.com/api/openapi.yaml#/components/schemas/TelemetryMessage</code>.<a href="#section-4.4-8" class="pilcrow">¶</a></p>
+<p id="section-4.4-9">This mirrors how a JSON Schema resource embedded without its own <code>$id</code>
+inherits identity from its position in the containing document, and it
+guarantees a default that is stable and unique per Schema Object location,
+independent of any <code>$ref</code>/<code>$import</code> graph resolution. An explicit <code>$id</code> on
+the Schema Object always takes precedence over this default.<a href="#section-4.4-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="materializing-defaults">
+<section id="section-4.5">
+        <h3 id="name-materializing-defaults-for-">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-materializing-defaults-for-" class="section-name selfRef">Materializing Defaults for Standalone Validation</a>
+        </h3>
+<p id="section-4.5-1">A JSON Structure Schema Object embedded in an OpenAPI Description commonly
+omits <code>$schema</code> (relying on <code>jsonSchemaDialect</code>, <a href="#dialect-selection" class="auto internal xref">Section 4.1</a>)
+and/or <code>$id</code> (relying on <a href="#default-id-construction" class="auto internal xref">Section 4.4</a>). Both are
+OAS-context-dependent conveniences: a standalone JSON Structure validator has
+no notion of <code>jsonSchemaDialect</code> and no notion of the Schema Object's
+position within a larger document.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<p id="section-4.5-2">Tooling that extracts a JSON Structure Schema Object from its containing
+Description in order to validate it, import it, or otherwise process it
+outside OAS context <span class="bcp14">MUST</span> first materialize both defaults as literal
+properties on the extracted document:<a href="#section-4.5-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.5-3.1">
+            <p id="section-4.5-3.1.1"><code>$schema</code>, set to the effective dialect determined per
+<a href="#dialect-selection" class="auto internal xref">Section 4.1</a>;<a href="#section-4.5-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.5-3.2">
+            <p id="section-4.5-3.2.1"><code>$id</code>, set to the Schema Object's own <code>$id</code> if present, or otherwise to the
+value constructed per <a href="#default-id-construction" class="auto internal xref">Section 4.4</a>.<a href="#section-4.5-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.5-4">The extracted document <span class="bcp14">MUST</span> be self-describing and independently valid JSON
+Structure without reference to the originating Description. Tooling <span class="bcp14">MUST NOT</span>
+hand an extracted Schema Object to a standalone JSON Structure validator with
+<code>$schema</code> or <code>$id</code> left absent on the assumption that OAS-level context will
+supply them.<a href="#section-4.5-4" class="pilcrow">¶</a></p>
+<p id="section-4.5-5">A root JSON Structure schema that carries a <code>type</code> attribute also <span class="bcp14">MUST</span> carry
+a <code>name</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, independent of the <code>$schema</code>/<code>$id</code> materialization
+above and regardless of the root's type kind (not only <code>object</code>/<code>tuple</code>).
+Within an OpenAPI Description, this requirement applies to every
+<code>components.schemas</code> entry, since each is independently extractable and
+validated as a schema resource root. An anonymous, inline Schema Object at a
+request body, response, or parameter position becomes a schema resource root
+the same way once it is extracted for standalone validation, and tooling
+performing that extraction <span class="bcp14">MUST</span> likewise materialize a <code>name</code> for it, for
+example by deriving one from the Schema Object's JSON Pointer location
+(<a href="#default-id-construction" class="auto internal xref">Section 4.4</a>) when the Schema Object does not already supply
+one.<a href="#section-4.5-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="type-system">
+<section id="section-5">
+      <h2 id="name-type-system">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-type-system" class="section-name selfRef">Type System</a>
+      </h2>
+<p id="section-5-1">Within a JSON Structure Schema Object, keywords are interpreted per JSON
+Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, which defines the full type system: primitive and
+precise numeric types, the <code>object</code>/<code>array</code>/<code>set</code>/<code>map</code>/<code>tuple</code>/<code>choice</code>
+compound types and their member/item/value declarations, nullability via type
+union, and inheritance via <code>abstract</code> and <code>$extends</code>. These JSON Structure
+constructs replace the correspondingly named OAS / JSON Schema constructs,
+which do not apply in this dialect.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="inheritance">
+<section id="section-5.1">
+        <h3 id="name-inheritance">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-inheritance" class="section-name selfRef">Inheritance</a>
+        </h3>
+<p id="section-5.1-1">Inheritance is expressed with <code>abstract</code> and <code>$extends</code> (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>).
+The OAS <code>discriminator</code> object combined with <code>allOf</code> is not an inheritance
+mechanism in a JSON Structure Schema Object, and <span class="bcp14">MUST NOT</span> be used to express
+type extension.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="discriminated-unions">
+<section id="section-5.2">
+        <h3 id="name-discriminated-unions">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-discriminated-unions" class="section-name selfRef">Discriminated Unions</a>
+        </h3>
+<p id="section-5.2-1">Discriminated unions use the JSON Structure <code>choice</code> type, in either its
+tagged-union or inline-union form, with <code>selector</code> naming the discriminant
+property (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>).<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">A JSON Structure Schema Object <span class="bcp14">MUST NOT</span> include the OAS <code>discriminator</code>
+field: its presence makes the Schema Object non-conforming with this binding.
+Tooling <span class="bcp14">MUST NOT</span> interpret an OAS <code>discriminator</code> field as a discriminator
+when present, and <span class="bcp14">MUST</span> use <code>selector</code> as JSON Structure's own discriminator
+mechanism instead.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="type-system-conditional-composition">
+<section id="section-5.3">
+        <h3 id="name-conditional-composition">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-conditional-composition" class="section-name selfRef">Conditional Composition</a>
+        </h3>
+<p id="section-5.3-1">Where present, the <code>allOf</code>, <code>anyOf</code>, <code>oneOf</code>, <code>not</code>, and <code>if</code>/<code>then</code>/<code>else</code>
+keywords of the <code>JSONStructureConditionalComposition</code> add-in <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span>
+are boolean validation combinators only. They do not merge or intersect type
+definitions and <span class="bcp14">MUST NOT</span> be interpreted as structural composition. Structural
+reuse is expressed exclusively with <code>$extends</code> (<a href="#inheritance" class="auto internal xref">Section 5.1</a>) and <code>$import</code>
+(<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>).<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="construct-mapping">
+<section id="section-5.4">
+        <h3 id="name-construct-mapping">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-construct-mapping" class="section-name selfRef">Construct Mapping</a>
+        </h3>
+<p id="section-5.4-1">For readers migrating a Schema Object from the OAS dialect, the following
+constructs change meaning:<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">OAS / JSON Schema construct</th>
+              <th class="text-left" rowspan="1" colspan="1">JSON Structure equivalent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>type: string</code> + <code>format: date-time</code> / <code>uuid</code> / <code>binary</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">dedicated types <code>datetime</code>, <code>uuid</code>, <code>binary</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>type: integer</code> + <code>format: int64</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>int64</code> (and the other precise numeric types)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>nullable: true</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">type union including <code>"null"</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>discriminator</code> + <code>allOf</code> for subtyping</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>abstract</code> + <code>$extends</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>oneOf</code> of variants + <code>discriminator</code>, variants unrelated</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>choice</code> with a <code>choices</code> map (tagged union, <a href="#discriminated-unions" class="auto internal xref">Section 5.2</a>)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>oneOf</code> of variants + <code>discriminator</code>, variants share a base</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>choice</code> with <code>$extends</code> and <code>selector</code> (inline union, <a href="#discriminated-unions" class="auto internal xref">Section 5.2</a>)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>allOf</code> / <code>anyOf</code> / <code>oneOf</code> as structural composition</td>
+              <td class="text-left" rowspan="1" colspan="1">not used for composition; conditional-composition add-in is validation-only</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>additionalProperties</code> (boolean or schema)</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>additionalProperties</code> (unchanged: boolean, or a schema constraining additional members)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>required</code> array</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>required</code> (unchanged; <span class="bcp14">MAY</span> also be an array of arrays for mutually exclusive alternative required sets)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>enum</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>enum</code> (unchanged)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>const</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>const</code> (unchanged)</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>readOnly</code> / <code>writeOnly</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as OAS Schema Object annotations alongside the dialect</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>deprecated</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as an OAS Schema Object annotation</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>$ref</code> to another <code>components.schemas</code> entry</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>$import</code> / <code>$importdefs</code> (<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>)</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+</section>
+</div>
+<div id="reference-model">
+<section id="section-6">
+      <h2 id="name-reference-model">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-reference-model" class="section-name selfRef">Reference Model</a>
+      </h2>
+<p id="section-6-1">A JSON Structure Schema Object is a self-contained schema resource. Two
+reference layers coexist and do not mix:<a href="#section-6-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-2.1">
+          <p id="section-6-2.1.1">The OpenAPI reference layer: an outer OpenAPI <code>$ref</code> that targets a Schema
+Object as a whole (for example <code>#/components/schemas/TelemetryMessage</code>).
+This resolves per OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, unchanged, at any position in the
+Description — including inside a Schema Object that has not itself
+adopted the JSON Structure dialect, such as an array wrapper's
+<code>items: { "$ref": "#/components/schemas/Pet" }</code>.<a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.2">
+          <p id="section-6-2.2.1">The JSON Structure reference layer: <code>$ref</code>, <code>$extends</code>, and <code>$import</code> used
+<em>within</em> a Schema Object that has adopted a JSON Structure dialect. These
+resolve as defined by JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>: <code>$ref</code> and
+<code>$extends</code> address named types under the schema's own
+<code>#/definitions/...</code>; cross-document reuse instead uses the
+<code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> (<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>).
+An inner <code>$ref</code> <span class="bcp14">MUST NOT</span> be used to reach a <code>components.schemas</code> entry.<a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-6-3">Because dialect selection is per schema-resource-root (<a href="#dialect-selection" class="auto internal xref">Section 4.1</a>),
+these layers are scoped, not global: the JSON Structure reference layer's
+rules apply only once a <code>$ref</code> node is already inside a JSON Structure
+resource's own body. An ordinary OAS <code>$ref</code> pointing <em>at</em> a JSON Structure
+resource from outside it — as in the array-wrapper example above — stays on
+the OpenAPI reference layer and is untouched.<a href="#section-6-3" class="pilcrow">¶</a></p>
+<p id="section-6-4">An OAS/JSON Schema <code>$ref</code> is a general-purpose node-reference mechanism: a
+sibling property that can stand in for an entire Schema Object at any
+position (<code>{ "$ref": "#/components/schemas/Foo" }</code>). JSON Structure has no
+equivalent general-purpose mechanism, and this is a deliberate design
+principle rather than an omission: its <code>$ref</code> exists solely to name the type
+referenced by a <code>type</code> attribute, and there is no other keyword position
+where "substitute this node with the schema over there" is meaningful.
+Consequently <code>$ref</code> <span class="bcp14">MUST</span> only appear as the value of a <code>type</code> attribute
+(<code>{ "type": { "$ref": "#/definitions/Foo" } }</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>) and <span class="bcp14">MUST NOT</span>
+be used as a sibling property standing in for a whole schema.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<div id="reference-model-ref-placement">
+<section id="section-6.1">
+        <h3 id="name-ref-names-a-type-not-a-node">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-ref-names-a-type-not-a-node" class="section-name selfRef"><code>$ref</code> Names a Type, Not a Node</a>
+        </h3>
+<p id="section-6.1-1">This principle is easy to lose sight of when moving a <code>properties</code>, <code>items</code>,
+or <code>choices</code> member from a plain OAS/JSON Schema Schema Object into a JSON
+Structure Schema Object, because the OAS reference syntax parses without
+complaint at the same position. Assume the array schema below has itself
+adopted the JSON Structure dialect (its own <code>$schema</code>, or an inherited
+<code>jsonSchemaDialect</code>, already selects it):<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.1-2">
+<pre>
+{
+  "type": "array",
+  "items": { "$ref": "#/components/schemas/Pet" }
+}
+</pre><a href="#section-6.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-6.1-3">This is NOT valid JSON Structure. <code>$ref</code> here is a sibling of <code>items</code> rather
+than the value of a <code>type</code> attribute, and it targets a <code>components.schemas</code>
+entry, which JSON Structure's own <code>$ref</code> cannot reach in any case
+(<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>): <code>$ref</code> and <code>$extends</code> are document-local,
+addressing only the schema's own <code>#/definitions</code>. A generic JSON/YAML parser
+accepts the form above without complaint, so the violation only surfaces
+when the Schema Object is validated with a JSON Structure-aware tool. The
+principled form names a type for <code>items</code> to hold and points that type
+reference at a locally defined type:<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-6.1-4">
+<pre>
+{
+  "type": "array",
+  "items": { "type": { "$ref": "#/definitions/Pet" } },
+  "definitions": {
+    "Pet": {
+      "type": "object",
+      "name": "Pet",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"]
+    }
+  }
+}
+</pre><a href="#section-6.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-6.1-5">If <code>Pet</code> is also used verbatim elsewhere in the Description as a whole
+Schema Object (for example, as another operation's response body), an
+ordinary OAS <code>$ref</code> to <code>#/components/schemas/Pet</code> is used at that Schema
+Object position instead of duplicating it there too; only positions nested
+inside another Schema Object's <code>properties</code>, <code>items</code>, or <code>choices</code> require
+the local <code>definitions</code> copy, because those positions cannot carry an OAS
+<code>$ref</code> of their own.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="cross-schema-reuse">
+<section id="section-7">
+      <h2 id="name-cross-schema-reuse-with-imp">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-cross-schema-reuse-with-imp" class="section-name selfRef">Cross-Schema Reuse with <code>$import</code> and <code>$importdefs</code></a>
+      </h2>
+<p id="section-7-1">Because <code>$ref</code> and <code>$extends</code> are document-local, a JSON Structure Schema
+Object cannot reach a type defined in another <code>components.schemas</code> entry
+through them. Reuse across entries, and across documents, uses the
+<code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>, which is active by default
+under the extended and validation meta-schemas and defines the <code>$import</code> and
+<code>$importdefs</code> keywords, their copy-not-link semantics, definition shadowing,
+import error handling, and cycle rejection. This section defines only how
+those keywords resolve against an OpenAPI Description.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="resolving-imports-within-a-description">
+<section id="section-7.1">
+        <h3 id="name-resolving-imports-within-a-">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-resolving-imports-within-a-" class="section-name selfRef">Resolving Imports within a Description</a>
+        </h3>
+<p id="section-7.1-1">When the URI of <code>$import</code>/<code>$importdefs</code> matches the <code>$id</code> of a JSON Structure
+Schema Object registered in the same OpenAPI Description, the import is
+satisfied from that entry. Tooling <span class="bcp14">MUST</span> resolve the URI against the <code>$id</code>
+values in the Description, using the same reference resolution as an
+ordinary <code>$ref</code> as illustrated in the OAS base-URI-determination examples
+<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, before attempting any network retrieval. A JSON Structure Schema
+Object that is imported this way therefore <span class="bcp14">MUST</span> declare an <code>$id</code>. Matching
+compares the fragment-free absolute URI: tooling <span class="bcp14">MUST</span> strip any fragment
+from the <code>$import</code>/<code>$importdefs</code> value before comparing it, byte-for-byte,
+against each registered <code>$id</code> in the Description; <code>$id</code> values <span class="bcp14">MUST</span> be
+unique within a Description, and tooling <span class="bcp14">MUST</span> reject a Description that
+registers the same <code>$id</code> more than once.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="resolving-external-imports">
+<section id="section-7.2">
+        <h3 id="name-resolving-external-imports">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-resolving-external-imports" class="section-name selfRef">Resolving External Imports</a>
+        </h3>
+<p id="section-7.2-1">When the URI matches no <code>$id</code> registered in the Description, it denotes a
+self-contained JSON Structure schema resource hosted elsewhere. Tooling
+retrieves that document over a secure transport such as HTTPS, validates that
+it is a JSON Structure schema, and copies its definitions into the designated
+namespace exactly as for an in-Description import. The external document need
+not itself be an OpenAPI Description, so a single canonical type library can
+be shared across many APIs. Import errors, deduplication, and cycle rejection
+follow <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> unchanged; an importing entry <span class="bcp14">MUST</span> additionally
+activate, through its meta-schema or its own <code>$uses</code>, any add-ins used by the
+definitions it imports.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="annotations-and-units">
+<section id="section-8">
+      <h2 id="name-activating-add-ins-with-use">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-activating-add-ins-with-use" class="section-name selfRef">Activating Add-ins with <code>$uses</code></a>
+      </h2>
+<p id="section-8-1">Under the extended meta-schema, non-Core add-ins are offered but not active; a
+schema activates them through <code>$uses</code>, an array of add-in tokens declared at
+the schema root. Under the validation meta-schema, all add-ins are active by
+default.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">Following the convention established by the add-in specifications themselves
+<span>[<a href="#JSTRUCT-UNITS" class="cite xref">JSTRUCT-UNITS</a>]</span> <span>[<a href="#JSTRUCT-VALIDATION" class="cite xref">JSTRUCT-VALIDATION</a>]</span> <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span>, <code>$uses</code> is
+placed at the root of the JSON Structure schema document to activate add-ins
+offered by that document's own <code>$schema</code> meta-schema. Tooling conforming to
+this binding <span class="bcp14">MUST</span> support <code>$uses</code> in that position.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">For example, <code>JSONStructureUnits</code> <span>[<a href="#JSTRUCT-UNITS" class="cite xref">JSTRUCT-UNITS</a>]</span> is offered, but not
+active, under the extended meta-schema; a schema that wants to annotate
+numeric properties with <code>unit</code>, <code>ucumUnit</code>, and <code>symbol</code> <span class="bcp14">MUST</span> list it in
+<code>$uses</code>:<a href="#section-8-3" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-8-4">
+<pre>
+components:
+  schemas:
+    Measurement:
+      $schema: https://json-structure.org/meta/extended/v0/#
+      $uses:
+        - JSONStructureUnits
+      $id: https://api.example.com/schemas/measurement
+      name: Measurement
+      type: object
+      properties:
+        temperature:
+          type: double
+          ucumUnit: "Cel"
+          symbol: "°C"
+</pre><a href="#section-8-4" class="pilcrow">¶</a>
+</div>
+<p id="section-8-5">Omitting <code>JSONStructureUnits</code> from <code>$uses</code> while still using <code>unit</code>,
+<code>ucumUnit</code>, or <code>symbol</code> leaves those keywords unrecognized under the extended
+meta-schema; tooling <span class="bcp14">MUST</span> treat them as unknown properties in that case,
+rather than silently applying <code>JSONStructureUnits</code> semantics. Under the
+validation meta-schema, <code>JSONStructureUnits</code> is active by default and <code>$uses</code>
+is not required to enable it.<a href="#section-8-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="code-generation-and-runtime-validation">
+<section id="section-9">
+      <h2 id="name-code-generation-and-runtime">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-code-generation-and-runtime" class="section-name selfRef">Code Generation and Runtime Validation</a>
+      </h2>
+<p id="section-9-1">Processing a JSON Structure Schema Object separates memory layout from
+constraint checking:<a href="#section-9-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-9-2">
+        <dt id="section-9-2.1">Code generation:</dt>
+        <dd style="margin-left: 1.5em" id="section-9-2.2">
+          <p id="section-9-2.2.1">The generated in-memory type <span class="bcp14">SHOULD</span> be derived solely from the JSON
+Structure Core structural keywords: <code>type</code>, <code>name</code>, <code>properties</code>, <code>items</code>,
+<code>values</code>, <code>tuple</code>, <code>choices</code>, <code>selector</code>, <code>abstract</code>, <code>$extends</code>,
+<code>required</code>, <code>additionalProperties</code>, and the <code>precision</code>/<code>scale</code> and
+<code>maxLength</code> storage constraints. Constraint keywords contributed by the
+<code>JSONStructureValidation</code> <span>[<a href="#JSTRUCT-VALIDATION" class="cite xref">JSTRUCT-VALIDATION</a>]</span> and
+<code>JSONStructureConditionalComposition</code> <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span> add-ins are
+runtime validation rules and <span class="bcp14">SHOULD NOT</span> change the generated type.<a href="#section-9-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-9-2.3">Runtime validation:</dt>
+        <dd style="margin-left: 1.5em" id="section-9-2.4">
+          <p id="section-9-2.4.1">Whether those add-ins are active is determined by the selected meta-schema:
+opt-in through <code>$uses</code> under the extended meta-schema, or active by default
+under the validation meta-schema. Conditional-composition keywords are
+evaluated as boolean value validation (<a href="#type-system-conditional-composition" class="auto internal xref">Section 5.3</a>),
+never as structural composition.<a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-9-3">This separation lets a generator produce a deterministic memory layout from
+Core keywords while a gateway or server enforces the full validation and
+composition rules against the same schema.<a href="#section-9-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="examples">
+<section id="section-10">
+      <h2 id="name-examples">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-examples" class="section-name selfRef">Examples</a>
+      </h2>
+<div id="example-single-schema-object">
+<section id="section-10.1">
+        <h3 id="name-a-single-json-structure-sch">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-a-single-json-structure-sch" class="section-name selfRef">A Single JSON Structure Schema Object</a>
+        </h3>
+<p id="section-10.1-1">The following <code>components.schemas</code> entry is a JSON Structure Schema Object:
+its <code>$schema</code> selects the JSON Structure Core dialect, so <code>type</code>,
+<code>properties</code>, and the primitive type names are interpreted per JSON
+Structure rather than per the OAS dialect. It is referenced from elsewhere in
+the OpenAPI Description with an ordinary OpenAPI <code>$ref</code> to
+<code>#/components/schemas/TelemetryMessage</code>.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-10.1-2">
+<pre>
+components:
+  schemas:
+    TelemetryMessage:
+      $schema: https://json-structure.org/meta/core/v0/#
+      $id: https://api.example.com/schemas/telemetry-message
+      name: TelemetryMessage
+      type: object
+      properties:
+        messageId:
+          type: uuid
+        timestamp:
+          type: datetime
+        sensorId:
+          type: string
+        reading:
+          type: double
+</pre><a href="#section-10.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="example-json-schema-dialect-default">
+<section id="section-10.2">
+        <h3 id="name-using-jsonschemadialect-as-">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-using-jsonschemadialect-as-" class="section-name selfRef">Using <code>jsonSchemaDialect</code> as the Document Default</a>
+        </h3>
+<p id="section-10.2-1">An OpenAPI Object <span class="bcp14">MAY</span> set <code>jsonSchemaDialect</code> once, so that Schema Objects
+need not repeat <code>$schema</code> individually (<a href="#dialect-selection" class="auto internal xref">Section 4.1</a>). Here the same
+<code>TelemetryMessage</code> schema omits both its own <code>$schema</code> and its own <code>$id</code>; the
+document default supplies the dialect, and the default-construction rule
+(<a href="#default-id-construction" class="auto internal xref">Section 4.4</a>) supplies the identifier.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-10.2-2">
+<pre>
+openapi: 3.1.0
+jsonSchemaDialect: https://json-structure.org/meta/core/v0/#
+info:
+  title: Telemetry API
+  version: "1.0.0"
+components:
+  schemas:
+    TelemetryMessage:
+      name: TelemetryMessage
+      type: object
+      properties:
+        messageId:
+          type: uuid
+        timestamp:
+          type: datetime
+        sensorId:
+          type: string
+        reading:
+          type: double
+</pre><a href="#section-10.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-10.2-3">Assuming this Description is retrieved from
+<code>https://api.example.com/openapi.yaml</code>, tooling that extracts
+<code>TelemetryMessage</code> for standalone validation
+(<a href="#materializing-defaults" class="auto internal xref">Section 4.5</a>) <span class="bcp14">MUST</span> produce:<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-10.2-4">
+<pre>
+$schema: https://json-structure.org/meta/core/v0/#
+$id: "https://api.example.com/openapi.yaml\
+  #/components/schemas/TelemetryMessage"
+name: TelemetryMessage
+type: object
+properties:
+  messageId:
+    type: uuid
+  timestamp:
+    type: datetime
+  sensorId:
+    type: string
+  reading:
+    type: double
+</pre><a href="#section-10.2-4" class="pilcrow">¶</a>
+</div>
+<p id="section-10.2-5">A Schema Object that carries its own <code>$schema</code> and/or <code>$id</code> (as in
+<a href="#example-single-schema-object" class="auto internal xref">Section 10.1</a>) overrides the corresponding default; the
+two defaults compose independently per keyword, not as an all-or-nothing
+pair, and are not mutually exclusive with each other.<a href="#section-10.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-cross-schema-reuse">
+<section id="section-10.3">
+        <h3 id="name-cross-schema-reuse-with-impo">
+<a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-cross-schema-reuse-with-impo" class="section-name selfRef">Cross-Schema Reuse with <code>$import</code></a>
+        </h3>
+<p id="section-10.3-1">Here <code>TelemetryMessage</code> imports the sibling <code>CommonTypes</code> library by its <code>$id</code>
+into the <code>Common</code> namespace, extends the imported <code>BaseMessage</code>, and
+references the imported <code>GeoPoint</code>. Both entries carry an <code>$id</code>, so the
+import resolves within the Description without any network access.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-10.3-2">
+<pre>
+components:
+  schemas:
+    CommonTypes:
+      $schema: https://json-structure.org/meta/core/v0/#
+      $id: https://api.example.com/schemas/common
+      definitions:
+        BaseMessage:
+          name: BaseMessage
+          abstract: true
+          type: object
+          properties:
+            messageId: { type: uuid }
+            timestamp: { type: datetime }
+        GeoPoint:
+          name: GeoPoint
+          type: object
+          properties:
+            lat: { type: double }
+            long: { type: double }
+    TelemetryMessage:
+      $schema: https://json-structure.org/meta/extended/v0/#
+      $id: https://api.example.com/schemas/telemetry
+      $root: "#/definitions/TelemetryMessage"
+      definitions:
+        Common:
+          $importdefs: https://api.example.com/schemas/common
+        TelemetryMessage:
+          name: TelemetryMessage
+          type: object
+          $extends: "#/definitions/Common/BaseMessage"
+          properties:
+            sensorId: { type: string }
+            reading: { type: double }
+            location:
+              type: { $ref: "#/definitions/Common/GeoPoint" }
+</pre><a href="#section-10.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="example-external-import">
+<section id="section-10.4">
+        <h3 id="name-importing-an-external-type-">
+<a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-importing-an-external-type-" class="section-name selfRef">Importing an External Type Library</a>
+        </h3>
+<p id="section-10.4-1">When the import URI matches no <code>$id</code> in the Description, it denotes an
+external schema resource. Here <code>OrderEvent</code> imports an external <code>people.json</code>
+type library by its absolute URI into the <code>People</code> namespace and uses the
+imported <code>Person</code> type. The external document is a self-contained JSON
+Structure schema and need not be an OpenAPI Description.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-10.4-2">
+<pre>
+components:
+  schemas:
+    OrderEvent:
+      $schema: https://json-structure.org/meta/extended/v0/#
+      $id: https://api.example.com/schemas/order-event
+      name: OrderEvent
+      type: object
+      properties:
+        customer:
+          type: { $ref: "#/definitions/People/Person" }
+      definitions:
+        People:
+          $import: https://types.example.com/people.json
+</pre><a href="#section-10.4-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="conformance">
+<section id="section-11">
+      <h2 id="name-conformance">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-conformance" class="section-name selfRef">Conformance</a>
+      </h2>
+<p id="section-11-1">A conforming JSON Structure Schema Object is a Schema Object whose effective
+dialect is one of the meta-schema URIs in <a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 4.2</a>
+and whose content is a valid JSON Structure schema for that meta-schema,
+including any add-ins it activates through <code>$uses</code>.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-2">Conforming tooling <span class="bcp14">MUST</span>:<a href="#section-11-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-11-3">
+<li id="section-11-3.1">
+          <p id="section-11-3.1.1">Determine the effective dialect of every Schema Object per
+<a href="#dialect-selection" class="auto internal xref">Section 4.1</a>.<a href="#section-11-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-11-3.2">
+          <p id="section-11-3.2.1">Process a Schema Object bearing a JSON Structure meta-schema URI as a JSON
+Structure schema, and never as an OAS-dialect schema
+(<a href="#tooling-requirements" class="auto internal xref">Section 4.3</a>).<a href="#section-11-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-11-3.3">
+          <p id="section-11-3.3.1">Resolve <code>$ref</code>/<code>$extends</code>/<code>$import</code>/<code>$importdefs</code> within a JSON Structure
+Schema Object per JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> and
+<a href="#cross-schema-reuse" class="auto internal xref">Section 7</a>, resolving in-Description imports by <code>$id</code> before
+any network retrieval.<a href="#section-11-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-11-3.4">
+          <p id="section-11-3.4.1">Keep the OpenAPI and JSON Structure reference layers separate
+(<a href="#reference-model" class="auto internal xref">Section 6</a>).<a href="#section-11-3.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-11-4">Conforming tooling <span class="bcp14">SHOULD</span> honor the code-generation and runtime-validation
+separation of <a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 9</a>, and <span class="bcp14">MUST</span> reject
+cyclic imports.<a href="#section-11-4" class="pilcrow">¶</a></p>
+<p id="section-11-5">A Description that contains only plain OAS Schema Objects is unaffected by
+this document and remains a conforming OpenAPI Description.<a href="#section-11-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-12">
+      <h2 id="name-security-considerations">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<span class="break"></span><dl class="dlParallel" id="section-12-1">
+        <dt id="section-12-1.1">Import retrieval:</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.2">
+          <p id="section-12-1.2.1"><code>$import</code>/<code>$importdefs</code> can reference external URIs. Tooling <span class="bcp14">MUST</span> resolve
+in-Description <code>$id</code> matches before any network access, <span class="bcp14">MUST</span> use a secure
+transport such as HTTPS for external retrieval, and <span class="bcp14">MUST</span> constrain
+automatic retrieval with an allow-list of permitted hosts or URI prefixes,
+connection and read timeouts, and response size limits to prevent
+server-side request forgery and resource exhaustion against internal or
+otherwise unintended targets. Tooling <span class="bcp14">SHOULD</span> cache retrieved schemas.<a href="#section-12-1.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.3">Cyclic and pathological imports:</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.4">
+          <p id="section-12-1.4.1">Cyclic import chains <span class="bcp14">MUST</span> be rejected. Deeply nested or fan-out imports
+<span class="bcp14">SHOULD</span> be bounded to prevent denial of service during schema assembly.<a href="#section-12-1.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.5">Dialect confusion:</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.6">
+          <p id="section-12-1.6.1">Because Core, JSON Schema, and JSON Structure share keyword spellings (for
+example <code>type</code>, <code>properties</code>, <code>$ref</code>) with differing semantics, tooling
+<span class="bcp14">MUST NOT</span> process a JSON Structure Schema Object as an OAS-dialect schema,
+or vice versa. Misidentifying the dialect can silently change validation
+outcomes.<a href="#section-12-1.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-12-1.7">Untrusted schemas:</dt>
+        <dd style="margin-left: 1.5em" id="section-12-1.8">
+          <p id="section-12-1.8.1">A JSON Structure schema retrieved from an external source is untrusted
+input. Tooling <span class="bcp14">MUST</span> validate it against its declared meta-schema before use
+and <span class="bcp14">SHOULD</span> apply the same input-handling precautions as for any other
+externally retrieved document.<a href="#section-12-1.8.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-12-2">Otherwise, the security considerations of OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> apply unchanged.<a href="#section-12-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-13">
+      <h2 id="name-iana-considerations">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-13-1">This document has no IANA actions.<a href="#section-13-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-normative-references">
+<section id="section-14">
+      <h2 id="name-normative-references">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      </h2>
+<dl class="references">
+<dt id="JSTRUCT-ALTNAMES">[JSTRUCT-ALTNAMES]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Alternate Names"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/alternate-names/draft-vasters-json-structure-alternate-names.html">https://json-structure.github.io/alternate-names/draft-vasters-json-structure-alternate-names.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-COMPOSITION">[JSTRUCT-COMPOSITION]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Conditional Composition"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/conditional-composition/draft-vasters-json-structure-cond-composition.html">https://json-structure.github.io/conditional-composition/draft-vasters-json-structure-cond-composition.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-CORE">[JSTRUCT-CORE]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Core"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/core/draft-vasters-json-structure-core.html">https://json-structure.github.io/core/draft-vasters-json-structure-core.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-IMPORT">[JSTRUCT-IMPORT]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Import"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/import/draft-vasters-json-structure-import.html">https://json-structure.github.io/import/draft-vasters-json-structure-import.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-UNITS">[JSTRUCT-UNITS]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure: Symbols, Scientific Units, and Currencies"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/units/draft-vasters-json-structure-units.html">https://json-structure.github.io/units/draft-vasters-json-structure-units.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="JSTRUCT-VALIDATION">[JSTRUCT-VALIDATION]</dt>
+      <dd>
+<span class="refAuthor">Vasters, C.</span>, <span class="refTitle">"JSON Structure Validation"</span>, <span>n.d.</span>, <span>&lt;<a href="https://json-structure.github.io/validation/draft-vasters-json-structure-validation.html">https://json-structure.github.io/validation/draft-vasters-json-structure-validation.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="OAS">[OAS]</dt>
+      <dd>
+<span class="refAuthor">OpenAPI Initiative</span>, <span class="refTitle">"OpenAPI Specification"</span>, <time datetime="2025" class="refDate">2025</time>, <span>&lt;<a href="https://spec.openapis.org/oas/latest">https://spec.openapis.org/oas/latest</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+      <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3986">[RFC3986]</dt>
+      <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3986">https://www.rfc-editor.org/rfc/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6901">[RFC6901]</dt>
+      <dd>
+<span class="refAuthor">Bryan, P., Ed.</span>, <span class="refAuthor">Zyp, K.</span>, and <span class="refAuthor">M. Nottingham, Ed.</span>, <span class="refTitle">"JavaScript Object Notation (JSON) Pointer"</span>, <span class="seriesInfo">RFC 6901</span>, <span class="seriesInfo">DOI 10.17487/RFC6901</span>, <time datetime="2013-04" class="refDate">April 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc6901">https://www.rfc-editor.org/rfc/rfc6901</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+      <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8259">[RFC8259]</dt>
+    <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1">TODO acknowledge.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Clemens Vasters</span></div>
+<div dir="auto" class="left"><span class="org">Microsoft Corporation</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:clemensv@microsoft.com" class="email">clemensv@microsoft.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
