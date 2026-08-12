@@ -9,6 +9,12 @@ This is the working area for the individual Internet-Draft, "JSON Structure: Ope
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-vasters-json-structure-oas-binding)
 * [Compare Editor's Copy to Individual Draft](https://json-structure.github.io/oas-binding/#go.draft-vasters-json-structure-oas-binding.diff)
 
+## Samples
+
+[`samples/`](samples/) contains ten complete OpenAPI documents that use JSON
+Structure Schema Objects per this binding, several adapted from canonical
+OpenAPI Initiative examples. See [`samples/README.md`](samples/README.md)
+for an index of what each one demonstrates.
 
 ## Contributing
 
