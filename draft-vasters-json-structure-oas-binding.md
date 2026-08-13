@@ -398,6 +398,33 @@ For example, if the Description's base URI is
 An explicit identity on the Schema Object always takes precedence over this
 default.
 
+A Schema Object outside `components.schemas` exercises the escaping rules.
+Consider an inline Schema Object at the JSON request body of
+`POST /orders/{orderId}`, in a Description with the same base URI. Two of its
+reference-tokens contain characters that the two escaping steps treat
+differently:
+
+| Reference-token | After step 2 (JSON Pointer escaping) | After step 3 (fragment encoding) |
+| ---- | ---- | ---- |
+| `paths` | `paths` | `paths` |
+| `/orders/{orderId}` | `~1orders~1{orderId}` | `~1orders~1%7BorderId%7D` |
+| `post` | `post` | `post` |
+| `requestBody` | `requestBody` | `requestBody` |
+| `content` | `content` | `content` |
+| `application/json` | `application~1json` | `application~1json` |
+| `schema` | `schema` | `schema` |
+
+A `/` inside a path template or a media type is part of the reference-token,
+not a pointer separator, so step 2 escapes it as `~1`. That `~1` then passes
+through step 3 unchanged, because `~` and digits are permitted literally in
+an {{RFC3986}} `fragment`. The braces of the path template are not permitted
+there, so step 3 percent-encodes them with uppercase hexadecimal digits. The
+resulting default identity is:
+
+~~~
+https://example.com/api/openapi.yaml#/paths/~1orders~1%7BorderId%7D/post/requestBody/content/application~1json/schema
+~~~
+
 Tooling APIs that process an encapsulated or offline Description MUST expose
 the selected base URI as an explicit input when it is not available from
 `$self` or a retrieval URI. A filesystem path MUST NOT be concatenated
@@ -705,12 +732,23 @@ properties:
     type: decimal
 ~~~
 
-`$schema` is the effective dialect inherited from `jsonSchemaDialect`. `$id`
-is the default identity of {{default-id-construction}}, in which `/orders`
-and `application/json` appear as the escaped reference-tokens `~1orders` and
-`application~1json`. `name` comes from step 2: the path template `/orders`,
-the method `post`, and the role `requestBody`, with the characters outside
-the identifier set removed.
+`$schema` is the effective dialect inherited from `jsonSchemaDialect`, and
+`$id` is the default identity constructed per {{default-id-construction}}.
+
+`name` comes from step 2. Three parts of the position identify it, and each
+contributes one segment:
+
+| Part | Value at this position | Segment |
+| ---- | ---- | ---- |
+| Path template | `/orders` | `Orders` |
+| Method | `post` | `Post` |
+| Role | `requestBody` | `RequestBody` |
+
+Each segment drops the characters outside `[A-Za-z0-9_]` and capitalizes its
+first letter; the segments are then concatenated in that order, giving
+`OrdersPostRequestBody`. The remaining reference-tokens of the pointer —
+`paths`, `content`, `application/json`, `schema` — contribute nothing,
+because they are structural rather than identifying.
 
 Distinct positions can still derive the same name. Two media types under the
 same operation — `application/json` and `application/xml` at `POST /orders` —

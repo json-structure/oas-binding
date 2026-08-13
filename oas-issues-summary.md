@@ -224,6 +224,18 @@ that tooling MUST NOT apply URI normalization, trailing-slash equivalence, or
 version-range matching on its own initiative; and that a dialect version
 defining new URIs is a distinct dialect for matching purposes.
 
+State also how a tool comes to support an additional dialect at all. OAS says
+tooling "MAY support additional values of `$schema`" without saying whether
+that support is compiled in, configured out of band, or discovered by
+retrieving the meta-schema. The distinction matters because a dialect may
+permit deriving a custom meta-schema — one that carries its own URI while
+incorporating a declared meta-schema's definitions — and no exact match can
+anticipate such a URI. OAS should say that recognizing one is an explicit,
+out-of-band configuration decision; that a tool so configured processes the
+Schema Object under the dialect the derived meta-schema extends; and that a
+tool not so configured applies the no-fallback rule of §3 rather than
+guessing from the URI's shape or resolving it at read time.
+
 ## 5. An embedded schema resource without an identity has no defined identity
 
 **Today.**
@@ -417,7 +429,7 @@ The limits are the part implementations skip and attackers find.
 | 1. Dialect bindings | "Binding Parameters" — replaced by a reference; the JSON Structure parameter table stays. |
 | 2. Classification ordering | "Reference Object Classification" in full. |
 | 3. Unknown-dialect no-fallback | Two bullets of "Recognizing and Rejecting Dialects." |
-| 4. URI matching | One bullet of "Recognizing and Rejecting Dialects." |
+| 4. URI matching and configured recognition | Two bullets of "Recognizing and Rejecting Dialects." |
 | 5. Embedded identity and extraction | "Default Resource Identity" and "Materializing Defaults for Standalone Processing" in full — the largest single block. |
 | 6. Type determination contract | "Schema Inspection for Non-JSON Serializations" in full; the JSON Structure procedure stays. |
 | 7. Third published schema | "Validating the Description Itself" in full. |
