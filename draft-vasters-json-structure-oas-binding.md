@@ -222,6 +222,7 @@ dialect-specific inputs the rest of this part requires.
 | Identity comparison | Whether identity comparison is byte-exact or subject to a declared normalization. |
 | Cross-document mechanism | The keyword(s), if any, by which a resource incorporates definitions from another resource, and whether their values are absolute URIs. A binding MAY declare that its dialect has no such mechanism. |
 | Type determination | The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations ({{serialization-inspection}}). |
+| Data media types | The media types whose message bodies are encoded according to the dialect, and for each, whether the encoding carries the schema needed to decode it ({{body-encodings}}). A binding MAY declare that its dialect defines no encoding of its own. |
 | Type naming and scope | What names a type in the dialect, and how a resource's scope for those names is determined ({{type-scope}}). A binding MAY declare that its dialect names no types, in which case {{type-scope}} imposes no aggregation requirement. |
 | Self-description | Which values an extracted resource requires beyond identity and dialect, including any value an inner declaration inherits from an enclosing one ({{materializing-defaults}}). |
 | Usable schema forms | Which of the dialect's schema forms are usable at a Schema Object position ({{dialect-selection}}), where the dialect admits forms that are not JSON objects. |
@@ -643,6 +644,45 @@ valid at an `itemSchema` position on the same terms as at a `schema`
 position. It is a schema-resource root ({{dialect-selection}}), and it
 describes one item, not the sequence.
 
+## Dialect-Defined Body Encodings {#body-encodings}
+
+A dialect may define a wire encoding for the data it describes, and not only a
+vocabulary for describing that data. Where it does, a message body in that
+encoding is decoded from the schema by the dialect's own rules.
+
+A binding MUST declare the media types whose bodies its dialect encodes
+({{binding-parameters}}). A binding MAY declare none, in which case bodies are
+encoded per their media type independently of the dialect, and this section
+does not apply.
+
+{{serialization-inspection}} does not apply to a body of a declared data media
+type. That procedure exists so that OAS can construct and parse form,
+multipart, and text values, which carry no type information of their own. A
+body the dialect encodes carries whatever the dialect's encoding provides, and
+the dialect decodes it as a whole. Tooling MUST NOT apply the
+type-determination procedure to such a body.
+
+For each declared media type, a binding MUST state whether the encoding
+carries the schema needed to decode the body:
+
+* Where the encoding carries that schema, tooling MUST decode the body using
+  the schema the body carries. Tooling MUST NOT decode the body using the
+  Schema Object in place of the schema on the wire. The Schema Object states
+  what the Description expects, and tooling MUST report a diagnostic where the
+  two disagree in a way the dialect does not reconcile.
+* Where the encoding does not carry that schema, the Schema Object is the
+  schema the body was encoded against. Tooling MUST NOT decode a body whose
+  encoding schema it cannot establish, and MUST NOT substitute a different
+  schema on the assumption that the two are compatible.
+
+A Schema Object whose dialect encodes the body is part of the wire contract.
+Editing it changes what is on the wire. Where the dialect defines its own rule
+for reading data written against a different version of a schema, the binding
+MUST state how that rule relates to a change made in the Description.
+
+A schema carried in a body is untrusted input. Tooling MUST validate it before
+use and MUST apply the limits of {{security-considerations}} to it.
+
 ## Validating the Description Itself {#validating-the-description}
 
 The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
@@ -681,6 +721,7 @@ whose base dialect is one of those canonical URIs.
 | Identity comparison | Byte-exact; no normalization. |
 | Cross-document mechanism | `$import` and `$importdefs` {{JSTRUCT-IMPORT}}, whose values MUST be absolute URIs ({{cross-schema-reuse}}). |
 | Type determination | {{json-structure-serialization-inspection}}. |
+| Data media types | None. JSON Structure describes JSON data and defines no wire encoding of its own. Bodies are encoded per their media type ({{body-encodings}}). |
 | Type naming and scope | A type is named by `name`. Scope is derived from the schema resource: a resource's scope is its root namespace ({{aggregate-namespaces}}). |
 | Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). No JSON Structure declaration inherits a value from an enclosing declaration. |
 | Usable schema forms | Every JSON Structure schema is a JSON object. All forms are usable. |

@@ -40,6 +40,7 @@ defined in [AVRO].
 | Identity comparison | Not applicable. |
 | Cross-document mechanism | None. An Avro schema resource MUST be self-contained ([Reference Layers](#reference-layers)). |
 | Type determination | [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations). |
+| Data media types | Four framings, in [Encodings and Media Types](#encodings-and-media-types). Avro defines a wire encoding, so an Avro-framed body is decoded by the Avro codec and not by the type-determination procedure. |
 | Type naming and scope | A named type is named by its fullname. Scope is author-declared: it is the `namespace` in effect at the declaration ([Type Naming and Scope](#type-naming-and-scope)). |
 | Self-description | An inner named declaration inherits its namespace from the most tightly enclosing named schema. That value MUST be materialized on extraction ([Materializing the Inherited Namespace](#materializing-the-inherited-namespace)). |
 | Usable schema forms | The JSON object form only ([Usable Schema Forms](#usable-schema-forms)). |
@@ -242,13 +243,185 @@ Extracting the inner record MUST produce:
 Extracting it without the `namespace` produces `LineItem` in the null
 namespace, which is a different type with the same field list.
 
+## A Note on Parsing Canonical Form
+
+The Parsing Canonical Form transformation keeps only the attributes relevant
+to parsing data, which are `type`, `name`, `fields`, `symbols`, `items`,
+`values`, and `size`, and strips all others [AVRO]. A `$schema` attribute is
+therefore stripped, and adding one does not change a schema's fingerprint.
+
+The same transformation replaces short names with fullnames using the
+applicable namespaces. Two schemas that differ only in whether an inherited
+namespace was written explicitly have the same Parsing Canonical Form, and the
+same fingerprint. Materializing the namespace is therefore safe with respect
+to fingerprint-keyed lookup.
+
+# Encodings and Media Types
+
+This section supplies the data media types declaration required by
+"Dialect-Defined Body Encodings" of [BINDING].
+
+Avro specifies two serialization encodings, binary and JSON [AVRO]. Two
+additional framings wrap the binary encoding: single-object encoding and the
+Object Container File. The four differ in what they carry alongside the data,
+which is what determines whether a body can be decoded from the Description
+alone.
+
+| Media type | Framing | Carries the schema |
+| ---- | ---- | ---- |
+| `avro/binary` | Binary encoding of one datum. | No |
+| `application/avro+json` | JSON encoding of one datum. | No |
+| `application/vnd.apache.avro.single-object` | `C3 01`, an 8-byte little-endian CRC-64-AVRO fingerprint, then the binary encoding of one datum. | Fingerprint only |
+| `application/vnd.apache.avro.ocf` | Object Container File: `Obj` and `01`, a metadata map, a 16-byte sync marker, then data blocks. | Yes, in full |
+
+Binary encoding "does not include field names, self-contained information
+about the types of individual bytes, nor field or record separators", so
+"readers are wholly reliant on the schema used when the data was encoded"
+[AVRO]. The JSON encoding is no better in this respect. It "does not
+distinguish between int and long, float and double, records and maps, enums
+and strings" [AVRO], and the schema is equally required to read it.
+
+A body of any of these media types MUST NOT be subjected to the procedure of
+[Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations).
+That procedure serves the OAS positions listed there. An Avro-framed body is
+decoded as a whole by the Avro codec.
+
+## Media Type Registration Status
+
+Avro has no IANA-registered media type. Of the four above, only `avro/binary`
+appears in [AVRO], and it appears there for a different payload than this
+binding gives it. See
+[The `avro/binary` Collision](#the-avrobinary-collision).
+
+`application/avro+json` is a widespread convention with no registration. The
+two `vnd.apache.avro` media types are provisional names coined by this
+document, because no name exists for those framings.
+
+A deployment MAY use other media types for these framings. Where it does, the
+Description MUST make the framing unambiguous, and tooling MUST NOT infer a
+framing from a media type this binding does not declare.
+
+## The `avro/binary` Collision
+
+[AVRO] specifies `avro/binary` as the HTTP content type for Avro RPC, under
+"HTTP as Transport". An Avro RPC body is not a bare datum. It carries a
+handshake, framed buffers, a request or response metadata map, a message name
+or error flag, and only then the parameters or response value.
+
+This binding uses `avro/binary` for a bare binary-encoded datum, which is the
+prevailing usage in HTTP APIs that are not Avro RPC. The two payloads share a
+media type and are not interchangeable.
+
+Tooling conforming to this binding MUST treat an `avro/binary` body as a bare
+datum. It MUST NOT expect an Avro RPC handshake, framing, or call header.
+An API that speaks Avro RPC is not described by this binding
+([Protocols](#protocols)).
+
+## Writer's Schema and Reader's Schema
+
+Avro decodes with two schemas: the writer's schema, which the data was encoded
+against, and the reader's schema, which the application expects. Where they
+differ, the reader resolves them per the schema resolution rules of [AVRO].
+
+The media type determines what role the Schema Object plays.
+
+For `avro/binary` and `application/avro+json`, the body carries no schema. The
+Schema Object is the writer's schema. Tooling MUST encode a body of these
+media types against the Schema Object. Tooling MUST NOT decode such a body
+unless it has established the writer's schema, either because it accepts the
+Schema Object as the writer's schema or because it obtained the writer's
+schema out of band.
+
+For `application/vnd.apache.avro.single-object`, the body carries an 8-byte
+fingerprint of the writer's schema in Parsing Canonical Form. Tooling MUST
+compare that fingerprint against the fingerprint of the Schema Object's
+Parsing Canonical Form. Where they match, the Schema Object is the writer's
+schema. Where they do not, tooling MUST NOT decode the body against the Schema
+Object, and MUST resolve the writer's schema from the fingerprint out of band.
+
+For `application/vnd.apache.avro.ocf`, the file's `avro.schema` metadata
+property carries the writer's schema in full. That schema is authoritative.
+Tooling MUST decode the file against the schema the file carries, and MUST NOT
+decode it against the Schema Object. Tooling MAY use the Schema Object as the
+reader's schema, and MUST report a diagnostic where the two fail to resolve.
+
+The body outranks the Description for this media type. A Description that
+disagrees with a container file describes an expectation, not the data.
+
+## Schema Evolution and the Description
+
+A Schema Object under this binding is part of the wire contract. Editing it
+changes what is encoded.
+
+A change to a Schema Object is wire-compatible only where the old schema
+resolves against the new one under the schema resolution rules of [AVRO].
+Adding a field with a `default`, reordering fields, and the documented type
+promotions are resolvable. Adding a field without a `default` and removing a
+field the reader requires are not.
+
+This binding defines no mechanism for a Description to carry more than one
+version of a schema. Where readers and writers may hold different versions, a
+Description MUST use
+`application/vnd.apache.avro.single-object` or
+`application/vnd.apache.avro.ocf`, whose framings identify the writer's schema
+on the wire. Tooling MUST NOT rely on schema resolution for an `avro/binary`
+or `application/avro+json` body, because nothing in that body identifies which
+schema it was written against.
+
+## Sequential Bodies
+
+An Object Container File holds many objects under one schema. A Description
+SHOULD describe it with `itemSchema`, whose Schema Object describes one object
+in the file ([BINDING], "Schema Inspection for Non-JSON Serializations"). The
+Schema Object MUST NOT attempt to describe the container structure, the
+metadata map, or the block framing.
+
+The other three media types carry exactly one datum. A Description describes
+them with `schema`.
+
+## Compression
+
+An Object Container File MAY compress its blocks, named by the `avro.codec`
+metadata property. Implementations are required to support `null` and
+`deflate`. The `bzip2`, `snappy`, `xz`, and `zstandard` codecs are optional
+[AVRO].
+
+The codec is internal to the file. It is not HTTP `Content-Encoding`, and
+tooling MUST NOT set or interpret `Content-Encoding` on its behalf.
+
+## Fields That Are Not Parts
+
+A `bytes` or `fixed` field inside an Avro datum is encoded inside the Avro
+framing. It is not a `multipart` part and carries no media type of its own.
+An Encoding Object MUST NOT be used to assign a content type to a field of an
+Avro Schema Object.
+
+Where an Avro datum is itself a `multipart` part, that part's `contentType` is
+one of the media types of this section.
+
+# Protocols
+
+This binding covers Avro schema declarations. It does not cover Avro protocol
+declarations, the `messages` and `errors` constructs, the handshake, message
+framing, or the call format [AVRO].
+
+An OpenAPI Description already describes the operation layer. Avro's protocol
+wire format is a competing operation layer, and binding both would describe
+the same API twice, inconsistently.
+
 # Type Determination for Non-JSON Serializations
 
 This section supplies the type-determination procedure required by "Schema
 Inspection for Non-JSON Serializations" of [BINDING].
 
-Avro defines its own JSON encoding [AVRO]. That encoding governs, and not the
-spelling of the Avro type name.
+It applies at the OAS positions that section lists, being form, multipart, and
+text values that carry no type information of their own. It does NOT apply to
+a body of one of the media types in
+[Encodings and Media Types](#encodings-and-media-types). Such a body is
+decoded by the Avro codec as a whole.
+
+The table below is the mapping of Avro's JSON encoding [AVRO]. That encoding
+governs, and not the spelling of the Avro type name.
 
 | Avro type | JSON data type |
 | ---- | ---- |
@@ -286,25 +459,58 @@ The procedure never inspects instance data. Avro requires an explicit type at
 every position and has no keyword that makes a declaration apply conditionally
 to the data.
 
+## Byte-Valued Strings
+
+`bytes` and `fixed` map to string, but not to arbitrary text. The JSON
+encoding of a byte sequence is a string in which Unicode code points 0 to 255
+map to unsigned 8-bit byte values 0 to 255 [AVRO].
+
+Tooling MUST apply that mapping in both directions. Tooling MUST NOT
+base64-encode a `bytes` or `fixed` value, and MUST NOT emit a code point above
+255 for one.
+
+## Numeric Precision
+
+The JSON encoding represents `long` as a JSON number. Generic JSON tooling
+that parses numbers as IEEE 754 double-precision values loses precision above
+2^53. Tooling MUST preserve the full 64-bit value.
+
+The binary encoding does not have this problem. `int` and `long` are written
+as variable-length zig-zag values and are exact [AVRO]. The same Schema Object
+is therefore lossless over `avro/binary` and hazardous over
+`application/avro+json` for large `long` values.
+
 ## Logical Types
 
-The mapping of the underlying type governs. Tooling MUST NOT infer a wire type
-from the logical type name.
+The mapping of the underlying type governs. "A logical type is always
+serialized using its underlying Avro type so that values are encoded in
+exactly the same way as the equivalent Avro type that does not have a
+`logicalType` attribute" [AVRO]. Tooling MUST NOT infer a wire type from the
+logical type name.
 
 | Declaration | JSON data type |
 | ---- | ---- |
 | `{"type": "int", "logicalType": "date"}` | number |
 | `{"type": "int", "logicalType": "time-millis"}` | number |
+| `{"type": "long", "logicalType": "time-micros"}` | number |
 | `{"type": "long", "logicalType": "timestamp-millis"}` | number |
 | `{"type": "long", "logicalType": "timestamp-micros"}` | number |
+| `{"type": "long", "logicalType": "timestamp-nanos"}` | number |
+| `{"type": "long", "logicalType": "local-timestamp-millis"}` | number |
 | `{"type": "string", "logicalType": "uuid"}` | string |
-| `{"type": "bytes", "logicalType": "decimal"}` | string |
-| `{"type": "fixed", "size": 12, "logicalType": "duration"}` | string |
+| `{"type": "fixed", "size": 16, "logicalType": "uuid"}` | string, byte-valued |
+| `{"type": "bytes", "logicalType": "decimal"}` | string, byte-valued |
+| `{"type": "fixed", "size": 12, "logicalType": "duration"}` | string, byte-valued |
 
 An Avro `date` is a count of days from the epoch, and a `timestamp-millis` is
 a count of milliseconds from the epoch. Both are numbers. Tooling MUST NOT
 serialize either as a formatted date string in a form field, path segment,
 query parameter, or header value.
+
+A `decimal` is the two's-complement unscaled integer in big-endian order,
+carried in `bytes` or `fixed` [AVRO]. It is a byte-valued string under the
+rule of [Byte-Valued Strings](#byte-valued-strings). Tooling MUST NOT
+serialize it as a decimal numeral.
 
 ## Unions
 
@@ -413,6 +619,52 @@ collision, and tooling MUST report a diagnostic per
 The author resolves it in the Description, by giving the inner record its own
 namespace or by making the two declarations identical.
 
+## Operations Over Each Framing
+
+The same `Pet` schema under three framings. Only the media type changes.
+
+~~~ yaml
+paths:
+  /pets:
+    post:
+      requestBody:
+        content:
+          avro/binary:
+            schema:
+              $ref: "#/components/schemas/Pet"
+          application/avro+json:
+            schema:
+              $ref: "#/components/schemas/Pet"
+      responses:
+        "200":
+          description: The stored pet, tagged with its writer's schema.
+          content:
+            application/vnd.apache.avro.single-object:
+              schema:
+                $ref: "#/components/schemas/Pet"
+  /pets/export:
+    get:
+      responses:
+        "200":
+          description: All pets as an Avro Object Container File.
+          content:
+            application/vnd.apache.avro.ocf:
+              itemSchema:
+                $ref: "#/components/schemas/Pet"
+~~~
+
+For the two request media types, `Pet` is the writer's schema. A client
+encodes against it, and a server that cannot accept it as the writer's schema
+MUST reject the request rather than guess.
+
+For the `200` response on `/pets`, the body carries a fingerprint. A client
+MUST compare it against the fingerprint of `Pet` in Parsing Canonical Form
+before decoding against `Pet`.
+
+For `/pets/export`, the file carries `avro.schema`, and that schema decodes
+the file. `Pet` is the reader's schema, and `itemSchema` marks it as
+describing one object rather than the container.
+
 # Conformance
 
 A conforming Avro Schema Object is a Schema Object that meets three
@@ -433,7 +685,12 @@ Resolver:
 Codec / Code Generator:
 : A conforming Codec or Code Generator MUST use the procedure of
   [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations)
-  and MUST NOT fall back to the OAS-dialect procedure.
+  and MUST NOT fall back to the OAS-dialect procedure. A Codec that encodes or
+  decodes a body of a media type in
+  [Encodings and Media Types](#encodings-and-media-types) MUST establish the
+  writer's schema per
+  [Writer's Schema and Reader's Schema](#writers-schema-and-readers-schema)
+  before decoding, and MUST NOT decode against an unverified schema.
 
 # Security Considerations
 
@@ -448,6 +705,39 @@ Dialect confusion:
   to a UUID in Avro, and constrains nothing beyond `string` under the OAS
   dialect, which does not define `logicalType`. Tooling MUST NOT process an
   Avro Schema Object as an OAS-dialect schema, or the reverse.
+
+Schemas carried in a message body:
+: An Object Container File carries a writer's schema in its `avro.schema`
+  metadata property, and decoding the file means parsing a schema supplied by
+  whoever produced the body. That schema is untrusted input, and it drives
+  allocation. Tooling MUST validate it as an Avro schema declaration before
+  use. Tooling MUST bound what it will accept from it, at least on the size of
+  a `fixed`, the depth of nesting, the number of named types, and the total
+  size of the schema text. Tooling MUST NOT allocate from a declared size
+  before the corresponding bytes have been read.
+
+Block counts and sizes:
+: Avro encodes arrays and maps as blocks, each introduced by a `long` count
+  and, where the count is negative, a `long` byte size [AVRO]. An Object
+  Container File likewise introduces each data block with a count and a size.
+  These values come from the wire and can be arbitrarily large. Tooling MUST
+  bound them against the bytes actually available, and MUST NOT pre-allocate
+  on the strength of a declared count or size.
+
+Decompression:
+: An Object Container File names its block codec in `avro.codec`, and the
+  optional codecs include `bzip2`, `snappy`, `xz`, and `zstandard` [AVRO].
+  Tooling MUST enforce a bound on the decompressed size of a block and on the
+  decompression ratio. Tooling MUST reject a codec it has not been configured
+  to accept, and MUST NOT treat an unrecognized `avro.codec` value as `null`.
+
+Fingerprints are not a security mechanism:
+: The single-object framing identifies the writer's schema by a 64-bit
+  CRC-64-AVRO fingerprint. [AVRO] states that Avro fingerprints "are not meant
+  to provide any security guarantees" and recommends that surrounding
+  mechanisms prevent collision and pre-image attacks. Tooling MUST NOT treat a
+  fingerprint match as authentication of the body, and MUST NOT resolve a
+  fingerprint against a schema source it does not trust.
 
 Untrusted schemas:
 : An Avro schema obtained from an external source is untrusted input. Tooling
