@@ -9,7 +9,7 @@ submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
 number:
 date: 2026-08-12
 consensus: true
-v: 0
+v: 3
 area: Web and Internet Transport
 workgroup: Building Blocks for HTTP APIs
 keyword: Internet-Draft
@@ -29,6 +29,7 @@ author:
 
 normative:
   RFC2119:
+  RFC3629:
   RFC3986:
   RFC6901:
   RFC8174:
@@ -109,12 +110,9 @@ The result is a strictly additive, opt-in binding:
   available to API designers and to code generators.
 
 This document defines how conforming tooling recognizes such a Schema Object,
-how it is processed, and how its references resolve.
-
-> **Note:** This document adds no fields to the OpenAPI Specification. It
-> defines how JSON Structure is used within the Schema Object dialect
-> mechanism that OAS has provided since version 3.1. OAS {{OAS}} remains
-> authoritative for everything this document does not modify.
+how it is processed, and how its references resolve. It adds no fields to
+the OpenAPI Specification; OAS {{OAS}} remains authoritative for everything
+this document does not modify.
 
 # Conventions and Terminology {#conventions-and-terminology}
 
@@ -132,7 +130,7 @@ Dialect, meta-schema:
   ("Specifying Schema Dialects") {{OAS}}.
 
 JSON Structure Schema Object:
-: A Schema Object whose effective dialect ({{declaring-a-json-structure-schema-object}})
+: A Schema Object whose effective dialect ({{dialect-selection}})
   is one of the JSON Structure meta-schema URIs. Such a Schema Object is a
   JSON Structure schema and is processed per the JSON Structure
   specifications.
@@ -156,10 +154,16 @@ This document is a profile, or binding, layered on OAS {{OAS}}, applicable to
 any OpenAPI Description whose OAS version provides Schema Object dialect
 selection through `$schema` and `jsonSchemaDialect` — introduced in OAS 3.1
 and retained in every subsequent OAS 3.x version. It is normative only where
-it states requirements about JSON Structure Schema Objects. In all other
-respects, the OpenAPI Object, Paths, Operations, Media Types, Parameters,
-Responses, Components, references between Objects, serialization, and
-security schemes, OAS applies unchanged and is authoritative.
+it states requirements about JSON Structure Schema Objects.
+
+This document's base-URI mechanisms ({{default-id-construction}}) rely in
+part on OAS features that postdate OAS 3.1: the OpenAPI Object's `$self`
+field is defined starting with OAS 3.2 and has no equivalent in OAS 3.1.
+Tooling operating against an OAS 3.1 Description MUST skip the `$self` step
+of {{default-id-construction}} entirely and proceed to the next applicable
+base-URI source; the absence of `$self` in an OAS 3.1 Description is
+expected and MUST NOT be treated as an error. In all other respects OAS
+applies unchanged and is authoritative.
 
 Where this document and OAS both describe the behavior of a Schema Object,
 this document governs only those Schema Objects whose dialect is a JSON
@@ -167,121 +171,173 @@ Structure meta-schema ({{json-structure-meta-schema-uris}}). A Schema Object
 that does not select a JSON Structure meta-schema is a plain OAS Schema
 Object and is outside the scope of this document.
 
+Selecting a dialect other than the OAS default is an OAS-sanctioned
+operation, not an extension of it. OAS states that `$schema` on a schema
+resource root "MUST be used to determine which dialect should be used when
+processing the schema," that this permits Schema Objects complying with
+other drafts of JSON Schema than Draft 2020-12, and that tooling "MAY
+support additional values of `$schema`" ({{OAS}}, "Specifying Schema
+Dialects"). The JSON Schema drafts reachable that way are themselves
+mutually incompatible: successive drafts have redefined `integer`, changed
+whether keywords adjacent to `$ref` apply, changed `format` from assertion to
+annotation, and changed the meaning of `items` while leaving its syntax
+intact, each altering the validation outcome of an unmodified document. A
+dialect is therefore already understood to be a distinct language selected by
+URI, not a variant of the OAS dialect. This document adds one more such
+language and introduces no mechanism that OAS does not already define.
+
 This document does not modify, fork, or republish the OpenAPI Specification.
 
-# Declaring a JSON Structure Schema Object {#declaring-a-json-structure-schema-object}
+This document is organized in two parts. {{dialect-binding-requirements}}
+states requirements that apply to binding *any* schema dialect into an
+OpenAPI Description; it is written without reference to JSON Structure and is
+parameterized by a small set of declarations that a binding supplies.
+{{json-structure-binding}} supplies those declarations for JSON Structure and
+states the requirements specific to it. The first part exists because OAS
+defines dialect *selection* but not dialect *processing*; if a future OAS
+version specifies that layer, the first part of this document can be replaced
+by a reference to it without affecting the second.
+
+# Dialect Binding Requirements {#dialect-binding-requirements}
+
+This part applies to any schema dialect bound into an OpenAPI Description
+through the `$schema` and `jsonSchemaDialect` mechanism, not only to JSON
+Structure. A **dialect binding** is a specification that makes one or more
+dialects usable in a Description by supplying the declarations of
+{{binding-parameters}} and satisfying the requirements of this part.
+
+## Binding Parameters {#binding-parameters}
+
+A dialect binding MUST declare the following. These declarations are the only
+dialect-specific inputs the rest of this part requires.
+
+| Parameter | Meaning |
+| ---- | ---- |
+| Dialect URIs | The exact URIs that select the dialect, and for each, the vocabularies or add-ins active by default and those merely offered for opt-in. |
+| Identity keyword | The keyword within a schema resource that carries its identity, used as its base URI and as the key for cross-document resolution. A binding MAY declare that its dialect has no identity keyword, in which case {{default-id-construction}} does not apply and resources are addressable only by location. |
+| Identity comparison | Whether identity comparison is byte-exact or subject to a declared normalization. |
+| Cross-document mechanism | The keyword(s), if any, by which a resource incorporates definitions from another resource, and whether their values are absolute URIs. A binding MAY declare that its dialect has no such mechanism. |
+| Type determination | The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations ({{serialization-inspection}}). |
+| Self-description | Whether an extracted resource requires additional keywords to be materialized beyond identity and dialect ({{materializing-defaults}}). |
+
+A binding MUST NOT redefine the OAS meaning of `$schema`, `jsonSchemaDialect`,
+or the Reference Object, and MUST NOT introduce new fields into any OAS
+Object.
+
+## Reference Object Classification {#reference-object-classification}
+
+Before dialect selection can apply, tooling MUST determine whether a JSON
+object occupying a Schema Object position is an OAS **Reference Object**
+({{OAS}}, "Reference Object") or a **Schema Object**. The two are distinct
+object types that happen to be accepted at the same positions, and only a
+Schema Object is subject to dialect selection ({{dialect-selection}}); a
+Reference Object is never itself dialect-selected, regardless of any
+`jsonSchemaDialect` default in scope.
+
+A JSON object at a Schema Object position is a Reference Object if and only
+if it is limited to the fixed fields of the OAS Reference Object (`$ref`,
+`summary`, `description`) and carries no other properties. Any additional
+property makes the object a Schema Object instead, because the Reference
+Object "cannot be extended with additional properties" ({{OAS}}); such extra
+properties are not silently ignored, they change the object's kind. In
+particular, an object that carries `$schema` is always a Schema Object.
+
+A `components.schemas` entry that is a bare Reference Object (for example
+`{ "$ref": "#/components/schemas/Pet" }`) MUST NOT be treated as a schema in
+the selected dialect merely because the document default `jsonSchemaDialect`
+names that dialect. It remains an OAS Reference Object, resolved entirely on
+the OpenAPI reference layer ({{reference-model}}); dialect selection does not
+apply to it, because it has no schema content of its own to select a dialect
+for.
+
+Tooling MUST classify a Schema Object position by this rule before
+performing dialect selection, and MUST re-classify at every Schema Object
+position independently; classification is not inherited from a containing
+resource.
 
 ## Dialect Selection {#dialect-selection}
 
-A Schema Object is a JSON Structure Schema Object when its effective dialect
-is a JSON Structure meta-schema URI. The effective dialect is determined
-exactly as in the OAS dialect-selection rules (Section 4.24.7,
-"Specifying Schema Dialects", of {{OAS}}):
+A Schema Object belongs to a bound dialect when its effective dialect is one
+of that binding's declared dialect URIs ({{binding-parameters}}). The
+effective dialect is determined exactly as in the OAS dialect-selection rules
+(Section 4.24.7, "Specifying Schema Dialects", of {{OAS}}):
 
 1. If the Schema Object is a schema-resource root and carries `$schema`, that
    value is the dialect.
 2. Otherwise, the OpenAPI Object's `jsonSchemaDialect` value, if present, is
    the dialect.
-3. Otherwise, the OAS dialect applies and the Schema Object is NOT a JSON
-   Structure Schema Object.
+3. Otherwise, the OAS dialect applies and no binding governs the Schema
+   Object.
 
-A `$schema` value on a resource-root Schema Object always overrides the
-document default. Because JSON Structure schemas natively carry `$schema`, a
-JSON Structure Schema Object is typically self-describing: pasting a JSON
-Structure schema into a Schema Object position, with its `$schema` intact, is
-sufficient.
+A dialect whose schemas natively carry `$schema` yields self-describing
+Schema Objects: pasting such a schema into a Schema Object position, with its
+`$schema` intact, is sufficient to select the dialect.
 
 A **schema-resource root** is a Schema Object that is independently addressable
-by the OpenAPI Description or that tooling extracts as an independent JSON
-Structure document. This includes every entry in `components.schemas` and an
-inline Schema Object at a request body, response, parameter, callback, webhook,
-or other OAS Schema Object position when tooling extracts it for standalone
-processing. Schema Objects nested inside an already-selected JSON Structure
-resource are part of that resource; they do not establish a second dialect
-selection context. A nested `$schema` value MUST NOT override the resource-root
-dialect and MUST be rejected if it would make the nested object ambiguous.
+by the OpenAPI Description or that tooling extracts as an independent schema
+document. This includes every entry in `components.schemas` and an inline
+Schema Object at a request body, response, parameter, callback, webhook, or
+other OAS Schema Object position when tooling extracts it for standalone
+processing. Schema Objects nested inside an already-selected resource are part
+of that resource; they do not establish a second dialect selection context. A
+nested `$schema` value MUST NOT override the resource-root dialect and MUST be
+rejected if it would make the nested object ambiguous.
 
 Dialect selection is per schema-resource root, not global to the Description.
-An OpenAPI Description MAY contain ordinary OAS Schema Objects, JSON Structure
-Schema Objects, and JSON Structure resources using different recognized
-dialects. Tooling MUST apply the effective dialect independently at each
-resource root.
+An OpenAPI Description MAY contain ordinary OAS Schema Objects and Schema
+Objects in one or more bound dialects. Tooling MUST apply the effective
+dialect independently at each resource root.
 
-## JSON Structure Meta-Schema URIs {#json-structure-meta-schema-uris}
+## Recognizing and Rejecting Dialects {#dialect-recognition}
 
-The following URIs identify the JSON Structure dialects:
-
-| Meta-schema URI | Meaning |
-| ---- | ---- |
-| `https://json-structure.org/meta/core/v0/#` | Core types and keywords only. |
-| `https://json-structure.org/meta/extended/v0/#` | Core plus the `JSONStructureImport` add-in active by default, and offering (for opt-in through the schema's own `$uses`) the `JSONStructureAlternateNames`, `JSONStructureUnits`, `JSONStructureValidation`, and `JSONStructureConditionalComposition` add-ins. |
-| `https://json-structure.org/meta/validation/v0/#` | The extended meta-schema with all add-ins, including validation and conditional composition, active by default. |
-
-The extended meta-schema is RECOMMENDED as the document default for API
-design, because it makes `$import` available while keeping validation and
-composition opt-in.
-
-These three URIs are the canonical JSON Structure dialects, but they are not
-the only meta-schema URIs a Description may encounter. JSON Structure Core
-permits a custom meta-schema to extend one of the canonical meta-schemas —
-adding organization-specific keywords or add-ins — by giving the derived
-meta-schema its own `$id` and using `$import` to pull in the foundational
-meta-schema's definitions ({{JSTRUCT-CORE}}, "Meta-Schemas"). A Schema Object
-whose `$schema` names such a derived meta-schema is a JSON Structure Schema
-Object in every respect that matters to this binding, but its URI will not
-appear in the table above and cannot be recognized by exact-match comparison
-alone. {{tooling-requirements}} states how conforming tooling handles this
-case.
-
-## Tooling Requirements {#tooling-requirements}
-
-* Tooling that supports this binding MUST recognize the three URIs in
-  {{json-structure-meta-schema-uris}} and MUST process a Schema Object bearing
-  one of them as a JSON Structure schema.
-* Tooling that does not recognize a JSON Structure meta-schema URI MUST treat
-  the Schema Object as an unknown dialect. It MUST NOT process the Schema
-  Object as an OAS-dialect (JSON Schema Draft 2020-12) schema, because the
-  keywords are interpreted differently ({{type-system}}).
-  In an OpenAPI reader, treating a dialect as unknown means that the reader
+* Tooling that supports a binding MUST recognize the dialect URIs that
+  binding declares and MUST process a Schema Object bearing one of them as a
+  schema in that dialect.
+* Matching a `$schema` or `jsonSchemaDialect` value against a declared
+  dialect URI MUST be exact, byte-for-byte string comparison unless the
+  binding declares a normalization. Tooling MUST NOT apply URI normalization,
+  trailing-slash equivalence, or version-range matching on its own
+  initiative. A future version of a dialect that defines new URIs is a new or
+  updated binding.
+* Tooling that does not recognize a dialect URI MUST treat the Schema Object
+  as an unknown dialect. It MUST NOT process the Schema Object as an
+  OAS-dialect (JSON Schema Draft 2020-12) schema, because unrelated dialects
+  routinely assign different meaning to the same keyword spellings. A reader
   MUST preserve the raw Schema Object and its surrounding Description for
-  pass-through or explicit diagnostic handling; it MUST NOT silently
-  deserialize the object as an OAS Schema Object. A tool MAY fail the
-  operation when it cannot preserve or expose the unknown object, but it MUST
-  report that the failure is caused by the unknown dialect.
-* Matching against the URIs in {{json-structure-meta-schema-uris}} MUST be
-  exact, byte-for-byte string comparison; tooling MUST NOT apply URI
-  normalization, trailing-slash equivalence, or version-range matching. A
-  future JSON Structure Core version that defines new meta-schema URIs is out
-  of scope for this document and requires a new or updated binding.
-* A `$schema` value naming a custom meta-schema that extends one of the three
-  canonical meta-schemas ({{JSTRUCT-CORE}}, "Meta-Schemas") does not satisfy
-  exact-match recognition and is out of scope for the MUST-recognize
-  requirement above. Tooling MAY be separately configured to recognize
-  specific custom meta-schema URIs — typically by resolving the meta-schema
-  document once, offline, and confirming that it imports one of the three
-  canonical meta-schemas — and, once so configured, MUST process Schema
-  Objects bearing that URI as JSON Structure schemas under the canonical
-  dialect it extends. Tooling that is not so configured MUST apply the
-  unknown-dialect rule above rather than guess at the custom meta-schema's
-  semantics.
-* A resource-root JSON Structure Schema Object SHOULD carry `$schema`
-  explicitly, even when the document default already selects a JSON Structure
-  dialect, so that the schema remains self-describing when extracted from the
-  Description.
-* Tooling MUST construct and materialize default `$schema` and `$id` values
-  per {{default-id-construction}} and {{materializing-defaults}} whenever a
-  Schema Object lacking one or both keywords is extracted for standalone
-  processing.
+  pass-through or explicit diagnostic handling, and MUST NOT silently
+  deserialize it as an OAS Schema Object. A tool MAY fail the operation when
+  it cannot preserve or expose the unknown object, but MUST report the
+  unknown dialect as the cause.
+* Where a dialect permits deriving a custom meta-schema from a declared one,
+  the derived URI does not satisfy exact-match recognition. Tooling MAY be
+  separately configured to recognize specific derived URIs, and once so
+  configured MUST process Schema Objects bearing them under the declared
+  dialect they extend. Tooling that is not so configured MUST apply the
+  unknown-dialect rule above.
+* A resource-root Schema Object SHOULD carry `$schema` explicitly, even when
+  the document default already selects the same dialect, so that the schema
+  remains self-describing when extracted from the Description.
+* Tooling MUST construct and materialize defaults per
+  {{default-id-construction}} and {{materializing-defaults}} whenever a Schema
+  Object lacking them is extracted for standalone processing.
 
-## Default `$id` Construction {#default-id-construction}
+## Default Resource Identity {#default-id-construction}
 
-A resource-root JSON Structure Schema Object SHOULD carry its own `$id`. When
-it does not, tooling still needs a stable, unique identifier for it — for
-example, to run the Schema Object through a standalone JSON Structure
-validator, or to resolve it as an `$import` target ({{cross-schema-reuse}}).
-This section defines how tooling MUST construct that default, by combining
-the Description's base URI with the Schema Object's location inside the
-Description.
+This section applies when the binding declares an identity keyword
+({{binding-parameters}}); "identity keyword" below means that keyword.
+
+A resource-root Schema Object SHOULD carry its own identity keyword. When it
+does not, tooling still needs a stable, unique identifier for it — for
+example, to run the Schema Object through a standalone validator for its
+dialect. This section defines how tooling MUST construct that default, by
+combining the Description's base URI with the Schema Object's location inside
+the Description.
+
+A default identity constructed this way is for standalone processing only. It
+is NOT registered as a target for the dialect's cross-document mechanism:
+{{cross-document-resolution}} matches exclusively against explicitly declared
+identities. A Schema Object intended to be reachable by another entry in the
+Description MUST carry an explicit identity.
 
 **Find the Description's base URI.** Tooling MUST try the following sources
 in order, using the first one that applies. This is the same precedence OAS
@@ -298,76 +354,287 @@ Determination and Reference Resolution", of {{OAS}}):
 
 If none of these applies — for example, the Description was authored offline
 and never assigned a location or a `$self` value — tooling MUST require an
-explicit `$id` on the Schema Object and MUST NOT proceed with extraction,
-import resolution, or standalone validation until one is supplied.
+explicit identity on the Schema Object and MUST NOT proceed with extraction,
+cross-document resolution, or standalone validation until one is supplied.
 
 **Find the Schema Object's location.** Tooling MUST determine the JSON
 Pointer {{RFC6901}} from the Description's document root to the Schema
 Object, for example `/components/schemas/TelemetryMessage`.
 
-**Combine the two.** The default `$id` is the base URI with that JSON Pointer
-appended as an {{RFC3986}} fragment. The pointer uses {{RFC6901}} escaping for
-`~` and `/`, and fragment characters that are not permitted literally in a URI
-fragment MUST be percent-encoded. The base URI MUST be resolved according to
-the OAS base-URI rules before the fragment is appended; any existing fragment
-on the base URI MUST be removed.
+**Combine the two.** The default identity is the base URI with that JSON
+Pointer appended as an {{RFC3986}} fragment, constructed deterministically as
+follows, in order:
 
-    <base-URI>#<JSON-Pointer>
+1. Take each JSON Pointer reference-token (for example `components`,
+   `schemas`, `TelemetryMessage`) as a Unicode string and encode it as
+   {{RFC3629}} UTF-8 octets.
+2. Apply {{RFC6901}} reference-token escaping to the token *before*
+   percent-encoding: a literal `~` becomes `~0` and a literal `/` becomes
+   `~1`. Join the escaped tokens with `/` to form the JSON Pointer string.
+3. Percent-encode the resulting pointer string for use as a URI fragment:
+   every octet not permitted literally in an {{RFC3986}} `fragment`
+   production MUST be percent-encoded, including any literal `%` character
+   (which becomes `%25`) so that the result cannot be misread as containing
+   a percent-encoded triple that was never intended as one. Percent-encoding
+   MUST use uppercase hexadecimal digits (for example `%2F`, not `%2f`).
+4. The base URI MUST be resolved according to the OAS base-URI rules before
+   the fragment is appended; any existing fragment on the base URI MUST be
+   removed first.
+
+The result has the form `base-URI` + `#` + `percent-encoded-JSON-Pointer`.
+
+This construction MUST be deterministic and idempotent: re-deriving the
+default identity for the same Schema Object location in the same Description
+MUST always produce the same byte sequence, because identity comparison is
+byte-exact unless the binding declares otherwise ({{binding-parameters}}).
 
 For example, if the Description's base URI is
 `https://example.com/api/openapi.yaml` and the Schema Object is at
-`/components/schemas/TelemetryMessage`, the default `$id` is
+`/components/schemas/TelemetryMessage`, the default identity is
 `https://example.com/api/openapi.yaml#/components/schemas/TelemetryMessage`.
-
-This mirrors how a JSON Schema resource embedded without its own `$id`
-inherits identity from its position in the containing document, and it
-guarantees a default that is stable and unique per Schema Object location,
-independent of any `$ref`/`$import` graph resolution. An explicit `$id` on
-the Schema Object always takes precedence over this default.
+An explicit identity on the Schema Object always takes precedence over this
+default.
 
 Tooling APIs that process an encapsulated or offline Description MUST expose
 the selected base URI as an explicit input when it is not available from
 `$self` or a retrieval URI. A filesystem path MUST NOT be concatenated
-directly into the default `$id`; it MUST first be converted to the URI used by
-the tool's retrieval/base-URI model.
+directly into the default identity; it MUST first be converted to the URI
+used by the tool's retrieval/base-URI model.
 
-## Materializing Defaults for Standalone Validation {#materializing-defaults}
+## Materializing Defaults for Standalone Processing {#materializing-defaults}
 
-A JSON Structure Schema Object embedded in an OpenAPI Description commonly
-omits `$schema` (relying on `jsonSchemaDialect`, {{dialect-selection}})
-and/or `$id` (relying on {{default-id-construction}}). Both are
-OAS-context-dependent conveniences: a standalone JSON Structure validator has
-no notion of `jsonSchemaDialect` and no notion of the Schema Object's
+A Schema Object embedded in an OpenAPI Description commonly omits `$schema`
+(relying on `jsonSchemaDialect`, {{dialect-selection}}) and its identity
+keyword (relying on {{default-id-construction}}). Both are
+OAS-context-dependent conveniences: a standalone validator for the dialect
+has no notion of `jsonSchemaDialect` and no notion of the Schema Object's
 position within a larger document.
 
-Tooling that extracts a JSON Structure Schema Object from its containing
-Description in order to validate it, import it, or otherwise process it
+Tooling that extracts a Schema Object from its containing Description in
+order to validate it, incorporate it elsewhere, or otherwise process it
 outside OAS context MUST first materialize both defaults as literal
 properties on the extracted document:
 
 * `$schema`, set to the effective dialect determined per
   {{dialect-selection}};
-* `$id`, set to the Schema Object's own `$id` if present, or otherwise to the
-  value constructed per {{default-id-construction}}.
+* the identity keyword, set to the Schema Object's own value if present, or
+  otherwise to the value constructed per {{default-id-construction}}.
 
-The extracted document MUST be self-describing and independently valid JSON
-Structure without reference to the originating Description. Tooling MUST NOT
-hand an extracted Schema Object to a standalone JSON Structure validator with
-`$schema` or `$id` left absent on the assumption that OAS-level context will
-supply them.
+The extracted document MUST be self-describing and independently valid in its
+dialect without reference to the originating Description. Tooling MUST NOT
+hand an extracted Schema Object to a standalone validator with `$schema` or
+the identity keyword left absent on the assumption that OAS-level context
+will supply them.
 
-A root JSON Structure schema that carries a `type` attribute also MUST carry
-a `name` {{JSTRUCT-CORE}}, independent of the `$schema`/`$id` materialization
-above and regardless of the root's type kind (not only `object`/`tuple`).
-Within an OpenAPI Description, this requirement applies to every
-`components.schemas` entry, since each is independently extractable and
-validated as a schema resource root. An anonymous, inline Schema Object at a
-request body, response, or parameter position becomes a schema resource root
-the same way once it is extracted for standalone validation, and tooling
-performing that extraction MUST likewise materialize a `name` for it, for
-example by deriving one from the Schema Object's JSON Pointer location
-({{default-id-construction}}) when the Schema Object does not already supply
-one.
+A binding MAY declare further keywords that a schema resource root requires
+and that an inline Schema Object might not supply ({{binding-parameters}}).
+Tooling performing an extraction MUST materialize those as well. Any
+materialized value MUST be deterministic for the same Description and JSON
+Pointer, and where it could collide with a declaration already present in the
+extracted document, tooling MUST reject the extraction rather than silently
+rename either declaration.
+
+## Reference Layer Separation {#reference-model}
+
+A Schema Object in a bound dialect is a self-contained schema resource, once
+classified as a Schema Object rather than a Reference Object
+({{reference-object-classification}}). Two reference layers coexist and do
+not mix:
+
+* The OpenAPI reference layer: an outer OpenAPI `$ref` that targets a Schema
+  Object as a whole (for example `#/components/schemas/TelemetryMessage`).
+  This resolves per OAS {{OAS}}, unchanged, at any position in the
+  Description — including inside a Schema Object that has not itself adopted
+  a bound dialect, such as an array wrapper's
+  `items: { "$ref": "#/components/schemas/Pet" }`.
+* The dialect's own reference layer: whatever referencing keywords the
+  dialect defines, used *within* a Schema Object that has adopted that
+  dialect. These resolve as the dialect specifies, which need not resemble
+  OAS reference resolution and need not be able to reach OAS component
+  addresses at all.
+
+Because dialect selection is per schema-resource-root ({{dialect-selection}}),
+these layers are scoped, not global: the dialect's rules apply only once a
+reference node is already inside that resource's own body. An ordinary OAS
+`$ref` pointing *at* a resource from outside it stays on the OpenAPI
+reference layer and is untouched.
+
+Tooling MUST determine the reference layer before resolving a reference. At
+an OAS Schema Object position, a sibling `$ref` is an OAS reference and is
+resolved against the containing Description. After a resource root has
+adopted a bound dialect, a reference encountered inside its body is valid
+only where that dialect permits it. A reader MUST NOT recursively reinterpret
+an OAS reference target as dialect content until that target Schema Object
+has independently undergone dialect selection.
+
+## Resolving Cross-Document References {#cross-document-resolution}
+
+This section applies when the binding declares a cross-document mechanism
+({{binding-parameters}}).
+
+A Description registers a set of schema resources: every Schema Object in a
+bound dialect that carries an explicit identity ({{default-id-construction}}).
+Tooling MUST attempt to resolve a cross-document reference in the following
+order, using the first source that satisfies it:
+
+1. a registered identity within the Description;
+2. a caller-supplied registry or cache mapping the reference URI to a
+   previously retrieved schema resource, without performing network access;
+3. network retrieval of the URI, over a secure transport such as HTTPS.
+
+Network retrieval is OPTIONAL for a conforming implementation and MUST be
+disabled by default. Tooling MUST NOT attempt network retrieval unless it has
+been explicitly configured to allow it. When retrieval is disabled, not
+supported, or not enabled for the target host, tooling MUST fail with a
+diagnostic identifying the unresolved reference; it MUST NOT silently skip it
+or substitute an empty definition. When network retrieval is enabled, tooling
+MUST provide controls for allowed schemes and hosts, maximum document size,
+retrieval timeouts, redirect policy, caching, and cycle detection, and MUST
+prevent cross-document resolution from becoming an SSRF or unrestricted
+local-file access primitive.
+
+Identity comparison uses two related but distinct notions, both derived from
+an explicitly declared identity:
+
+* **Resource identity** is the identity value exactly as declared, including
+  any fragment it carries. It is the value used as the base URI for
+  references resolved within that resource.
+* **Lookup key** is the fragment-free form of a resource identity: the same
+  absolute URI with any fragment removed. It is used exclusively for matching
+  a cross-document reference against registered resources.
+
+Matching compares lookup keys: tooling MUST strip any fragment from the
+reference value, and MUST strip any fragment from each registered identity,
+before comparing the two byte-for-byte. Because this comparison discards
+fragments, two different registered identities that share the same
+fragment-free prefix collide as lookup keys even though they remain distinct
+resource identities; tooling MUST reject a Description in which more than one
+registered identity reduces to the same lookup key, and MUST reject a
+Description that registers the same resource identity more than once.
+
+A schema resource retrieved from outside the Description need not itself be
+an OpenAPI Description or a JSON Schema document. OAS requires every document
+in an OpenAPI Description to have an OpenAPI Object or a Schema Object at its
+root ({{OAS}}, "OpenAPI Description Structure"), and treats other roots as
+implementation-defined. Such a retrieved resource is therefore not part of
+the OAD: it is an input to dialect processing, obtained and interpreted under
+this section and the dialect's own rules, and OAS document-structure
+requirements do not apply to it. Tooling MUST NOT attempt to parse it as an
+OpenAPI document, and MUST NOT expose its contents at OAS component addresses.
+
+## Schema Inspection for Non-JSON Serializations {#serialization-inspection}
+
+For media types whose serialization is not self-describing as to type —
+`application/x-www-form-urlencoded`, `multipart` media types, and `text/plain`
+values in Parameter, Header, and Encoding Objects — OAS requires
+implementations to inspect the schema to determine each value's type before
+parsing or serializing it ({{OAS}}, "Parsing and Serializing"). OAS states
+that procedure in terms of the OAS dialect's own keywords, following `$ref`
+and `allOf`. That procedure does not apply to a Schema Object in another
+dialect, because those keywords need not exist or need not mean the same
+thing.
+
+A binding MUST declare an equivalent type-determination procedure
+({{binding-parameters}}) that, given a starting-point Schema Object in its
+dialect, yields for each named or positioned value either a determined JSON
+data type or an explicit "undetermined" result. The procedure MUST be
+deterministic and MUST NOT depend on instance data.
+
+Tooling MUST use the binding's procedure, and MUST NOT fall back to the OAS
+procedure, whenever a Schema Object in a bound dialect appears in:
+
+* a Media Type Object's `schema` or `itemSchema` for a non-JSON media type;
+* a Parameter or Header Object using `schema` rather than `content`;
+* a value correlated with an Encoding Object through `encoding`,
+  `prefixEncoding`, or `itemEncoding`.
+
+Where the procedure yields "undetermined", tooling MUST report a diagnostic
+identifying the value rather than guessing a type. Where a binding declares
+no such procedure, its dialect MUST NOT be used at the positions listed
+above, and tooling MUST reject a Description that does so.
+
+The `itemSchema` field applies its Schema Object to each item of a sequential
+media type independently ({{OAS}}). A Schema Object in a bound dialect is
+valid at an `itemSchema` position on the same terms as at a `schema`
+position: it is a schema-resource root ({{dialect-selection}}), and it
+describes one item, not the sequence.
+
+## Validating the Description Itself {#validating-the-description}
+
+The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
+validating OpenAPI documents. The `schema` iteration deliberately does not
+validate Schema Objects, because it makes no assumption about the dialect in
+use. The `schema-base` iteration does validate them, and constrains
+`jsonSchemaDialect` and `$schema` to the OAS dialect.
+
+A Description that uses any bound dialect is therefore validatable against
+the `schema` iteration and is NOT validatable against the `schema-base`
+iteration; a `schema-base` failure caused solely by a bound dialect URI is
+expected and is not a defect in the Description. Tooling that validates
+Descriptions MUST NOT treat `schema-base` as the authoritative structural
+check for a Description containing bound-dialect Schema Objects, and SHOULD
+validate against the `schema` iteration together with the dialect's own
+meta-schema applied to each Schema Object.
+
+# The JSON Structure Binding {#json-structure-binding}
+
+This part is a dialect binding, in the sense of
+{{dialect-binding-requirements}}, for JSON Structure {{JSTRUCT-CORE}}. It
+supplies the declarations of {{binding-parameters}} and states the
+requirements specific to JSON Structure.
+
+A **JSON Structure Schema Object** is a Schema Object whose effective dialect
+({{dialect-selection}}) is one of the URIs in
+{{json-structure-meta-schema-uris}}.
+
+## JSON Structure Binding Parameters {#json-structure-binding-parameters}
+
+| Parameter | Value for JSON Structure |
+| ---- | ---- |
+| Dialect URIs | The three URIs in {{json-structure-meta-schema-uris}}, with the active and offered add-ins given there. |
+| Identity keyword | `$id` {{JSTRUCT-CORE}}. |
+| Identity comparison | Byte-exact; no normalization. |
+| Cross-document mechanism | `$import` and `$importdefs` {{JSTRUCT-IMPORT}}, whose values MUST be absolute URIs ({{cross-schema-reuse}}). |
+| Type determination | {{json-structure-serialization-inspection}}. |
+| Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). |
+
+## JSON Structure Meta-Schema URIs {#json-structure-meta-schema-uris}
+
+The following URIs identify the JSON Structure dialects:
+
+| Meta-schema URI | Meaning |
+| ---- | ---- |
+| `https://json-structure.org/meta/core/v0/#` | Core types and keywords only. |
+| `https://json-structure.org/meta/extended/v0/#` | Core plus the `JSONStructureImport` add-in active by default, and offering (for opt-in through the schema's own `$uses`) the `JSONStructureAlternateNames`, `JSONStructureUnits`, `JSONStructureValidation`, and `JSONStructureConditionalComposition` add-ins. |
+| `https://json-structure.org/meta/validation/v0/#` | Core plus `JSONStructureImport` and all four extended add-ins (`JSONStructureAlternateNames`, `JSONStructureUnits`, `JSONStructureValidation`, `JSONStructureConditionalComposition`), all active by default; `$uses` is not required to enable any of them. |
+
+The extended meta-schema is RECOMMENDED as the document default for API
+design, because it makes `$import` available while keeping validation and
+composition opt-in.
+
+JSON Structure Core permits a custom meta-schema to extend one of these by
+giving the derived meta-schema its own `$id` and using `$import` to pull in
+the foundational meta-schema's definitions ({{JSTRUCT-CORE}}, "Meta-Schemas").
+Such a URI is subject to the derived-URI rule of {{dialect-recognition}};
+configuring tooling to recognize one typically means resolving the
+meta-schema document once, offline, and confirming that it imports one of the
+three canonical meta-schemas. A custom meta-schema MUST document which
+add-ins it activates by default and which it merely offers.
+
+## Materializing `name` {#json-structure-materializing-name}
+
+Beyond the `$schema` and `$id` materialization required by
+{{materializing-defaults}}, every JSON Structure schema resource root MUST
+carry a `name` {{JSTRUCT-CORE}}. This requirement is unconditional: it
+applies to a root that declares `type` at the top level, to a root that uses
+`$root` to designate a type defined under its own `definitions`, and to a
+root that only holds `definitions` and is never itself instantiated. Within
+an OpenAPI Description it applies to every `components.schemas` entry, and to
+an anonymous inline Schema Object at a request body, response, or parameter
+position once that object is extracted for standalone validation. Tooling
+performing such an extraction MUST materialize a `name` when the Schema
+Object does not supply one, for example by deriving it from the Schema
+Object's JSON Pointer location ({{default-id-construction}}).
 
 The materialized name MUST be a valid JSON Structure identifier and MUST be
 stable for the same Description and JSON Pointer. If the derived name
@@ -376,7 +643,7 @@ the extraction rather than silently rename either declaration. The OpenAPI
 component key remains the OAS address; it does not implicitly replace an
 explicit JSON Structure `name`.
 
-# Type System {#type-system}
+## Type System {#type-system}
 
 Within a JSON Structure Schema Object, keywords are interpreted per JSON
 Structure {{JSTRUCT-CORE}}, which defines the full type system: primitive and
@@ -386,14 +653,14 @@ union, and inheritance via `abstract` and `$extends`. These JSON Structure
 constructs replace the correspondingly named OAS / JSON Schema constructs,
 which do not apply in this dialect.
 
-## Inheritance {#inheritance}
+### Inheritance {#inheritance}
 
 Inheritance is expressed with `abstract` and `$extends` ({{JSTRUCT-CORE}}).
 The OAS `discriminator` object combined with `allOf` is not an inheritance
 mechanism in a JSON Structure Schema Object, and MUST NOT be used to express
 type extension.
 
-## Discriminated Unions {#discriminated-unions}
+### Discriminated Unions {#discriminated-unions}
 
 Discriminated unions use the JSON Structure `choice` type, in either its
 tagged-union or inline-union form, with `selector` naming the discriminant
@@ -405,7 +672,7 @@ Tooling MUST NOT interpret an OAS `discriminator` field as a discriminator
 when present, and MUST use `selector` as JSON Structure's own discriminator
 mechanism instead.
 
-## Conditional Composition {#type-system-conditional-composition}
+### Conditional Composition {#type-system-conditional-composition}
 
 Where present, the `allOf`, `anyOf`, `oneOf`, `not`, and `if`/`then`/`else`
 keywords of the `JSONStructureConditionalComposition` add-in {{JSTRUCT-COMPOSITION}}
@@ -414,7 +681,7 @@ definitions and MUST NOT be interpreted as structural composition. Structural
 reuse is expressed exclusively with `$extends` ({{inheritance}}) and `$import`
 ({{cross-schema-reuse}}).
 
-## Construct Mapping {#construct-mapping}
+### Construct Mapping {#construct-mapping}
 
 For readers migrating a Schema Object from the OAS dialect, the following
 constructs change meaning:
@@ -432,65 +699,54 @@ constructs change meaning:
 | `required` array | `required` (unchanged; MAY also be an array of arrays for mutually exclusive alternative required sets) |
 | `enum` | `enum` (unchanged) |
 | `const` | `const` (unchanged) |
-| `readOnly` / `writeOnly` | not part of the JSON Structure type system; retained as OAS Schema Object annotations alongside the dialect |
-| `deprecated` | not part of the JSON Structure type system; retained as an OAS Schema Object annotation |
+| `readOnly` / `writeOnly` | not part of the JSON Structure type system; retained as annotations on individual `properties` entries |
+| `deprecated` on a property | not part of the JSON Structure type system; retained as an annotation on that property |
 | `$ref` to another `components.schemas` entry | `$import` / `$importdefs` ({{cross-schema-reuse}}) |
 
-# Reference Model {#reference-model}
+The three OAS annotation keywords above remain usable when they annotate an
+individual member inside `properties`, because the JSON Structure member
+type definitions permit additional properties beyond the JSON Structure
+keyword set {{JSTRUCT-CORE}}. They MUST NOT be placed at the root of a
+JSON Structure Schema Object (for example, `deprecated: true` describing the
+entire schema resource): the root of a JSON Structure schema document is a
+closed object type that permits only the keywords JSON Structure Core
+defines for it, and validating such a root against its meta-schema fails if
+an OAS-only annotation is added there. A resource-level deprecation notice
+MUST instead be conveyed through `description` prose or a `x-`-prefixed OAS
+specification extension on the Schema Object, not by adding `deprecated` as
+a root sibling of `$schema`/`type`/`name`.
 
-A JSON Structure Schema Object is a self-contained schema resource. Two
-reference layers coexist and do not mix:
+## JSON Structure Reference Layer {#json-structure-reference-model}
 
-* The OpenAPI reference layer: an outer OpenAPI `$ref` that targets a Schema
-  Object as a whole (for example `#/components/schemas/TelemetryMessage`).
-  This resolves per OAS {{OAS}}, unchanged, at any position in the
-  Description — including inside a Schema Object that has not itself
-  adopted the JSON Structure dialect, such as an array wrapper's
-  `items: { "$ref": "#/components/schemas/Pet" }`.
-* The JSON Structure reference layer: `$ref`, `$extends`, and `$import` used
-  *within* a Schema Object that has adopted a JSON Structure dialect. These
-  resolve as defined by JSON Structure {{JSTRUCT-CORE}}: `$ref` and
-  `$extends` address named types under the schema's own
-  `#/definitions/...`; cross-document reuse instead uses the
-  `JSONStructureImport` add-in {{JSTRUCT-IMPORT}} ({{cross-schema-reuse}}).
-  An inner `$ref` MUST NOT be used to reach a `components.schemas` entry.
+The two reference layers of {{reference-model}} are instantiated for JSON
+Structure as follows. The OpenAPI layer is unchanged. The dialect layer is
+`$ref`, `$extends`, and `$import` used *within* a Schema Object that has
+adopted a JSON Structure dialect: `$ref` and `$extends` address named types
+under the schema's own `#/definitions/...`, and cross-document reuse instead
+uses the `JSONStructureImport` add-in {{JSTRUCT-IMPORT}}
+({{cross-schema-reuse}}). An inner `$ref` MUST NOT be used to reach a
+`components.schemas` entry.
 
-Because dialect selection is per schema-resource-root ({{dialect-selection}}),
-these layers are scoped, not global: the JSON Structure reference layer's
-rules apply only once a `$ref` node is already inside a JSON Structure
-resource's own body. An ordinary OAS `$ref` pointing *at* a JSON Structure
-resource from outside it — as in the array-wrapper example above — stays on
-the OpenAPI reference layer and is untouched.
-
-Tooling MUST determine the reference layer before resolving a reference. At
-an OAS Schema Object position, a sibling `$ref` is an OAS reference and is
-resolved against the containing Description. After a resource root has
-adopted the JSON Structure dialect, a `$ref` encountered inside its JSON
-Structure body is valid only where JSON Structure Core permits it: as the
-value of `type` (or through the corresponding `$extends` and import forms).
-A JSON Structure-aware reader MUST NOT recursively reinterpret an OAS
-reference target as JSON Structure content until that target Schema Object has
-independently undergone dialect selection.
+After a resource root has adopted a JSON Structure dialect, a `$ref`
+encountered inside its body is valid only where JSON Structure Core permits
+it: as the value of `type`, or through the corresponding `$extends` and
+import forms.
 
 An OAS/JSON Schema `$ref` is a general-purpose node-reference mechanism: a
 sibling property that can stand in for an entire Schema Object at any
 position (`{ "$ref": "#/components/schemas/Foo" }`). JSON Structure has no
-equivalent general-purpose mechanism, and this is a deliberate design
-principle rather than an omission: its `$ref` exists solely to name the type
-referenced by a `type` attribute, and there is no other keyword position
-where "substitute this node with the schema over there" is meaningful.
-Consequently `$ref` MUST only appear as the value of a `type` attribute
-(`{ "type": { "$ref": "#/definitions/Foo" } }` {{JSTRUCT-CORE}}) and MUST NOT
-be used as a sibling property standing in for a whole schema.
+equivalent: its `$ref` exists solely to name the type referenced by a `type`
+attribute. Consequently `$ref` MUST only appear as the value of a `type`
+attribute (`{ "type": { "$ref": "#/definitions/Foo" } }` {{JSTRUCT-CORE}})
+and MUST NOT be used as a sibling property standing in for a whole schema.
 
-## `$ref` Names a Type, Not a Node {#reference-model-ref-placement}
+### `$ref` Names a Type, Not a Node {#reference-model-ref-placement}
 
-This principle is easy to lose sight of when moving a `properties`, `items`,
-or `choices` member from a plain OAS/JSON Schema Schema Object into a JSON
+This is easy to lose sight of when moving a `properties`, `items`, or
+`choices` member from a plain OAS/JSON Schema Schema Object into a JSON
 Structure Schema Object, because the OAS reference syntax parses without
 complaint at the same position. Assume the array schema below has itself
-adopted the JSON Structure dialect (its own `$schema`, or an inherited
-`jsonSchemaDialect`, already selects it):
+adopted the JSON Structure dialect:
 
 ~~~json
 {
@@ -504,10 +760,10 @@ than the value of a `type` attribute, and it targets a `components.schemas`
 entry, which JSON Structure's own `$ref` cannot reach in any case
 ({{cross-schema-reuse}}): `$ref` and `$extends` are document-local,
 addressing only the schema's own `#/definitions`. A generic JSON/YAML parser
-accepts the form above without complaint, so the violation only surfaces
-when the Schema Object is validated with a JSON Structure-aware tool. The
-principled form names a type for `items` to hold and points that type
-reference at a locally defined type:
+accepts the form above, so the violation only surfaces when the Schema
+Object is validated with a JSON Structure-aware tool. The principled form
+names a type for `items` to hold and points that type reference at a locally
+defined type:
 
 ~~~json
 {
@@ -526,15 +782,14 @@ reference at a locally defined type:
 }
 ~~~
 
-If `Pet` is also used verbatim elsewhere in the Description as a whole
-Schema Object (for example, as another operation's response body), an
-ordinary OAS `$ref` to `#/components/schemas/Pet` is used at that Schema
-Object position instead of duplicating it there too; only positions nested
-inside another Schema Object's `properties`, `items`, or `choices` require
-the local `definitions` copy, because those positions cannot carry an OAS
-`$ref` of their own.
+If `Pet` is also used verbatim elsewhere in the Description as a whole Schema
+Object, an ordinary OAS `$ref` to `#/components/schemas/Pet` is used at that
+position instead of duplicating it. Only positions nested inside another
+Schema Object's `properties`, `items`, or `choices` require the local
+`definitions` copy, because those positions cannot carry an OAS `$ref` of
+their own.
 
-# Cross-Schema Reuse with `$import` and `$importdefs` {#cross-schema-reuse}
+## Cross-Schema Reuse with `$import` and `$importdefs` {#cross-schema-reuse}
 
 Because `$ref` and `$extends` are document-local, a JSON Structure Schema
 Object cannot reach a type defined in another `components.schemas` entry
@@ -542,47 +797,36 @@ through them. Reuse across entries, and across documents, uses the
 `JSONStructureImport` add-in {{JSTRUCT-IMPORT}}, which is active by default
 under the extended and validation meta-schemas and defines the `$import` and
 `$importdefs` keywords, their copy-not-link semantics, definition shadowing,
-import error handling, and cycle rejection. This section defines only how
-those keywords resolve against an OpenAPI Description.
+import error handling, and cycle rejection.
 
-## Resolving Imports within a Description {#resolving-imports-within-a-description}
+`$import` and `$importdefs` are this binding's cross-document mechanism
+({{binding-parameters}}), and their values MUST be absolute URIs per
+{{JSTRUCT-IMPORT}}. This binding does not relax that requirement or
+introduce relative import URIs for use inside an OpenAPI Description; a JSON
+Structure Schema Object with a relative `$import`/`$importdefs` value is
+non-conforming, and tooling MUST reject it rather than attempt to resolve it
+against the importing resource's base URI.
 
-When the URI of `$import`/`$importdefs` matches the `$id` of a JSON Structure
-Schema Object registered in the same OpenAPI Description, the import is
-satisfied from that entry. Tooling MUST resolve the URI against the `$id`
-values in the Description, using the same reference resolution as an
-ordinary `$ref` as illustrated in the OAS base-URI-determination examples
-{{OAS}}, before attempting any network retrieval. A JSON Structure Schema
-Object that is imported this way therefore MUST declare an `$id`. Matching
-compares the fragment-free absolute URI: tooling MUST strip any fragment
-from the `$import`/`$importdefs` value before comparing it, byte-for-byte,
-against each registered `$id` in the Description; `$id` values MUST be
-unique within a Description, and tooling MUST reject a Description that
-registers the same `$id` more than once.
+Resolution follows {{cross-document-resolution}} unchanged: an in-Description
+`$id` match first, then a caller-supplied registry or cache, then optional
+and explicitly enabled network retrieval. Resource identity is the declared
+`$id`; the lookup key is that value with any fragment removed. A JSON
+Structure Schema Object that is to be importable therefore MUST declare an
+explicit `$id` ({{default-id-construction}}); a default-constructed `$id` is
+never used for import matching.
 
-## Resolving External Imports {#resolving-external-imports}
+Once a resource is obtained, tooling validates that it is a JSON Structure
+schema and copies its definitions into the designated namespace, identically
+whether the resource came from the Description, a cache, or the network. A
+resource obtained from outside the Description is not part of the OAD
+({{cross-document-resolution}}), so a single canonical type library can be
+shared across many APIs without itself being an OpenAPI document. Import
+errors, deduplication, and cycle rejection follow {{JSTRUCT-IMPORT}}
+unchanged; an importing entry MUST additionally activate, through its
+meta-schema or its own `$uses`, any add-ins used by the definitions it
+imports.
 
-When the URI matches no `$id` registered in the Description, it denotes a
-self-contained JSON Structure schema resource hosted elsewhere. Tooling
-retrieves that document over a secure transport such as HTTPS, validates that
-it is a JSON Structure schema, and copies its definitions into the designated
-namespace exactly as for an in-Description import. The external document need
-not itself be an OpenAPI Description, so a single canonical type library can
-be shared across many APIs. Import errors, deduplication, and cycle rejection
-follow {{JSTRUCT-IMPORT}} unchanged; an importing entry MUST additionally
-activate, through its meta-schema or its own `$uses`, any add-ins used by the
-definitions it imports.
-
-Relative import URIs MUST be resolved against the importing resource's
-materialized `$id`, after applying the OAS base-URI rules and before network
-retrieval. An import MUST NOT resolve against an implementation-dependent
-current working directory. Tooling SHOULD be offline by default and MUST
-provide controls for allowed schemes and hosts, maximum document size,
-retrieval timeouts, redirect policy, caching, and import-cycle detection.
-Implementations MUST prevent imports from becoming an SSRF or unrestricted
-local-file access primitive.
-
-# Activating Add-ins with `$uses` {#annotations-and-units}
+## Activating Add-ins with `$uses` {#annotations-and-units}
 
 Under the extended meta-schema, non-Core add-ins are offered but not active; a
 schema activates them through `$uses`, an array of add-in tokens declared at
@@ -594,6 +838,24 @@ Following the convention established by the add-in specifications themselves
 placed at the root of the JSON Structure schema document to activate add-ins
 offered by that document's own `$schema` meta-schema. Tooling conforming to
 this binding MUST support `$uses` in that position.
+
+This meta-schema-level usage is distinct from the document-instance `$offers`
+/ `$uses` mechanism JSON Structure Core also defines, where a schema
+document advertises its own custom add-in types through `$offers`, and a
+separate JSON *instance* document that conforms to that schema selects among
+them with its own top-level `$uses` {{JSTRUCT-CORE}}. The two share a keyword
+name but operate in different scopes: this section's `$uses` selects add-ins
+that the schema's own meta-schema offers to it. A JSON Structure Schema
+Object embedded in an OpenAPI Description MAY additionally use `$offers` to
+advertise custom add-in types to instance documents; doing so has no effect
+on this section's meta-schema-level `$uses`.
+
+A custom meta-schema recognized under {{dialect-recognition}} MUST
+explicitly document which add-ins it activates by default and which it
+merely offers for opt-in through `$uses`; "all add-ins" is not a
+well-defined active set without a specific meta-schema to enumerate it
+against, and tooling MUST NOT assume a custom meta-schema's active/offered
+sets mirror those of the canonical meta-schema it extends.
 
 For example, `JSONStructureUnits` {{JSTRUCT-UNITS}} is offered, but not
 active, under the extended meta-schema; a schema that wants to annotate
@@ -624,7 +886,7 @@ rather than silently applying `JSONStructureUnits` semantics. Under the
 validation meta-schema, `JSONStructureUnits` is active by default and `$uses`
 is not required to enable it.
 
-# Code Generation and Runtime Validation {#code-generation-and-runtime-validation}
+## Code Generation and Runtime Validation {#code-generation-and-runtime-validation}
 
 Processing a JSON Structure Schema Object separates memory layout from
 constraint checking:
@@ -649,6 +911,47 @@ Runtime validation:
 This separation lets a generator produce a deterministic memory layout from
 Core keywords while a gateway or server enforces the full validation and
 composition rules against the same schema.
+
+## Type Determination for Non-JSON Serializations {#json-structure-serialization-inspection}
+
+This section supplies the type-determination procedure required by
+{{serialization-inspection}}.
+
+Given a starting-point JSON Structure Schema Object, tooling MUST determine
+the type of a value as follows. All steps operate on the schema alone.
+
+1. Resolve the starting point to a type definition: follow `$root` from a
+   resource root, and follow a `type` whose value is a `$ref` to the named
+   type it designates. Follow `$extends` to incorporate inherited members.
+   Imported namespaces are resolved first ({{cross-schema-reuse}}), so a
+   `$ref` into an imported namespace is followed the same way.
+2. Locate the value: a named member under `properties`, a positional element
+   under `tuple`, the item type under `items`, or the value type under
+   `values`.
+3. The located declaration's `type` gives the JSON data type directly. JSON
+   Structure requires `type` on every type declaration, so this step does not
+   fail for a valid schema.
+4. Map the JSON Structure type to a JSON data type: the precise numeric types
+   (`int32`, `int64`, `float`, `double`, `decimal`, and the remaining numeric
+   types) map to number; `string`, `datetime`, `date`, `time`, `duration`,
+   `uuid`, `uri`, `binary`, and `jsonpointer` map to string; `boolean` maps to
+   boolean; `object`, `map`, and `choice` map to object; `array`, `set`, and
+   `tuple` map to array; `null` maps to null.
+5. A type union yields "undetermined" unless exactly one member of the union
+   remains after removing `null`, in which case that member's mapping applies.
+   A `choice` used at a position requiring a scalar serialization yields
+   "undetermined".
+
+Because JSON Structure requires an explicit `type` everywhere and has no
+keyword that makes a declaration apply conditionally to the data, this
+procedure never needs to inspect instance data and never has to reconcile
+competing `type` assertions the way the OAS-dialect procedure does.
+
+Values that map to object or array are serialized as `application/json` by
+default in an Encoding Object, exactly as for the OAS dialect; a `binary`
+value carries no `contentEncoding` and is serialized as
+`application/octet-stream` unless an Encoding Object's `contentType` says
+otherwise.
 
 # Examples {#examples}
 
@@ -702,10 +1005,6 @@ components:
       properties:
         messageId:
           type: uuid
-        timestamp:
-          type: datetime
-        sensorId:
-          type: string
         reading:
           type: double
 ~~~
@@ -724,10 +1023,6 @@ type: object
 properties:
   messageId:
     type: uuid
-  timestamp:
-    type: datetime
-  sensorId:
-    type: string
   reading:
     type: double
 ~~~
@@ -735,7 +1030,7 @@ properties:
 A Schema Object that carries its own `$schema` and/or `$id` (as in
 {{example-single-schema-object}}) overrides the corresponding default; the
 two defaults compose independently per keyword, not as an all-or-nothing
-pair, and are not mutually exclusive with each other.
+pair.
 
 ## Cross-Schema Reuse with `$import` {#example-cross-schema-reuse}
 
@@ -750,6 +1045,7 @@ components:
     CommonTypes:
       $schema: https://json-structure.org/meta/core/v0/#
       $id: https://api.example.com/schemas/common
+      name: CommonTypes
       definitions:
         BaseMessage:
           name: BaseMessage
@@ -767,6 +1063,7 @@ components:
     TelemetryMessage:
       $schema: https://json-structure.org/meta/extended/v0/#
       $id: https://api.example.com/schemas/telemetry
+      name: TelemetryMessage
       $root: "#/definitions/TelemetryMessage"
       definitions:
         Common:
@@ -813,54 +1110,128 @@ dialect is one of the meta-schema URIs in {{json-structure-meta-schema-uris}}
 and whose content is a valid JSON Structure schema for that meta-schema,
 including any add-ins it activates through `$uses`.
 
-Conforming tooling MUST:
+The roles below are defined for any dialect binding
+({{dialect-binding-requirements}}); the parenthetical requirements name both
+the generic rule and, where one exists, its JSON Structure instantiation. An
+implementation MAY conform to any subset of these roles; a component that
+fills only one role (for example, a documentation renderer that never
+resolves imports) is not required to implement the others.
 
-1. Determine the effective dialect of every Schema Object per
-   {{dialect-selection}}.
-2. Process a Schema Object bearing a JSON Structure meta-schema URI as a JSON
-   Structure schema, and never as an OAS-dialect schema
-   ({{tooling-requirements}}).
-3. Resolve `$ref`/`$extends`/`$import`/`$importdefs` within a JSON Structure
-   Schema Object per JSON Structure {{JSTRUCT-CORE}} and
-   {{cross-schema-reuse}}, resolving in-Description imports by `$id` before
-   any network retrieval.
-4. Keep the OpenAPI and JSON Structure reference layers separate
-   ({{reference-model}}).
+Reader:
+: Parses an OpenAPI Description, classifies each Schema Object position as a
+  Reference Object or a Schema Object ({{reference-object-classification}}),
+  and determines the effective dialect of every Schema Object
+  ({{dialect-selection}}). A conforming Reader MUST classify before selecting
+  a dialect, MUST recognize the dialect URIs its binding declares
+  ({{json-structure-meta-schema-uris}}), and MUST NOT process a Schema Object
+  in a bound dialect as an OAS-dialect schema, or vice versa
+  ({{dialect-recognition}}).
+
+Schema Validator:
+: Validates that the content of a Schema Object is well-formed in its
+  effective dialect, including any vocabularies active through that dialect
+  or opted into by the schema ({{annotations-and-units}}). A conforming
+  Schema Validator MUST reject a Schema Object that is not valid under its
+  effective dialect and MUST NOT silently ignore unrecognized keywords to
+  force validity.
+
+Resolver:
+: Resolves the dialect's own references and cross-document mechanism per
+  {{reference-model}} and {{cross-document-resolution}}
+  ({{json-structure-reference-model}}, {{cross-schema-reuse}}). A conforming
+  Resolver MUST resolve in-Description identities before any network
+  retrieval, MUST reject cycles, and MUST enforce the limits of
+  {{security-considerations}}.
+
+Instance Validator:
+: Validates instances (request/response bodies, parameters) against a Schema
+  Object in its dialect, applying both structural and constraint keywords
+  ({{code-generation-and-runtime-validation}}).
+
+Codec / Code Generator:
+: Produces an in-memory type or wire (de)serializer from a Schema Object. A
+  conforming Codec or Code Generator MUST derive memory layout solely from
+  the dialect's structural keywords
+  ({{code-generation-and-runtime-validation}}), MUST use the binding's type
+  determination procedure for non-JSON serializations
+  ({{serialization-inspection}}, {{json-structure-serialization-inspection}}),
+  and MUST reject, rather than silently reinterpret under OAS/JSON Schema
+  semantics, any construct it does not support. Falling back to OAS-dialect
+  interpretation of an unsupported construct is non-conforming, because
+  different dialects assign different meaning to the same keywords
+  ({{type-system}}).
+
+A tool that implements more than one role MUST keep the roles' failure modes
+distinct: a Schema Validator rejection MUST NOT be silently downgraded to a
+warning by a Codec operating on the same schema, and vice versa. Across
+whichever roles it implements, conforming tooling MUST keep the OpenAPI and
+dialect reference layers separate ({{reference-model}}).
 
 Conforming tooling SHOULD honor the code-generation and runtime-validation
-separation of {{code-generation-and-runtime-validation}}, and MUST reject
-cyclic imports.
+separation of {{code-generation-and-runtime-validation}}.
 
 A Description that contains only plain OAS Schema Objects is unaffected by
 this document and remains a conforming OpenAPI Description.
 
 # Security Considerations {#security-considerations}
 
-Import retrieval:
-: `$import`/`$importdefs` can reference external URIs. Tooling MUST resolve
-  in-Description `$id` matches before any network access, MUST use a secure
-  transport such as HTTPS for external retrieval, and MUST constrain
+Cross-document retrieval:
+: A dialect's cross-document mechanism — for JSON Structure,
+  `$import`/`$importdefs` — can reference external URIs. Tooling MUST resolve
+  in-Description identity matches before any network access, MUST use a
+  secure transport such as HTTPS for external retrieval, and MUST constrain
   automatic retrieval with an allow-list of permitted hosts or URI prefixes,
   connection and read timeouts, and response size limits to prevent
   server-side request forgery and resource exhaustion against internal or
-  otherwise unintended targets. Tooling SHOULD cache retrieved schemas.
+  otherwise unintended targets. Network retrieval MUST be disabled unless
+  explicitly enabled ({{cross-document-resolution}}). Tooling SHOULD cache
+  retrieved schemas.
 
-Cyclic and pathological imports:
-: Cyclic import chains MUST be rejected. Deeply nested or fan-out imports
-  SHOULD be bounded to prevent denial of service during schema assembly.
+Resources outside the OpenAPI Description:
+: A schema resource retrieved from outside the Description is not part of the
+  OAD ({{cross-document-resolution}}) and has therefore not passed whatever
+  checks the deployment applies to OpenAPI documents. Tooling MUST subject
+  such a resource to the same limits, transport requirements, and validation
+  as any other externally retrieved document, and MUST NOT grant it the trust
+  extended to the entry document merely because a schema in the Description
+  named it.
+
+Cyclic and pathological cross-document graphs:
+: Before expanding any import, tooling MUST construct the complete import
+  dependency graph reachable from a JSON Structure Schema Object, following
+  `$import`/`$importdefs` transitively through every resource it reaches,
+  and MUST detect cycles in that graph before copying any definitions from
+  it. A cycle anywhere in the graph MUST cause the entire import to be
+  rejected atomically: tooling MUST NOT apply a partial set of definitions
+  from a graph that is later found to be cyclic or otherwise invalid.
+  Tooling MUST also reject an import graph in which two distinct resources
+  declare the same `$id`, whether both are external or one is external and
+  one is in-Description; such a graph is ambiguous and MUST be treated as
+  an import error rather than resolved by source precedence. Tooling MUST
+  enforce finite, configurable upper bounds, and MUST reject an import graph
+  that exceeds them, on at least: the total number of distinct imported
+  resources; the total decoded byte size of all imported resources combined;
+  the import nesting depth from the importing resource; the fan-out (direct
+  import count) of any single resource; the decompression ratio of any
+  compressed transport encoding; and the number of HTTP redirects followed
+  per retrieval. Exceeding any bound MUST be treated as an import error
+  under {{JSTRUCT-IMPORT}}, not as a silent truncation.
 
 Dialect confusion:
-: Because Core, JSON Schema, and JSON Structure share keyword spellings (for
-  example `type`, `properties`, `$ref`) with differing semantics, tooling
-  MUST NOT process a JSON Structure Schema Object as an OAS-dialect schema,
-  or vice versa. Misidentifying the dialect can silently change validation
-  outcomes.
+: Because JSON Schema, JSON Structure, and other dialects share keyword
+  spellings (for example `type`, `properties`, `$ref`) with differing
+  semantics, tooling MUST NOT process a Schema Object in a bound dialect as
+  an OAS-dialect schema, or vice versa. Misidentifying the dialect can
+  silently change validation outcomes. The same hazard applies to type
+  determination for non-JSON serializations: applying the OAS-dialect
+  inspection procedure to another dialect can silently produce the wrong wire
+  type ({{serialization-inspection}}).
 
 Untrusted schemas:
-: A JSON Structure schema retrieved from an external source is untrusted
-  input. Tooling MUST validate it against its declared meta-schema before use
-  and SHOULD apply the same input-handling precautions as for any other
-  externally retrieved document.
+: A schema retrieved from an external source is untrusted input. Tooling MUST
+  validate it against its declared dialect before use and SHOULD apply the
+  same input-handling precautions as for any other externally retrieved
+  document.
 
 Otherwise, the security considerations of OAS {{OAS}} apply unchanged.
 
