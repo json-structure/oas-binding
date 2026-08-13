@@ -2,7 +2,9 @@
 
 **Status:** Experimental. Not a submission, and not endorsed by the Apache
 Software Foundation or the Apache Avro project. The dialect URI in this
-document is a placeholder ([Avro Dialect URI](#avro-dialect-uri)).
+document is a placeholder ([Avro Dialect URI](#avro-dialect-uri)). One of the
+media types it uses, `avro/binary`, does not conform to BCP 13
+([Registration and Conformance](#registration-and-conformance)).
 
 **Baseline:** Apache Avro Specification 1.12.0 [AVRO], OpenAPI Specification
 3.2.0 [OAS].
@@ -369,16 +371,46 @@ A body of any of these media types MUST NOT be subjected to the procedure of
 That procedure serves the OAS positions listed there. An Avro-framed body is
 decoded as a whole by the Avro codec.
 
-## Media Type Registration Status
+## Registration and Conformance
 
-Avro has no IANA-registered media type. Of the four above, only `avro/binary`
-appears in [AVRO], and it appears there for a different payload than this
-binding gives it, per
-[Conflict with Avro RPC](#conflict-with-avro-rpc).
+Avro has no IANA-registered media type. The four media types above differ in
+how far they depart from BCP 13 [RFC6838].
 
-`application/avro+json` is a convention in common use with no registration.
-The two `vnd.apache.avro` media types are provisional names coined by this
-document, no name being defined for those framings.
+| Media type | Top-level type | Tree | Status |
+| ---- | ---- | ---- | ---- |
+| `avro/binary` | `avro`, not registered | not applicable | Non-conforming |
+| `application/avro+json` | `application` | standards | Unregistered, registrable |
+| `application/vnd.apache.avro.single-object` | `application` | vendor | Unregistered, registrable |
+| `application/vnd.apache.avro.ocf` | `application` | vendor | Unregistered, registrable |
+
+`avro` is not a registered top-level type. IANA maintains the "Top-Level Media
+Types" registry established by [RFC9694], and `avro` does not appear in it.
+[RFC6838], Section 4.2.7, states that definition of a new top-level type name
+"MUST be done via a Standards Track RFC" and that "no other mechanism can be
+used to define additional type names".
+
+`avro/binary` is therefore not a conforming media type, and it is not
+registrable as it stands. Conformance would require an IETF Standards Track
+RFC defining an `avro` top-level type. That is a substantially higher bar than
+registering a subtype, and [RFC9694] sets it deliberately high. [RFC9695],
+which defines the `haptics` top-level type, shows what clearing it involves.
+
+[AVRO] specifies `avro/binary` without reference to BCP 13 and without a
+registration. This binding uses it because it is the prevailing practice, per
+[Conflict with Avro RPC](#conflict-with-avro-rpc). This document records the
+non-conformance and does not correct it.
+
+The other three media types conform syntactically. `application` is a
+registered top-level type, and [RFC6838], Section 4.2.5, admits subtypes named
+after the application that processes the data, subject to registration. The
+`+json` structured syntax suffix is registered [RFC6839].
+`application/avro+json` is a convention in common use. The two
+`vnd.apache.avro` names are provisional names coined by this document in the
+vendor tree ([RFC6838], Section 3.2), where the Apache Software Foundation
+would be the appropriate registrant.
+
+A deployment that requires conforming media types SHOULD use the `application`
+forms and SHOULD NOT use `avro/binary`.
 
 A deployment MAY use other media types for these framings. Where it does, the
 Description MUST make the framing unambiguous, and tooling MUST NOT infer a
@@ -895,5 +927,17 @@ Specification", [draft-vasters-json-structure-oas-binding](draft-vasters-json-st
 **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement
 Levels", BCP 14, RFC 2119, March 1997.
 
+**[RFC6838]** Freed, N., Klensin, J., and T. Hansen, "Media Type
+Specifications and Registration Procedures", BCP 13, RFC 6838, January 2013.
+
+**[RFC6839]** Hansen, T. and A. Melnikov, "Additional Media Type Structured
+Syntax Suffixes", RFC 6839, January 2013.
+
 **[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key
 Words", BCP 14, RFC 8174, May 2017.
+
+**[RFC9694]** Dürst, M., "Guidelines for the Definition of New Top-Level Media
+Types", BCP 13, RFC 9694, March 2025.
+
+**[RFC9695]** Muthusamy, Y. and C. Ullrich, "The 'haptics' Top-Level Media
+Type", RFC 9695, March 2025.
