@@ -191,6 +191,22 @@ JSON Structure Schema Object is typically self-describing: pasting a JSON
 Structure schema into a Schema Object position, with its `$schema` intact, is
 sufficient.
 
+A **schema-resource root** is a Schema Object that is independently addressable
+by the OpenAPI Description or that tooling extracts as an independent JSON
+Structure document. This includes every entry in `components.schemas` and an
+inline Schema Object at a request body, response, parameter, callback, webhook,
+or other OAS Schema Object position when tooling extracts it for standalone
+processing. Schema Objects nested inside an already-selected JSON Structure
+resource are part of that resource; they do not establish a second dialect
+selection context. A nested `$schema` value MUST NOT override the resource-root
+dialect and MUST be rejected if it would make the nested object ambiguous.
+
+Dialect selection is per schema-resource root, not global to the Description.
+An OpenAPI Description MAY contain ordinary OAS Schema Objects, JSON Structure
+Schema Objects, and JSON Structure resources using different recognized
+dialects. Tooling MUST apply the effective dialect independently at each
+resource root.
+
 ## JSON Structure Meta-Schema URIs {#json-structure-meta-schema-uris}
 
 The following URIs identify the JSON Structure dialects:
@@ -226,6 +242,12 @@ case.
   the Schema Object as an unknown dialect. It MUST NOT process the Schema
   Object as an OAS-dialect (JSON Schema Draft 2020-12) schema, because the
   keywords are interpreted differently ({{type-system}}).
+  In an OpenAPI reader, treating a dialect as unknown means that the reader
+  MUST preserve the raw Schema Object and its surrounding Description for
+  pass-through or explicit diagnostic handling; it MUST NOT silently
+  deserialize the object as an OAS Schema Object. A tool MAY fail the
+  operation when it cannot preserve or expose the unknown object, but it MUST
+  report that the failure is caused by the unknown dialect.
 * Matching against the URIs in {{json-structure-meta-schema-uris}} MUST be
   exact, byte-for-byte string comparison; tooling MUST NOT apply URI
   normalization, trailing-slash equivalence, or version-range matching. A
@@ -284,7 +306,11 @@ Pointer {{RFC6901}} from the Description's document root to the Schema
 Object, for example `/components/schemas/TelemetryMessage`.
 
 **Combine the two.** The default `$id` is the base URI with that JSON Pointer
-appended as a fragment:
+appended as an RFC 3986 fragment. The pointer uses RFC 6901 escaping for
+`~` and `/`, and fragment characters that are not permitted literally in a URI
+fragment MUST be percent-encoded. The base URI MUST be resolved according to
+the OAS base-URI rules before the fragment is appended; any existing fragment
+on the base URI MUST be removed.
 
     <base-URI>#<JSON-Pointer>
 
@@ -298,6 +324,12 @@ inherits identity from its position in the containing document, and it
 guarantees a default that is stable and unique per Schema Object location,
 independent of any `$ref`/`$import` graph resolution. An explicit `$id` on
 the Schema Object always takes precedence over this default.
+
+Tooling APIs that process an encapsulated or offline Description MUST expose
+the selected base URI as an explicit input when it is not available from
+`$self` or a retrieval URI. A filesystem path MUST NOT be concatenated
+directly into the default `$id`; it MUST first be converted to the URI used by
+the tool's retrieval/base-URI model.
 
 ## Materializing Defaults for Standalone Validation {#materializing-defaults}
 
@@ -336,6 +368,13 @@ performing that extraction MUST likewise materialize a `name` for it, for
 example by deriving one from the Schema Object's JSON Pointer location
 ({{default-id-construction}}) when the Schema Object does not already supply
 one.
+
+The materialized name MUST be a valid JSON Structure identifier and MUST be
+stable for the same Description and JSON Pointer. If the derived name
+collides with a declared name in the extracted document, tooling MUST reject
+the extraction rather than silently rename either declaration. The OpenAPI
+component key remains the OAS address; it does not implicitly replace an
+explicit JSON Structure `name`.
 
 # Type System {#type-system}
 
@@ -422,6 +461,16 @@ rules apply only once a `$ref` node is already inside a JSON Structure
 resource's own body. An ordinary OAS `$ref` pointing *at* a JSON Structure
 resource from outside it — as in the array-wrapper example above — stays on
 the OpenAPI reference layer and is untouched.
+
+Tooling MUST determine the reference layer before resolving a reference. At
+an OAS Schema Object position, a sibling `$ref` is an OAS reference and is
+resolved against the containing Description. After a resource root has
+adopted the JSON Structure dialect, a `$ref` encountered inside its JSON
+Structure body is valid only where JSON Structure Core permits it: as the
+value of `type` (or through the corresponding `$extends` and import forms).
+A JSON Structure-aware reader MUST NOT recursively reinterpret an OAS
+reference target as JSON Structure content until that target Schema Object has
+independently undergone dialect selection.
 
 An OAS/JSON Schema `$ref` is a general-purpose node-reference mechanism: a
 sibling property that can stand in for an entire Schema Object at any
@@ -523,6 +572,15 @@ be shared across many APIs. Import errors, deduplication, and cycle rejection
 follow {{JSTRUCT-IMPORT}} unchanged; an importing entry MUST additionally
 activate, through its meta-schema or its own `$uses`, any add-ins used by the
 definitions it imports.
+
+Relative import URIs MUST be resolved against the importing resource's
+materialized `$id`, after applying the OAS base-URI rules and before network
+retrieval. An import MUST NOT resolve against an implementation-dependent
+current working directory. Tooling SHOULD be offline by default and MUST
+provide controls for allowed schemes and hosts, maximum document size,
+retrieval timeouts, redirect policy, caching, and import-cycle detection.
+Implementations MUST prevent imports from becoming an SSRF or unrestricted
+local-file access primitive.
 
 # Activating Add-ins with `$uses` {#annotations-and-units}
 
