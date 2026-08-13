@@ -1193,7 +1193,10 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
                 <p id="section-toc.1-1.4.2.10.1"><a href="#section-4.10" class="auto internal xref">4.10</a>. <a href="#name-schema-inspection-for-non-j" class="internal xref">Schema Inspection for Non-JSON Serializations</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.11">
-                <p id="section-toc.1-1.4.2.11.1"><a href="#section-4.11" class="auto internal xref">4.11</a>. <a href="#name-validating-the-description-" class="internal xref">Validating the Description Itself</a></p>
+                <p id="section-toc.1-1.4.2.11.1"><a href="#section-4.11" class="auto internal xref">4.11</a>. <a href="#name-dialect-defined-body-encodi" class="internal xref">Dialect-Defined Body Encodings</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.12">
+                <p id="section-toc.1-1.4.2.12.1"><a href="#section-4.12" class="auto internal xref">4.12</a>. <a href="#name-validating-the-description-" class="internal xref">Validating the Description Itself</a></p>
 </li>
             </ul>
 </li>
@@ -1244,7 +1247,10 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
                 <p id="section-toc.1-1.5.2.9.1"><a href="#section-5.9" class="auto internal xref">5.9</a>.  <a href="#name-code-generation-and-runtime" class="internal xref">Code Generation and Runtime Validation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.10">
-                <p id="section-toc.1-1.5.2.10.1"><a href="#section-5.10" class="auto internal xref">5.10</a>. <a href="#name-type-determination-for-non-" class="internal xref">Type Determination for Non-JSON Serializations</a></p>
+                <p id="section-toc.1-1.5.2.10.1"><a href="#section-5.10" class="auto internal xref">5.10</a>. <a href="#name-data-media-types-and-json-r" class="internal xref">Data Media Types and JSON Representation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.11">
+                <p id="section-toc.1-1.5.2.11.1"><a href="#section-5.11" class="auto internal xref">5.11</a>. <a href="#name-type-determination-for-non-" class="internal xref">Type Determination for Non-JSON Serializations</a></p>
 </li>
             </ul>
 </li>
@@ -1480,12 +1486,20 @@ dialect-specific inputs the rest of this part requires.<a href="#section-4.1-1" 
               <td class="text-left" rowspan="1" colspan="1">The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations (<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>).</td>
             </tr>
             <tr>
+              <td class="text-left" rowspan="1" colspan="1">Data media types</td>
+              <td class="text-left" rowspan="1" colspan="1">The media types whose message bodies are encoded according to the dialect, and for each, whether the encoding carries the schema needed to decode it (<a href="#body-encodings" class="auto internal xref">Section 4.11</a>). A binding <span class="bcp14">MAY</span> declare that its dialect defines no encoding of its own.</td>
+            </tr>
+            <tr>
               <td class="text-left" rowspan="1" colspan="1">Type naming and scope</td>
-              <td class="text-left" rowspan="1" colspan="1">What names a type in the dialect, and what constitutes one schema resource's scope for those names (<a href="#type-scope" class="auto internal xref">Section 4.9</a>). A binding <span class="bcp14">MAY</span> declare that its dialect names no types, in which case <a href="#type-scope" class="auto internal xref">Section 4.9</a> imposes no aggregation requirement.</td>
+              <td class="text-left" rowspan="1" colspan="1">What names a type in the dialect, and how a resource's scope for those names is determined (<a href="#type-scope" class="auto internal xref">Section 4.9</a>). A binding <span class="bcp14">MAY</span> declare that its dialect names no types, in which case <a href="#type-scope" class="auto internal xref">Section 4.9</a> imposes no aggregation requirement.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Self-description</td>
-              <td class="text-left" rowspan="1" colspan="1">Whether an extracted resource requires additional keywords to be materialized beyond identity and dialect (<a href="#materializing-defaults" class="auto internal xref">Section 4.6</a>).</td>
+              <td class="text-left" rowspan="1" colspan="1">Which values an extracted resource requires beyond identity and dialect, including any value an inner declaration inherits from an enclosing one (<a href="#materializing-defaults" class="auto internal xref">Section 4.6</a>).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Usable schema forms</td>
+              <td class="text-left" rowspan="1" colspan="1">Which of the dialect's schema forms are usable at a Schema Object position (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>), where the dialect admits forms that are not JSON objects.</td>
             </tr>
           </tbody>
         </table>
@@ -1551,20 +1565,28 @@ Object.<a href="#section-4.3-2.3.1" class="pilcrow">¶</a></p>
 <p id="section-4.3-3">A dialect whose schemas natively carry <code>$schema</code> yields self-describing
 Schema Objects. Pasting such a schema into a Schema Object position, with its
 <code>$schema</code> intact, is sufficient to select the dialect.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
-<p id="section-4.3-4">A <strong>schema-resource root</strong> is a Schema Object that is independently addressable
+<p id="section-4.3-4">A Schema Object position accepts a JSON object, and in the OAS dialect also a
+boolean (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>). It accepts neither a JSON array nor a JSON string. A
+dialect whose schema forms include such values is bound only for the forms
+that position accepts. A binding <span class="bcp14">MUST</span> declare which of its dialect's forms
+are usable there (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). Tooling <span class="bcp14">MUST</span> reject a Description
+that places any other form of a bound dialect at a Schema Object position.
+The restriction applies to that position alone. Inside a Schema Object, the
+dialect's remaining forms are unrestricted.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
+<p id="section-4.3-5">A <strong>schema-resource root</strong> is a Schema Object that is independently addressable
 by the OpenAPI Description or that tooling extracts as an independent schema
 document. This includes every entry in <code>components.schemas</code>. It also includes
 an inline Schema Object at a request body, response, parameter, callback,
 webhook, or other OAS Schema Object position, once tooling extracts it for
-standalone processing.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
-<p id="section-4.3-5">Schema Objects nested inside an already-selected resource are part of that
+standalone processing.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+<p id="section-4.3-6">Schema Objects nested inside an already-selected resource are part of that
 resource. They do not establish a second dialect selection context. A nested
 <code>$schema</code> value <span class="bcp14">MUST NOT</span> override the resource-root dialect. Tooling <span class="bcp14">MUST</span>
-reject a nested <code>$schema</code> that would make the nested object ambiguous.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
-<p id="section-4.3-6">Dialect selection is per schema-resource root, not global to the Description.
+reject a nested <code>$schema</code> that would make the nested object ambiguous.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
+<p id="section-4.3-7">Dialect selection is per schema-resource root, not global to the Description.
 An OpenAPI Description <span class="bcp14">MAY</span> contain ordinary OAS Schema Objects and Schema
 Objects in one or more bound dialects. Tooling <span class="bcp14">MUST</span> apply the effective
-dialect independently at each resource root.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
+dialect independently at each resource root.<a href="#section-4.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dialect-recognition">
@@ -1823,7 +1845,7 @@ used by the tool's retrieval and base-URI model.<a href="#section-4.5-17" class=
 <p id="section-4.6-1">A Schema Object embedded in an OpenAPI Description commonly omits <code>$schema</code>
 and its identity keyword. <code>$schema</code> is supplied by <code>jsonSchemaDialect</code>
 (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>) and the identity by <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>. Both
-are conveniences that depend on OAS context. A standalone validator for the
+are conveniences that depend on context. A standalone validator for the
 dialect has no notion of <code>jsonSchemaDialect</code> and no notion of the Schema
 Object's position within a larger document.<a href="#section-4.6-1" class="pilcrow">¶</a></p>
 <p id="section-4.6-2">Tooling that extracts a Schema Object from its containing Description in
@@ -1845,13 +1867,18 @@ dialect without reference to the originating Description. Tooling <span class="b
 hand an extracted Schema Object to a standalone validator with <code>$schema</code> or
 the identity keyword left absent on the assumption that OAS-level context
 will supply them.<a href="#section-4.6-4" class="pilcrow">¶</a></p>
-<p id="section-4.6-5">A binding <span class="bcp14">MAY</span> declare further keywords that a schema resource root requires
-and that an inline Schema Object might not supply (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>).
-Tooling performing an extraction <span class="bcp14">MUST</span> materialize those as well. Any
-materialized value <span class="bcp14">MUST</span> be deterministic for the same Description and JSON
-Pointer. Where a materialized value could collide with a declaration already
-present in the extracted document, tooling <span class="bcp14">MUST</span> reject the extraction. Tooling
-<span class="bcp14">MUST NOT</span> rename either declaration.<a href="#section-4.6-5" class="pilcrow">¶</a></p>
+<p id="section-4.6-5">A binding <span class="bcp14">MAY</span> declare further values that the extracted document would
+otherwise take from context (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). That context is not
+always the OpenAPI Description. Where a dialect's own nesting rules let an
+inner declaration inherit a value from an enclosing one, extraction destroys
+that value just as thoroughly as extraction from a Description destroys
+<code>jsonSchemaDialect</code>. Tooling performing an extraction <span class="bcp14">MUST</span> materialize every
+such value, whichever context supplied it. The materialized value <span class="bcp14">MUST</span> be the
+one in effect at the declaration's position in the originating document.<a href="#section-4.6-5" class="pilcrow">¶</a></p>
+<p id="section-4.6-6">Any materialized value <span class="bcp14">MUST</span> be deterministic for the same Description and
+JSON Pointer. Where a materialized value could collide with a declaration
+already present in the extracted document, tooling <span class="bcp14">MUST</span> reject the extraction.
+Tooling <span class="bcp14">MUST NOT</span> rename either declaration.<a href="#section-4.6-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="reference-model">
@@ -1979,16 +2006,18 @@ as it supplies the other parameters of <a href="#binding-parameters" class="auto
 <p id="section-4.9-3">Scope becomes observable once a consumer treats the Description as a single
 type space. A code generator does this when it emits one module for the
 Description. Two resources can carry the same type name without either being
-wrong, since neither is in the other's scope. A consumer that flattens them
-produces a collision that exists nowhere in the Description.<a href="#section-4.9-3" class="pilcrow">¶</a></p>
-<p id="section-4.9-4">A dialect binding <span class="bcp14">MUST</span> declare what names a type in its dialect and what
-constitutes a resource's scope (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). Tooling that
-aggregates the Schema Objects of a Description into one type space <span class="bcp14">MUST</span>
-preserve the resource boundary as a scope boundary. It <span class="bcp14">MUST NOT</span> merge the
-type declarations of two schema resources into a single scope. It <span class="bcp14">MUST NOT</span>
-rename a declaration to resolve a collision that arises only from merging.
-Where the dialect cannot express the resulting scopes, tooling <span class="bcp14">MUST</span> report a
-diagnostic and <span class="bcp14">MUST NOT</span> choose a name on the author's behalf.<a href="#section-4.9-4" class="pilcrow">¶</a></p>
+wrong, where the binding's rules place them in different scopes. A consumer
+that flattens them produces a collision that exists nowhere in the
+Description.<a href="#section-4.9-3" class="pilcrow">¶</a></p>
+<p id="section-4.9-4">A dialect binding <span class="bcp14">MUST</span> declare what names a type in its dialect and how a
+resource's scope for those names is determined (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). A
+dialect <span class="bcp14">MAY</span> derive scope from the schema resource, and it <span class="bcp14">MAY</span> take scope from
+a declaration the author writes inside the schema. The binding states which.<a href="#section-4.9-4" class="pilcrow">¶</a></p>
+<p id="section-4.9-5">Tooling that aggregates the Schema Objects of a Description into one type
+space <span class="bcp14">MUST</span> preserve the scopes the binding's rules assign. It <span class="bcp14">MUST NOT</span>
+introduce a name collision that those rules do not already produce. It <span class="bcp14">MUST NOT</span> resolve a collision by renaming a declaration or by synthesizing a scope.
+Where the binding's rules place two differing declarations in one scope,
+tooling <span class="bcp14">MUST</span> report a diagnostic and <span class="bcp14">MUST NOT</span> choose between them.<a href="#section-4.9-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="serialization-inspection">
@@ -2034,24 +2063,67 @@ position. It is a schema-resource root (<a href="#dialect-selection" class="auto
 describes one item, not the sequence.<a href="#section-4.10-6" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="validating-the-description">
+<div id="body-encodings">
 <section id="section-4.11">
-        <h3 id="name-validating-the-description-">
-<a href="#section-4.11" class="section-number selfRef">4.11. </a><a href="#name-validating-the-description-" class="section-name selfRef">Validating the Description Itself</a>
+        <h3 id="name-dialect-defined-body-encodi">
+<a href="#section-4.11" class="section-number selfRef">4.11. </a><a href="#name-dialect-defined-body-encodi" class="section-name selfRef">Dialect-Defined Body Encodings</a>
         </h3>
-<p id="section-4.11-1">The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
+<p id="section-4.11-1">A dialect may define a wire encoding for the data it describes, and not only a
+vocabulary for describing that data. Where it does, a message body in that
+encoding is decoded from the schema by the dialect's own rules.<a href="#section-4.11-1" class="pilcrow">¶</a></p>
+<p id="section-4.11-2">A binding <span class="bcp14">MUST</span> declare the media types whose bodies its dialect encodes
+(<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). A binding <span class="bcp14">MAY</span> declare none, in which case bodies are
+encoded per their media type independently of the dialect, and this section
+does not apply.<a href="#section-4.11-2" class="pilcrow">¶</a></p>
+<p id="section-4.11-3"><a href="#serialization-inspection" class="auto internal xref">Section 4.10</a> does not apply to a body of a declared data media
+type. That procedure exists so that OAS can construct and parse form,
+multipart, and text values, which carry no type information of their own. A
+body the dialect encodes carries whatever the dialect's encoding provides, and
+the dialect decodes it as a whole. Tooling <span class="bcp14">MUST NOT</span> apply the
+type-determination procedure to such a body.<a href="#section-4.11-3" class="pilcrow">¶</a></p>
+<p id="section-4.11-4">For each declared media type, a binding <span class="bcp14">MUST</span> state whether the encoding
+carries the schema needed to decode the body:<a href="#section-4.11-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.11-5.1">
+            <p id="section-4.11-5.1.1">Where the encoding carries that schema, tooling <span class="bcp14">MUST</span> decode the body using
+the schema the body carries. Tooling <span class="bcp14">MUST NOT</span> decode the body using the
+Schema Object in place of the schema on the wire. The Schema Object states
+what the Description expects, and tooling <span class="bcp14">MUST</span> report a diagnostic where the
+two disagree in a way the dialect does not reconcile.<a href="#section-4.11-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.11-5.2">
+            <p id="section-4.11-5.2.1">Where the encoding does not carry that schema, the Schema Object is the
+schema the body was encoded against. Tooling <span class="bcp14">MUST NOT</span> decode a body whose
+encoding schema it cannot establish, and <span class="bcp14">MUST NOT</span> substitute a different
+schema on the assumption that the two are compatible.<a href="#section-4.11-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.11-6">A Schema Object whose dialect encodes the body is part of the wire contract.
+Editing it changes what is on the wire. Where the dialect defines its own rule
+for reading data written against a different version of a schema, the binding
+<span class="bcp14">MUST</span> state how that rule relates to a change made in the Description.<a href="#section-4.11-6" class="pilcrow">¶</a></p>
+<p id="section-4.11-7">A schema carried in a body is untrusted input. Tooling <span class="bcp14">MUST</span> validate it before
+use and <span class="bcp14">MUST</span> apply the limits of <a href="#security-considerations" class="auto internal xref">Section 8</a> to it.<a href="#section-4.11-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="validating-the-description">
+<section id="section-4.12">
+        <h3 id="name-validating-the-description-">
+<a href="#section-4.12" class="section-number selfRef">4.12. </a><a href="#name-validating-the-description-" class="section-name selfRef">Validating the Description Itself</a>
+        </h3>
+<p id="section-4.12-1">The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
 validating OpenAPI documents. The <code>schema</code> iteration deliberately does not
 validate Schema Objects, since it makes no assumption about the dialect in
 use. The <code>schema-base</code> iteration does validate them, and constrains
-<code>jsonSchemaDialect</code> and <code>$schema</code> to the OAS dialect.<a href="#section-4.11-1" class="pilcrow">¶</a></p>
-<p id="section-4.11-2">A Description that uses any bound dialect is therefore validatable against
+<code>jsonSchemaDialect</code> and <code>$schema</code> to the OAS dialect.<a href="#section-4.12-1" class="pilcrow">¶</a></p>
+<p id="section-4.12-2">A Description that uses any bound dialect is therefore validatable against
 the <code>schema</code> iteration and is NOT validatable against the <code>schema-base</code>
 iteration. A <code>schema-base</code> failure caused solely by a bound dialect URI is
 expected and is not a defect in the Description. Tooling that validates
 Descriptions <span class="bcp14">MUST NOT</span> treat <code>schema-base</code> as the authoritative structural
 check for a Description containing bound-dialect Schema Objects. Such tooling
 <span class="bcp14">SHOULD</span> validate against the <code>schema</code> iteration together with the dialect's own
-meta-schema applied to each Schema Object.<a href="#section-4.11-2" class="pilcrow">¶</a></p>
+meta-schema applied to each Schema Object.<a href="#section-4.12-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2104,16 +2176,24 @@ whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Type determination</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.10</a>.</td>
+                <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.11</a>.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Data media types</td>
+              <td class="text-left" rowspan="1" colspan="1">None. JSON Structure defines no framing of its own. It does fix the JSON representation of several types (<a href="#json-structure-body-encodings" class="auto internal xref">Section 5.10</a>).</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Type naming and scope</td>
-              <td class="text-left" rowspan="1" colspan="1">A type is named by <code>name</code>; a resource's scope is its root namespace (<a href="#aggregate-namespaces" class="auto internal xref">Section 5.7</a>).</td>
+              <td class="text-left" rowspan="1" colspan="1">A type is named by <code>name</code>. Scope is derived from the schema resource: a resource's scope is its root namespace (<a href="#aggregate-namespaces" class="auto internal xref">Section 5.7</a>).</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Self-description</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>name</code> is additionally required on every resource root (<a href="#json-structure-materializing-name" class="auto internal xref">Section 5.3</a>).</td>
+                <code>name</code> is additionally required on every resource root (<a href="#json-structure-materializing-name" class="auto internal xref">Section 5.3</a>). No JSON Structure declaration inherits a value from an enclosing declaration.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Usable schema forms</td>
+              <td class="text-left" rowspan="1" colspan="1">Every JSON Structure schema is a JSON object. All forms are usable.</td>
             </tr>
           </tbody>
         </table>
@@ -2712,35 +2792,78 @@ Core keywords while a gateway or server enforces the full validation and
 composition rules against the same schema.<a href="#section-5.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="json-structure-serialization-inspection">
+<div id="json-structure-body-encodings">
 <section id="section-5.10">
-        <h3 id="name-type-determination-for-non-">
-<a href="#section-5.10" class="section-number selfRef">5.10. </a><a href="#name-type-determination-for-non-" class="section-name selfRef">Type Determination for Non-JSON Serializations</a>
+        <h3 id="name-data-media-types-and-json-r">
+<a href="#section-5.10" class="section-number selfRef">5.10. </a><a href="#name-data-media-types-and-json-r" class="section-name selfRef">Data Media Types and JSON Representation</a>
         </h3>
-<p id="section-5.10-1">This section supplies the type-determination procedure required by
-<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>.<a href="#section-5.10-1" class="pilcrow">¶</a></p>
-<p id="section-5.10-2">Given a starting-point JSON Structure Schema Object, tooling <span class="bcp14">MUST</span> determine
-the type of a value as follows. All steps operate on the schema alone.<a href="#section-5.10-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.10-3">
-<li id="section-5.10-3.1">
-            <p id="section-5.10-3.1.1">Resolve the starting point to a type definition. Follow <code>$root</code> from a
+<p id="section-5.10-1">This section supplies the data media types declaration required by
+<a href="#body-encodings" class="auto internal xref">Section 4.11</a>. The declaration is none.<a href="#section-5.10-1" class="pilcrow">¶</a></p>
+<p id="section-5.10-2">JSON Structure defines no message framing. It has no container format, no
+schema fingerprint, and no media type of its own. A body described by a JSON
+Structure Schema Object is carried in whatever media type its Media Type
+Object names, and this binding does not change how that media type frames the
+body. No schema travels with the body, so the Schema Object is the only
+schema, and the schema-on-the-wire requirements of <a href="#body-encodings" class="auto internal xref">Section 4.11</a> do not
+apply.<a href="#section-5.10-2" class="pilcrow">¶</a></p>
+<p id="section-5.10-3">JSON Structure does fix how several values appear inside a JSON body. These
+representations cannot be inferred from the value, and a consumer that reads a
+JSON Structure Schema Object as though it were an OAS-dialect schema gets them
+wrong (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>):<a href="#section-5.10-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.10-4.1">
+            <p id="section-5.10-4.1.1"><code>int64</code>, <code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> appear as JSON
+strings. Interoperable JSON numbers span -2^53 to 2^53-1, and these types
+exceed that range.<a href="#section-5.10-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.10-4.2">
+            <p id="section-5.10-4.2.1"><code>binary</code> appears as a string, Base64 by default. <code>contentEncoding</code> selects
+another alphabet, and <code>contentCompression</code> names a compression applied
+before the encoding.<a href="#section-5.10-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.10-4.3">
+            <p id="section-5.10-4.3.1"><code>date</code>, <code>datetime</code>, <code>time</code>, and <code>duration</code> appear as strings in the
+corresponding RFC 3339 productions.<a href="#section-5.10-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.10-5">Tooling <span class="bcp14">MUST</span> apply these representations when it reads or writes a body of
+<code>application/json</code>, or of any media type whose payload is JSON. Tooling <span class="bcp14">MUST NOT</span> emit an <code>int64</code> as a JSON number. Tooling <span class="bcp14">MUST NOT</span> surface a quoted
+<code>int64</code> to an application as a string-typed value.<a href="#section-5.10-5" class="pilcrow">¶</a></p>
+<p id="section-5.10-6">JSON Structure encoding specifications that map the type system onto a
+non-JSON wire format are separate specifications. Each is a separate dialect
+binding and declares its own data media types under <a href="#binding-parameters" class="auto internal xref">Section 4.1</a>.
+This document does not cover them.<a href="#section-5.10-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="json-structure-serialization-inspection">
+<section id="section-5.11">
+        <h3 id="name-type-determination-for-non-">
+<a href="#section-5.11" class="section-number selfRef">5.11. </a><a href="#name-type-determination-for-non-" class="section-name selfRef">Type Determination for Non-JSON Serializations</a>
+        </h3>
+<p id="section-5.11-1">This section supplies the type-determination procedure required by
+<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>.<a href="#section-5.11-1" class="pilcrow">¶</a></p>
+<p id="section-5.11-2">Given a starting-point JSON Structure Schema Object, tooling <span class="bcp14">MUST</span> determine
+the type of a value as follows. All steps operate on the schema alone.<a href="#section-5.11-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.11-3">
+<li id="section-5.11-3.1">
+            <p id="section-5.11-3.1.1">Resolve the starting point to a type definition. Follow <code>$root</code> from a
 resource root, and follow a <code>type</code> whose value is a <code>$ref</code> to the named
 type it designates. Follow <code>$extends</code> to incorporate inherited members.
 Imported namespaces are resolved first (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>), so a
-<code>$ref</code> into an imported namespace is followed the same way.<a href="#section-5.10-3.1.1" class="pilcrow">¶</a></p>
+<code>$ref</code> into an imported namespace is followed the same way.<a href="#section-5.11-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.10-3.2">
-            <p id="section-5.10-3.2.1">Locate the value: a named member under <code>properties</code>, a positional element
+          <li id="section-5.11-3.2">
+            <p id="section-5.11-3.2.1">Locate the value: a named member under <code>properties</code>, a positional element
 under <code>tuple</code>, the item type under <code>items</code>, or the value type under
-<code>values</code>.<a href="#section-5.10-3.2.1" class="pilcrow">¶</a></p>
+<code>values</code>.<a href="#section-5.11-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.10-3.3">
-            <p id="section-5.10-3.3.1">The located declaration's <code>type</code> gives the JSON data type directly. JSON
+          <li id="section-5.11-3.3">
+            <p id="section-5.11-3.3.1">The located declaration's <code>type</code> gives the JSON data type directly. JSON
 Structure requires <code>type</code> on every type declaration, so this step does not
-fail for a valid schema.<a href="#section-5.10-3.3.1" class="pilcrow">¶</a></p>
+fail for a valid schema.<a href="#section-5.11-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.10-3.4">
-            <p id="section-5.10-3.4.1">Map the JSON Structure type to a JSON data type. The types <code>int64</code>,
+          <li id="section-5.11-3.4">
+            <p id="section-5.11-3.4.1">Map the JSON Structure type to a JSON data type. The types <code>int64</code>,
 <code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> map to <strong>string</strong>. JSON
 Structure represents them as strings, since their ranges exceed the
 interoperable range of a JSON number (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>). The remaining
@@ -2749,29 +2872,29 @@ numeric types map to number: <code>number</code>, <code>integer</code>, <code>in
 <code>string</code>, <code>datetime</code>, <code>date</code>, <code>time</code>, <code>duration</code>, <code>uuid</code>, <code>uri</code>, <code>binary</code>,
 and <code>jsonpointer</code> map to string. <code>boolean</code> maps to boolean. <code>object</code>,
 <code>map</code>, and <code>choice</code> map to object. <code>array</code>, <code>set</code>, and <code>tuple</code> map to
-array. <code>null</code> maps to null.<a href="#section-5.10-3.4.1" class="pilcrow">¶</a></p>
-<p id="section-5.10-3.4.2">
+array. <code>null</code> maps to null.<a href="#section-5.11-3.4.1" class="pilcrow">¶</a></p>
+<p id="section-5.11-3.4.2">
 Tooling <span class="bcp14">MUST NOT</span> map the large-integer and decimal types to number. Doing
 so produces an unquoted numeric literal in a form field, path segment,
 query parameter, or header value, which loses precision and does not match
-the JSON Structure representation of the same value.<a href="#section-5.10-3.4.2" class="pilcrow">¶</a></p>
+the JSON Structure representation of the same value.<a href="#section-5.11-3.4.2" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.10-3.5">
-            <p id="section-5.10-3.5.1">A type union yields "undetermined" unless exactly one member of the union
+          <li id="section-5.11-3.5">
+            <p id="section-5.11-3.5.1">A type union yields "undetermined" unless exactly one member of the union
 remains after removing <code>null</code>, in which case that member's mapping applies.
 A <code>choice</code> used at a position requiring a scalar serialization yields
-"undetermined".<a href="#section-5.10-3.5.1" class="pilcrow">¶</a></p>
+"undetermined".<a href="#section-5.11-3.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.10-4">JSON Structure requires an explicit <code>type</code> everywhere and has no keyword that
+<p id="section-5.11-4">JSON Structure requires an explicit <code>type</code> everywhere and has no keyword that
 makes a declaration apply conditionally to the data. This procedure therefore
 never needs to inspect instance data, and never has to reconcile competing
-<code>type</code> assertions the way the OAS-dialect procedure does.<a href="#section-5.10-4" class="pilcrow">¶</a></p>
-<p id="section-5.10-5">Values that map to object or array are serialized as <code>application/json</code> by
+<code>type</code> assertions the way the OAS-dialect procedure does.<a href="#section-5.11-4" class="pilcrow">¶</a></p>
+<p id="section-5.11-5">Values that map to object or array are serialized as <code>application/json</code> by
 default in an Encoding Object, exactly as for the OAS dialect. A <code>binary</code>
 value carries no <code>contentEncoding</code> and is serialized as
 <code>application/octet-stream</code> unless an Encoding Object's <code>contentType</code> says
-otherwise.<a href="#section-5.10-5" class="pilcrow">¶</a></p>
+otherwise.<a href="#section-5.11-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3014,7 +3137,7 @@ conforming Codec or Code Generator <span class="bcp14">MUST</span> derive memory
 the dialect's structural keywords
 (<a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.9</a>). It <span class="bcp14">MUST</span> use the binding's type
 determination procedure for non-JSON serializations
-(<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>, <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.10</a>).
+(<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>, <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.11</a>).
 It <span class="bcp14">MUST</span> reject any construct it does not support, and <span class="bcp14">MUST NOT</span> silently
 reinterpret that construct under OAS or JSON Schema semantics. Falling back
 to OAS-dialect interpretation of an unsupported construct is
@@ -3106,6 +3229,16 @@ another dialect can silently produce the wrong wire type
 validate it against its declared dialect before use and <span class="bcp14">SHOULD</span> apply the
 same input-handling precautions as for any other externally retrieved
 document.<a href="#section-8-1.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-8-1.11">Compressed binary values:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-1.12">
+          <p id="section-8-1.12.1">A JSON Structure <code>binary</code> value <span class="bcp14">MAY</span> name a compression through
+<code>contentCompression</code>, applied before the value is encoded
+(<a href="#json-structure-body-encodings" class="auto internal xref">Section 5.10</a>). Decompression is driven by data on the
+wire. Tooling <span class="bcp14">MUST</span> enforce a bound on the decompressed size of such a value
+and on its decompression ratio, and <span class="bcp14">MUST</span> reject a value that exceeds either.
+Tooling <span class="bcp14">MUST</span> reject a compression it has not been configured to accept.<a href="#section-8-1.12.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
