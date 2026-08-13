@@ -222,8 +222,9 @@ dialect-specific inputs the rest of this part requires.
 | Identity comparison | Whether identity comparison is byte-exact or subject to a declared normalization. |
 | Cross-document mechanism | The keyword(s), if any, by which a resource incorporates definitions from another resource, and whether their values are absolute URIs. A binding MAY declare that its dialect has no such mechanism. |
 | Type determination | The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations ({{serialization-inspection}}). |
-| Type naming and scope | What names a type in the dialect, and what constitutes one schema resource's scope for those names ({{type-scope}}). A binding MAY declare that its dialect names no types, in which case {{type-scope}} imposes no aggregation requirement. |
-| Self-description | Whether an extracted resource requires additional keywords to be materialized beyond identity and dialect ({{materializing-defaults}}). |
+| Type naming and scope | What names a type in the dialect, and how a resource's scope for those names is determined ({{type-scope}}). A binding MAY declare that its dialect names no types, in which case {{type-scope}} imposes no aggregation requirement. |
+| Self-description | Which values an extracted resource requires beyond identity and dialect, including any value an inner declaration inherits from an enclosing one ({{materializing-defaults}}). |
+| Usable schema forms | Which of the dialect's schema forms are usable at a Schema Object position ({{dialect-selection}}), where the dialect admits forms that are not JSON objects. |
 
 A binding MUST NOT redefine the OAS meaning of `$schema`, `jsonSchemaDialect`,
 or the Reference Object, and MUST NOT introduce new fields into any OAS
@@ -276,6 +277,15 @@ effective dialect is determined exactly as in the OAS dialect-selection rules
 A dialect whose schemas natively carry `$schema` yields self-describing
 Schema Objects. Pasting such a schema into a Schema Object position, with its
 `$schema` intact, is sufficient to select the dialect.
+
+A Schema Object position accepts a JSON object, and in the OAS dialect also a
+boolean ({{OAS}}). It accepts neither a JSON array nor a JSON string. A
+dialect whose schema forms include such values is bound only for the forms
+that position accepts. A binding MUST declare which of its dialect's forms
+are usable there ({{binding-parameters}}). Tooling MUST reject a Description
+that places any other form of a bound dialect at a Schema Object position.
+The restriction applies to that position alone. Inside a Schema Object, the
+dialect's remaining forms are unrestricted.
 
 A **schema-resource root** is a Schema Object that is independently addressable
 by the OpenAPI Description or that tooling extracts as an independent schema
@@ -439,7 +449,7 @@ used by the tool's retrieval and base-URI model.
 A Schema Object embedded in an OpenAPI Description commonly omits `$schema`
 and its identity keyword. `$schema` is supplied by `jsonSchemaDialect`
 ({{dialect-selection}}) and the identity by {{default-id-construction}}. Both
-are conveniences that depend on OAS context. A standalone validator for the
+are conveniences that depend on context. A standalone validator for the
 dialect has no notion of `jsonSchemaDialect` and no notion of the Schema
 Object's position within a larger document.
 
@@ -459,13 +469,19 @@ hand an extracted Schema Object to a standalone validator with `$schema` or
 the identity keyword left absent on the assumption that OAS-level context
 will supply them.
 
-A binding MAY declare further keywords that a schema resource root requires
-and that an inline Schema Object might not supply ({{binding-parameters}}).
-Tooling performing an extraction MUST materialize those as well. Any
-materialized value MUST be deterministic for the same Description and JSON
-Pointer. Where a materialized value could collide with a declaration already
-present in the extracted document, tooling MUST reject the extraction. Tooling
-MUST NOT rename either declaration.
+A binding MAY declare further values that the extracted document would
+otherwise take from context ({{binding-parameters}}). That context is not
+always the OpenAPI Description. Where a dialect's own nesting rules let an
+inner declaration inherit a value from an enclosing one, extraction destroys
+that value just as thoroughly as extraction from a Description destroys
+`jsonSchemaDialect`. Tooling performing an extraction MUST materialize every
+such value, whichever context supplied it. The materialized value MUST be the
+one in effect at the declaration's position in the originating document.
+
+Any materialized value MUST be deterministic for the same Description and
+JSON Pointer. Where a materialized value could collide with a declaration
+already present in the extracted document, tooling MUST reject the extraction.
+Tooling MUST NOT rename either declaration.
 
 ## Reference Layer Separation {#reference-model}
 
@@ -575,17 +591,21 @@ as it supplies the other parameters of {{binding-parameters}}.
 Scope becomes observable once a consumer treats the Description as a single
 type space. A code generator does this when it emits one module for the
 Description. Two resources can carry the same type name without either being
-wrong, since neither is in the other's scope. A consumer that flattens them
-produces a collision that exists nowhere in the Description.
+wrong, where the binding's rules place them in different scopes. A consumer
+that flattens them produces a collision that exists nowhere in the
+Description.
 
-A dialect binding MUST declare what names a type in its dialect and what
-constitutes a resource's scope ({{binding-parameters}}). Tooling that
-aggregates the Schema Objects of a Description into one type space MUST
-preserve the resource boundary as a scope boundary. It MUST NOT merge the
-type declarations of two schema resources into a single scope. It MUST NOT
-rename a declaration to resolve a collision that arises only from merging.
-Where the dialect cannot express the resulting scopes, tooling MUST report a
-diagnostic and MUST NOT choose a name on the author's behalf.
+A dialect binding MUST declare what names a type in its dialect and how a
+resource's scope for those names is determined ({{binding-parameters}}). A
+dialect MAY derive scope from the schema resource, and it MAY take scope from
+a declaration the author writes inside the schema. The binding states which.
+
+Tooling that aggregates the Schema Objects of a Description into one type
+space MUST preserve the scopes the binding's rules assign. It MUST NOT
+introduce a name collision that those rules do not already produce. It MUST
+NOT resolve a collision by renaming a declaration or by synthesizing a scope.
+Where the binding's rules place two differing declarations in one scope,
+tooling MUST report a diagnostic and MUST NOT choose between them.
 
 ## Schema Inspection for Non-JSON Serializations {#serialization-inspection}
 
@@ -661,8 +681,9 @@ whose base dialect is one of those canonical URIs.
 | Identity comparison | Byte-exact; no normalization. |
 | Cross-document mechanism | `$import` and `$importdefs` {{JSTRUCT-IMPORT}}, whose values MUST be absolute URIs ({{cross-schema-reuse}}). |
 | Type determination | {{json-structure-serialization-inspection}}. |
-| Type naming and scope | A type is named by `name`; a resource's scope is its root namespace ({{aggregate-namespaces}}). |
-| Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). |
+| Type naming and scope | A type is named by `name`. Scope is derived from the schema resource: a resource's scope is its root namespace ({{aggregate-namespaces}}). |
+| Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). No JSON Structure declaration inherits a value from an enclosing declaration. |
+| Usable schema forms | Every JSON Structure schema is a JSON object. All forms are usable. |
 
 ## JSON Structure Meta-Schema URIs {#json-structure-meta-schema-uris}
 

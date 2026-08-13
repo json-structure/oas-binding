@@ -1,155 +1,218 @@
-# An Experimental Avro Binding for OpenAPI Descriptions
+# An Apache Avro Binding for OpenAPI Descriptions
 
-**Status:** Experimental. Not a specification, not a submission, and not
-endorsed by the Apache Software Foundation or the Apache Avro project.
+**Status:** Experimental. Not a submission, and not endorsed by the Apache
+Software Foundation or the Apache Avro project. The dialect URI in this
+document is a placeholder ([Avro Dialect URI](#avro-dialect-uri)).
 
-**Purpose:** To test whether Part I of
-[draft-vasters-json-structure-oas-binding](draft-vasters-json-structure-oas-binding.md)
-is actually dialect-neutral, by binding a second dialect that shares almost
-nothing with the first.
+**Baseline:** Apache Avro Specification 1.12.0 [AVRO], OpenAPI Specification
+3.2.0 [OAS].
 
-**Method:** Supply the seven declarations of "Binding Parameters" and nothing
-else. Where a rule of Part I already covers Avro, this document does not
-restate it. Where Avro forces something Part I did not anticipate, this
-document says so instead of quietly patching around it.
+# Introduction
 
-**Baseline:** Apache Avro Specification 1.12.0, OAS 3.2.0.
+This document is a dialect binding, in the sense of "Dialect Binding
+Requirements" of [BINDING], for Apache Avro schema declarations [AVRO]. It
+supplies the declarations of "Binding Parameters" and states the requirements
+specific to Avro.
 
----
+Everything in Part I of [BINDING] applies unchanged and is not restated here.
+This document is normative only where it declares a binding parameter or
+states an Avro-specific requirement.
 
-## Why Avro
+An **Avro Schema Object** is a Schema Object whose effective dialect, per
+"Dialect Selection" of [BINDING], is the Avro dialect URI.
 
-A binding framework built while binding one dialect tends to be a
-description of that dialect wearing a costume. JSON Structure is a close
-relative of JSON Schema. It has a `$id`, it has document-local `$ref`, it
-has a cross-document import mechanism, it has an identifier grammar, and its
-schemas are JSON objects. Every one of the seven binding parameters has an
-obvious value.
+# Conventions and Terminology
 
-Avro has almost none of that:
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+interpreted as described in BCP 14 [RFC2119] [RFC8174] when, and only when,
+they appear in all capitals, as shown here.
 
-- No `$schema`, and no dialect identifier of any kind.
-- No `$id`, and no URI-based identity for a schema.
-- No cross-document reference mechanism in the schema declaration format.
-- Names are scoped by an author-declared `namespace`, not by the document.
-- A schema is not necessarily a JSON object. It can be a JSON array (a
-  union) or a JSON string (a named-type reference).
-- A JSON encoding that is defined by the dialect and does not match the
-  obvious one.
+**Fullname**, **named type**, **namespace**, and **logical type** are used as
+defined in [AVRO].
 
-If the abstraction survives Avro, it is an abstraction. If it only survives
-by acquiring Avro-shaped exceptions, it was a description of JSON Structure.
-
-## Binding Parameters
+# Avro Binding Parameters
 
 | Parameter | Value for Avro |
 | ---- | ---- |
-| Dialect URIs | One placeholder URI, `https://example.org/dialects/avro/1.12#`. No vocabularies or add-ins. Logical types are part of the dialect and are always active. |
-| Identity keyword | **None.** A resource is addressable only by location. |
+| Dialect URIs | The single URI in [Avro Dialect URI](#avro-dialect-uri). No vocabularies or add-ins. Logical types are part of the dialect and are always active. |
+| Identity keyword | None. Avro defines no identity keyword, and resources are addressable only by location ([Resource Identity](#resource-identity)). |
 | Identity comparison | Not applicable. |
-| Cross-document mechanism | **None.** A schema resource MUST be self-contained. |
-| Type determination | The procedure in [Type Determination](#type-determination-for-non-json-serializations). |
-| Type naming and scope | A named type is named by its fullname. A resource's scope is the set of namespaces its declarations name. See [Type Naming and Scope](#type-naming-and-scope). |
-| Self-description | Yes. An extracted resource MUST carry an explicit `namespace` on every named declaration that inherited one. |
+| Cross-document mechanism | None. An Avro schema resource MUST be self-contained ([Reference Layers](#reference-layers)). |
+| Type determination | [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations). |
+| Type naming and scope | A named type is named by its fullname. Scope is author-declared: it is the `namespace` in effect at the declaration ([Type Naming and Scope](#type-naming-and-scope)). |
+| Self-description | An inner named declaration inherits its namespace from the most tightly enclosing named schema. That value MUST be materialized on extraction ([Materializing the Inherited Namespace](#materializing-the-inherited-namespace)). |
+| Usable schema forms | The JSON object form only ([Usable Schema Forms](#usable-schema-forms)). |
 
-Two of the seven go inert by declaration. Two are trivial. Three need real
-text. That distribution is roughly what a parameterized framework should
-produce.
+# Avro Dialect URI
 
-### On the dialect URI
+The Avro dialect is selected by the URI:
 
-Avro has no meta-schema and no registered dialect URI, because it has no
-`$schema` keyword to put one in. The URI above is a placeholder. A real
-binding would need a URI minted by whoever owns the dialect. Nobody has
-minted one, and this document does not propose that anyone should.
+~~~
+https://example.org/dialects/avro/1.12#
+~~~
 
-Avro permits attributes it does not define, as metadata that must not affect
-the serialized form. A `$schema` attribute at the root of an Avro record
-schema is therefore legal Avro and inert to Avro tooling. An author who
-wants a self-selecting Avro Schema Object can write one. This works only for
-the object form of an Avro schema, which is the next problem.
+Avro defines no meta-schema and no dialect URI, because it defines no
+`$schema` keyword to carry one. The URI above is a placeholder for the
+purposes of this document. A production binding requires a URI minted under
+the control of whoever governs the dialect. No such URI exists.
 
-## What a Schema Object May Hold
+Recognition of this URI is subject to "Recognizing and Rejecting Dialects" of
+[BINDING] unchanged. The binding declares no normalization, so matching is
+byte-exact. Avro has no derived-meta-schema mechanism, so the derived-URI rule
+of that section has nothing to apply to.
 
-An OAS Schema Object is a JSON object, or in the OAS dialect a boolean. It
-is never a JSON array and never a JSON string.
+# Usable Schema Forms
 
-Three of Avro's schema forms are therefore unusable at a Schema Object
-position:
+An Avro schema is one of three JSON values [AVRO]:
 
-| Avro form | Example | Usable |
-| ---- | ---- | ---- |
-| Object | `{"type": "record", "name": "Pet", ...}` | yes |
-| Object, primitive | `{"type": "string"}` | yes |
-| String, primitive shorthand | `"string"` | no |
-| String, named-type reference | `"com.example.Pet"` | no |
-| Array, union | `["null", "string"]` | no |
+| Avro form | Example |
+| ---- | ---- |
+| JSON object | `{"type": "record", "name": "Pet", ...}` |
+| JSON string | `"string"`, or a named-type reference such as `"com.example.Pet"` |
+| JSON array | a union, such as `["null", "string"]` |
 
-A conforming Avro Schema Object MUST be a JSON object. An author whose
-schema is a union at the top level MUST wrap it, either in a record with a
-single field or in a `{"type": ...}` object form.
+A Schema Object position accepts neither a JSON string nor a JSON array
+("Dialect Selection" of [BINDING]). This binding therefore declares the JSON
+object form as the only form usable at a Schema Object position.
 
-Inside a Schema Object, the excluded forms are unrestricted. `"string"` and
-`["null", "string"]` and `"com.example.Pet"` are all ordinary field types.
-The restriction applies to the resource root and nowhere else, which is the
-same shape as the resource-root rules of Part I.
+A conforming Avro Schema Object MUST be a JSON object. Tooling MUST reject a
+Description that places a string-form or array-form Avro schema at a Schema
+Object position.
 
-Part I does not state this constraint. See
-[What Did Not Hold](#what-did-not-hold).
+An author whose intended resource is a union or a bare primitive MUST wrap it.
+A union is wrapped in a record with a single field, or in a `map` or `array`
+whose value type is the union. A primitive is written in its equivalent object
+form, as `{"type": "string"}`.
 
-## Identity
+The restriction applies to the Schema Object position alone. Inside an Avro
+Schema Object, all three forms are unrestricted. A field type MAY be
+`"string"`, `["null", "string"]`, or `"com.example.Pet"`.
 
-Avro has no identity keyword. This binding declares none, and "Default
-Resource Identity" therefore does not apply. Avro schema resources in an
-OpenAPI Description are addressable by their OAS location and by nothing
-else.
+# Dialect Selection and Self-Description
 
-Nothing downstream misses it. "Resolving Cross-Document References" is
-already inert, because there is no cross-document mechanism to resolve.
-"Materializing Defaults for Standalone Processing" reduces to `$schema` plus
-whatever the self-description parameter adds, and the identity bullet is
-vacuous.
+Selection follows "Dialect Selection" of [BINDING] unchanged.
 
-The Part I escape hatch is written as an aside. In Avro it is load-bearing.
+Avro defines no `$schema` keyword. Avro does permit attributes it does not
+define, as metadata that must not affect the serialized form [AVRO]. A
+`$schema` attribute at the root of an Avro Schema Object is therefore valid
+Avro, and is inert to Avro tooling.
 
-## Cross-Schema Reuse
+An Avro Schema Object SHOULD carry `$schema` explicitly, so that it remains
+self-selecting when extracted from the Description. Where it does not, the
+OpenAPI Object's `jsonSchemaDialect` selects the dialect.
 
-There is none.
+Tooling MUST NOT treat a `$schema` attribute as part of the Avro type
+declaration, and MUST NOT emit it into any Avro serialized form.
 
-Avro's named types are addressable by fullname within one schema, subject to
-the define-before-use rule. That rule is scoped to a single schema. The
-schema declaration format has no mechanism to pull a definition in from
-another document. Avro IDL has an `import`, and schema registries invent
-their own, but neither is part of the schema declaration format that occupies
-a Schema Object position.
+# Resource Identity
+
+This binding declares no identity keyword. "Default Resource Identity" of
+[BINDING] therefore does not apply.
+
+An Avro schema resource in an OpenAPI Description is addressable by its OAS
+location, and by nothing else. Tooling MUST NOT synthesize a URI identity and
+write it into an Avro Schema Object.
+
+Because there is no identity keyword, an extracted Avro Schema Object carries
+no identity. "Materializing Defaults for Standalone Processing" of [BINDING]
+reduces, for this binding, to `$schema` plus the namespace materialization of
+[Materializing the Inherited Namespace](#materializing-the-inherited-namespace).
+
+# Reference Layers
+
+The two layers of "Reference Layer Separation" of [BINDING] are instantiated
+as follows.
+
+The OpenAPI layer is unchanged. An OAS `$ref` targeting an Avro Schema Object
+as a whole resolves per [OAS].
+
+The dialect layer is Avro's named-type reference: a JSON string in a schema
+position that names a type by fullname. It resolves only within the schema
+resource that contains it, subject to Avro's rule that a name is defined
+before it is used, in depth-first left-to-right traversal order [AVRO].
+
+This binding declares no cross-document mechanism. "Resolving Cross-Document
+References" of [BINDING] therefore does not apply, and neither do its
+retrieval, cycle, and graph-limit requirements.
 
 Consequently:
 
-- An Avro Schema Object MUST define every named type it references.
-- Two `components.schemas` entries that both need `com.example.Pet` MUST each
+* An Avro Schema Object MUST define every named type it references. Tooling
+  MUST reject an Avro Schema Object containing a named-type reference that
+  resolves to no definition within that same resource.
+* Two `components.schemas` entries that each need a given type MUST each
   define it.
-- The only reuse available is an OAS `$ref` at the OpenAPI layer, which
-  targets a whole Schema Object.
+* An Avro field type MUST NOT be an OAS Reference Object. A `$ref` at a field
+  type position is not an Avro schema, and Avro's metadata allowance does not
+  make it one.
 
-This is the same trap as the JSON Structure binding's `$ref` placement rule,
-arrived at from a different direction. A field type inside an Avro record
-cannot carry an OAS `$ref`, so a type needed at a nested position must be
-copied. Part I's "Reference Layer Separation" covers this without amendment.
+Reuse across schema resources is available only at the OpenAPI layer, through
+an OAS `$ref` targeting a whole Schema Object. A type needed at a position
+nested inside another Avro Schema Object cannot be reached that way and MUST
+be defined locally.
 
-## Self-Description: Materializing `namespace`
+# Type Naming and Scope
 
-This is where Avro earns its place in the experiment.
+This section supplies the type naming and scope declaration required by "Type
+Identity and Scope" of [BINDING].
 
-Avro determines a named type's fullname in three ways. If `name` contains a
-dot, it is the fullname. If `name` and `namespace` are both given, the
-fullname is their concatenation. If only a dotless `name` is given, **the
-namespace is taken from the most tightly enclosing named schema**, and the
-null namespace applies if there is none.
+A named type is named by its fullname. `record`, `enum`, and `fixed` are the
+named types. The anonymous forms, being `array`, `map`, `union`, and the
+primitives, name nothing, and the requirements of this section do not apply
+to them.
 
-The third case makes a nested declaration's identity depend on its
-container. Extract it, and its fullname silently changes.
+Scope is author-declared, not derived from the schema resource. The scope of
+a named declaration is the `namespace` in effect at that declaration. A single
+Avro schema resource MAY populate several namespaces, and two schema resources
+of one Description MAY populate the same namespace.
 
-~~~json
+Aggregating the Avro Schema Objects of a Description into one type space
+therefore places two declarations in one scope exactly when their fullnames
+agree. That is the author's own arrangement, and preserving it satisfies the
+aggregation requirement of [BINDING].
+
+Where two declarations across schema resources share a fullname and are
+identical, the aggregate holds one declaration. Avro admits no other outcome,
+since a fullname has at most one definition [AVRO].
+
+Where two declarations across schema resources share a fullname and differ,
+tooling MUST report a diagnostic identifying both. Tooling MUST NOT rename
+either declaration. Tooling MUST NOT select one and discard the other. Tooling
+MUST NOT synthesize a disambiguating namespace, because a synthesized
+namespace changes a fullname that consumers of the original resource already
+depend on.
+
+# Materializing the Inherited Namespace
+
+This section supplies the self-description declaration required by
+"Materializing Defaults for Standalone Processing" of [BINDING].
+
+Avro determines a named type's fullname in three ways [AVRO]:
+
+1. `name` contains a dot. `name` is then the fullname, and any `namespace` is
+   ignored.
+2. `name` and `namespace` are both present and `name` contains no dot. The
+   fullname is the two joined by a dot.
+3. `name` is present without `namespace` and contains no dot. The namespace is
+   then taken from the most tightly enclosing named schema, or is the null
+   namespace if there is none.
+
+The third case makes an inner declaration's identity depend on its container.
+Extracting the inner declaration changes its fullname.
+
+Tooling that extracts an Avro Schema Object, or any named declaration nested
+within one, MUST first write an explicit `namespace` onto every named
+declaration that would otherwise resolve its namespace by case 3. The
+materialized value MUST be the namespace in effect at that declaration's
+position in the originating document.
+
+Tooling MUST NOT hand an extracted Avro declaration to an Avro tool with an
+inherited namespace left implicit.
+
+In the schema below, `LineItem` is `com.example.sales.LineItem`:
+
+~~~ json
 {
   "type": "record",
   "name": "Order",
@@ -164,51 +227,28 @@ container. Extract it, and its fullname silently changes.
 }
 ~~~
 
-`LineItem` here is `com.example.sales.LineItem`. Lift that inner record out
-for standalone processing and it becomes `LineItem` in the null namespace. It
-is a different type with the same JSON text.
+Extracting the inner record MUST produce:
 
-Tooling that extracts an Avro Schema Object, or any declaration nested within
-one, MUST first write the inherited `namespace` explicitly onto every named
-declaration that inherited it. The materialized value MUST be the namespace
-in effect at that declaration's position in the original document.
+~~~ json
+{
+  "$schema": "https://example.org/dialects/avro/1.12#",
+  "type": "record",
+  "name": "LineItem",
+  "namespace": "com.example.sales",
+  "fields": [ { "name": "sku", "type": "string" } ]
+}
+~~~
 
-That is the self-description parameter doing exactly what it is for. But the
-prose that consumes it does not quite fit. See
-[What Did Not Hold](#what-did-not-hold).
+Extracting it without the `namespace` produces `LineItem` in the null
+namespace, which is a different type with the same field list.
 
-## Type Naming and Scope
+# Type Determination for Non-JSON Serializations
 
-A named type is named by its fullname. Anonymous forms (`array`, `map`,
-`union`, and the primitives) name nothing and are out of scope for the
-aggregation rule.
+This section supplies the type-determination procedure required by "Schema
+Inspection for Non-JSON Serializations" of [BINDING].
 
-A resource's scope is the set of namespaces its declarations name. It is not
-one namespace, and it is not derived from the resource. An author picks the
-namespace per declaration, and a single Avro schema can populate several.
-
-Where two schema resources of one Description declare the same fullname with
-identical definitions, the aggregate holds one declaration. That is not a
-merge. It is Avro's own rule that a fullname has one definition.
-
-Where two schema resources declare the same fullname with differing
-definitions, Avro cannot express the result. Tooling MUST report a
-diagnostic. It MUST NOT rename either declaration, MUST NOT pick one, and
-MUST NOT synthesize a disambiguating namespace, because a synthesized
-namespace changes the fullname that consumers of the original resource
-already depend on.
-
-This exercises the branch of Part I's rule that JSON Structure never reaches.
-JSON Structure can always express the resulting scopes, because its
-namespaces are constructed from resource names. Avro cannot, because its
-namespaces are declared by the author. The diagnostic branch is not
-defensive drafting. It is the normal outcome for a dialect whose naming is
-author-controlled.
-
-## Type Determination for Non-JSON Serializations
-
-Avro defines its own JSON encoding. That encoding, and not intuition about
-the type names, governs.
+Avro defines its own JSON encoding [AVRO]. That encoding governs, and not the
+spelling of the Avro type name.
 
 | Avro type | JSON data type |
 | ---- | ---- |
@@ -225,47 +265,91 @@ the type names, governs.
 | `array` | array |
 | union | undetermined |
 
-Tooling MUST determine the type of a value as follows. All steps operate on
-the schema alone.
+Given a starting-point Avro Schema Object, tooling MUST determine the type of
+a value as follows. All steps operate on the schema alone.
 
-1. Resolve the starting point. Follow a named-type reference to its
-   definition within the same schema. Resolution is by fullname, with the
-   namespace-inheritance rule applied.
-2. Locate the value: a field under `fields`, the item type under `items`, or
-   the value type under `values`.
+1. Resolve the starting point to a type definition. Follow a named-type
+   reference to its definition within the same schema resource. Resolution is
+   by fullname, with the namespace rules of
+   [Materializing the Inherited Namespace](#materializing-the-inherited-namespace)
+   applied.
+2. Locate the value: a named field under `fields`, the item type under
+   `items`, or the value type under `values`.
 3. Take the located declaration's Avro type and map it through the table
    above.
-4. Ignore `logicalType`. A logical type annotates an underlying Avro type and
-   does not change the JSON encoding. `{"type": "long", "logicalType":
-   "timestamp-millis"}` is a **number**. `{"type": "int", "logicalType":
-   "date"}` is a **number**. `{"type": "bytes", "logicalType": "decimal"}` is
-   a **string**.
+4. Disregard `logicalType`. A logical type annotates an underlying Avro type
+   and does not change the JSON encoding. Tooling MUST map the underlying
+   type.
 5. A union yields "undetermined".
 
-Two of these will surprise anyone arriving from JSON Schema or JSON
-Structure.
+The procedure never inspects instance data. Avro requires an explicit type at
+every position and has no keyword that makes a declaration apply conditionally
+to the data.
 
-**Dates and timestamps are numbers.** Avro encodes `date` as days since the
-epoch and `timestamp-millis` as milliseconds since the epoch, both as JSON
-numbers. Tooling MUST NOT serialize them as formatted date strings in a form
-field, path segment, query parameter, or header value.
+## Logical Types
 
-**A nullable value is not its non-null branch.** Avro's JSON encoding tags
-union values: `["null", "string"]` encodes as `null` or as
-`{"string": "..."}`, never as a bare string. Tooling MUST NOT collapse a
-two-branch union with a `null` branch to the other branch's type. The JSON
-Structure binding permits exactly that collapse, and it is correct there,
-because JSON Structure's type unions are untagged. Carrying the shortcut
-across dialects produces a wrong wire type with no error raised.
+The mapping of the underlying type governs. Tooling MUST NOT infer a wire type
+from the logical type name.
 
-That is Part I's "dialect confusion" hazard in its most concrete form. The
-two dialects have the same feature, spelled almost the same way, with
-different wire consequences.
+| Declaration | JSON data type |
+| ---- | ---- |
+| `{"type": "int", "logicalType": "date"}` | number |
+| `{"type": "int", "logicalType": "time-millis"}` | number |
+| `{"type": "long", "logicalType": "timestamp-millis"}` | number |
+| `{"type": "long", "logicalType": "timestamp-micros"}` | number |
+| `{"type": "string", "logicalType": "uuid"}` | string |
+| `{"type": "bytes", "logicalType": "decimal"}` | string |
+| `{"type": "fixed", "size": 12, "logicalType": "duration"}` | string |
 
-## Worked Example
+An Avro `date` is a count of days from the epoch, and a `timestamp-millis` is
+a count of milliseconds from the epoch. Both are numbers. Tooling MUST NOT
+serialize either as a formatted date string in a form field, path segment,
+query parameter, or header value.
 
-An OpenAPI Description with two Avro Schema Objects, one of which needs the
-other's type at a nested position and therefore defines its own copy.
+## Unions
+
+Avro's JSON encoding tags union values [AVRO]. A value of union type is
+encoded as JSON `null` when its branch is `null`, and otherwise as a JSON
+object with one member, whose name is the branch's name and whose value is the
+recursively encoded value.
+
+A union therefore yields "undetermined", and tooling MUST report a diagnostic
+identifying the value rather than serializing it.
+
+Tooling MUST NOT reduce a two-branch union containing `null` to its other
+branch. A field of type `["null", "string"]` does not serialize as a bare
+string. It serializes as `null` or as `{"string": "..."}`.
+
+# Examples
+
+## An Avro Schema Object
+
+A `components.schemas` entry carrying its own `$schema`, referenced from
+elsewhere in the Description by an ordinary OAS `$ref` to
+`#/components/schemas/Pet`.
+
+~~~ yaml
+components:
+  schemas:
+    Pet:
+      $schema: https://example.org/dialects/avro/1.12#
+      type: record
+      name: Pet
+      namespace: com.example.petstore
+      fields:
+        - name: id
+          type: { type: string, logicalType: uuid }
+        - name: name
+          type: string
+        - name: tag
+          type: ["null", "string"]
+          default: null
+~~~
+
+The `id` field is a string on the wire. The `tag` field is a union and yields
+"undetermined" for non-JSON serializations.
+
+## Using `jsonSchemaDialect` as the Document Default
 
 ~~~ yaml
 openapi: 3.2.0
@@ -282,8 +366,24 @@ components:
       fields:
         - name: id
           type: { type: string, logicalType: uuid }
-        - name: name
-          type: string
+~~~
+
+Extraction for standalone processing MUST materialize `$schema`. No identity
+is materialized, and `Pet` already declares its namespace explicitly, so
+nothing else changes.
+
+## A Fullname Collision Across Resources
+
+~~~ yaml
+components:
+  schemas:
+    Pet:
+      type: record
+      name: Pet
+      namespace: com.example.petstore
+      fields:
+        - name: id
+          type: { type: string, logicalType: uuid }
     PetListResponse:
       type: record
       name: PetListResponse
@@ -298,115 +398,82 @@ components:
               fields:
                 - name: id
                   type: { type: string, logicalType: uuid }
-                - name: name
-                  type: string
                 - name: tags
                   type: { type: array, items: string }
 ~~~
 
-Both entries validate as Avro on their own. Aggregated, they collide: two
-definitions of `com.example.petstore.Pet` with different fields. The inner
-one inherited its namespace from `PetListResponse`.
+The inner `Pet` declares no namespace and inherits `com.example.petstore` from
+`PetListResponse`. Both resources therefore declare
+`com.example.petstore.Pet`, and the two declarations differ.
 
-Under the scope rule above, tooling reports a diagnostic and stops. It does
-not rename the inner record, and it does not push it into a synthesized
-namespace, because either would change a fullname that an Avro consumer of
-`PetListResponse` already reads off the wire.
+Each resource is valid Avro on its own. Aggregating them is a fullname
+collision, and tooling MUST report a diagnostic per
+[Type Naming and Scope](#type-naming-and-scope).
 
-The author fixes it in the Description, by giving the inner record its own
-namespace or by making the two definitions identical. That is the same
-outcome the JSON Structure binding reaches, by a mechanism the JSON Structure
-binding does not have.
+The author resolves it in the Description, by giving the inner record its own
+namespace or by making the two declarations identical.
 
-## Scorecard
+# Conformance
 
-### Applied unchanged
+A conforming Avro Schema Object is a Schema Object that meets three
+conditions. Its effective dialect is the URI of
+[Avro Dialect URI](#avro-dialect-uri). It is a JSON object
+([Usable Schema Forms](#usable-schema-forms)). Its content, disregarding any
+`$schema` attribute, is a valid Avro schema declaration that defines every
+named type it references.
 
-No Avro-specific text was needed for any of these:
+The roles of "Conformance" in [BINDING] apply. Two are narrowed by this
+binding's declarations:
 
-- Reference Object Classification
-- Dialect Selection
-- Recognizing and Rejecting Dialects
-- Reference Layer Separation
-- Validating the Description Itself
-- Conformance roles
-- Security: dialect confusion, untrusted schemas
+Resolver:
+: There is no cross-document mechanism to resolve. A conforming Resolver for
+  this binding resolves named-type references within a schema resource, and
+  MUST reject a reference that resolves to no definition there.
 
-### Inert by declaration
+Codec / Code Generator:
+: A conforming Codec or Code Generator MUST use the procedure of
+  [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations)
+  and MUST NOT fall back to the OAS-dialect procedure.
 
-The escape hatches were used, and nothing downstream broke:
+# Security Considerations
 
-- Default Resource Identity, and with it the whole JSON Pointer construction
-- Resolving Cross-Document References
-- Security: cross-document retrieval, resources outside the OAD, cyclic and
-  pathological import graphs
+The cross-document retrieval, external-resource, and import-graph
+considerations of [BINDING] do not apply. This binding declares no
+cross-document mechanism, so an Avro Schema Object cannot cause a retrieval.
 
-### Required real work, as designed
+Dialect confusion:
+: Avro and the OAS dialect share the `type` keyword and several of its
+  values. `{"type": "string"}` means the same in both. Others diverge
+  silently. `{"type": "string", "logicalType": "uuid"}` constrains the value
+  to a UUID in Avro, and constrains nothing beyond `string` under the OAS
+  dialect, which does not define `logicalType`. Tooling MUST NOT process an
+  Avro Schema Object as an OAS-dialect schema, or the reverse.
 
-- Type determination
-- Self-description
-- Type naming and scope
+Untrusted schemas:
+: An Avro schema obtained from an external source is untrusted input. Tooling
+  MUST validate it as an Avro schema declaration before use.
 
-## What Did Not Hold
+Recursive definitions:
+: Avro named types may be mutually recursive within one schema resource.
+  Tooling that expands a schema into an in-memory type or a validator MUST
+  detect recursion and MUST NOT expand indefinitely.
 
-Three findings. All three are defects in Part I, not in Avro.
+Otherwise, the security considerations of [OAS] and [BINDING] apply
+unchanged.
 
-**1. "Resource boundary as scope boundary" is wrong for author-scoped
-dialects.**
+# References
 
-Part I says tooling "MUST preserve the resource boundary as a scope boundary"
-and "MUST NOT merge the type declarations of two schema resources into a
-single scope."
+**[AVRO]** Apache Software Foundation, "Apache Avro Specification", version
+1.12.0. <https://avro.apache.org/docs/1.12.0/specification/>
 
-Avro cannot satisfy that while remaining Avro. Two resources that both
-declare types in `com.example.petstore` are in one scope because the author
-put them there. Refusing to merge them would contradict the Description.
+**[BINDING]** Vasters, C., "Binding JSON Structure to the OpenAPI
+Specification", [draft-vasters-json-structure-oas-binding](draft-vasters-json-structure-oas-binding.md).
 
-The rule generalizes badly from JSON Structure, where scope is derived from
-the resource, to any dialect where scope is declared inside the schema.
+**[OAS]** OpenAPI Initiative, "OpenAPI Specification", version 3.2.0.
+<https://spec.openapis.org/oas/v3.2.0.html>
 
-Proposed repair: state the invariant instead of the mechanism. Tooling MUST
-NOT introduce a collision that does not exist in the Description, and MUST
-NOT resolve a collision by renaming. Whether that requires preserving the
-resource boundary depends on the dialect, and the binding says which.
+**[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement
+Levels", BCP 14, RFC 2119, March 1997.
 
-**2. The self-description parameter is broader than the section that
-consumes it.**
-
-"Materializing Defaults for Standalone Processing" frames materialization as
-recovering "conveniences that depend on OAS context" — the dialect from
-`jsonSchemaDialect`, the identity from the Schema Object's position.
-
-Avro's inherited `namespace` is neither. It is a default supplied by the
-*dialect's own* containment rule, which the extraction breaks just as
-thoroughly. The parameter slot in the table accommodates it. The prose that
-sends tooling to that slot does not describe it.
-
-Proposed repair: extend the section to cover any value the extracted document
-would otherwise inherit from context, whether that context is the OpenAPI
-Description or the dialect's own nesting.
-
-**3. Part I never says a Schema Object must be a JSON object.**
-
-It is inherited from OAS and true throughout, so it never came up while
-binding a dialect whose schemas are always objects. It is the first thing
-that bites a dialect whose schema *document* form is sometimes an array or a
-string, and Avro is not unusual in that respect.
-
-Proposed repair: one sentence in "Dialect Selection". A dialect whose schema
-forms include non-object JSON values is bound only for its object forms, and
-the binding says which forms are usable at a Schema Object position.
-
-## Conclusion
-
-The framework held for four of the seven parameters without amendment,
-degraded cleanly for the two Avro does not have, and produced usable
-requirements for the one it does have differently.
-
-The three failures are all in Part I's *prose*, not its structure. Each is a
-place where a rule was written against the dialect at hand rather than
-against the parameter it belongs to. That is the specific failure mode a
-second binding is supposed to catch, and it caught three.
-
-Binding Avro took one document and no new machinery. That is the result the
-experiment was looking for.
+**[RFC8174]** Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key
+Words", BCP 14, RFC 8174, May 2017.
