@@ -1350,9 +1350,10 @@ schema resource is written in, as used by the OAS dialect-selection rules
 <dt id="section-2-3.5">JSON Structure Schema Object:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.6">
           <p id="section-2-3.6.1">A Schema Object whose effective dialect (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>)
-is one of the JSON Structure meta-schema URIs. Such a Schema Object is a
-JSON Structure schema and is processed per the JSON Structure
-specifications.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+is one of the canonical JSON Structure meta-schema URIs, or a separately
+configured derived URI whose base dialect is one of those URIs. Such a
+Schema Object is a JSON Structure schema and is processed per the JSON
+Structure specifications.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-2-3.7">Schema resource:</dt>
@@ -1497,11 +1498,13 @@ Reference Object is never itself dialect-selected, regardless of any
 <code>jsonSchemaDialect</code> default in scope.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 <p id="section-4.2-2">A JSON object at a Schema Object position is a Reference Object if and only
 if it is limited to the fixed fields of the OAS Reference Object (<code>$ref</code>,
-<code>summary</code>, <code>description</code>) and carries no other properties. Any additional
-property makes the object a Schema Object instead, because the Reference
-Object "cannot be extended with additional properties" (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>); such extra
-properties are not silently ignored, they change the object's kind. In
-particular, an object that carries <code>$schema</code> is always a Schema Object.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<code>summary</code>, <code>description</code>) and carries no other properties. An object that
+contains <code>$ref</code> together with any other property outside that fixed set is
+not a valid Reference Object. Tooling <span class="bcp14">MUST</span> reject that object as invalid at
+the OAS layer before dialect selection; it <span class="bcp14">MUST NOT</span> reinterpret the extra
+properties as dialect Schema Object content. An object without <code>$ref</code> is
+classified as a Schema Object and is then subject to dialect selection,
+including when it carries <code>$schema</code>.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
 <p id="section-4.2-3">A <code>components.schemas</code> entry that is a bare Reference Object (for example
 <code>{ "$ref": "#/components/schemas/Pet" }</code>) <span class="bcp14">MUST NOT</span> be treated as a schema in
 the selected dialect merely because the document default <code>jsonSchemaDialect</code>
@@ -1920,8 +1923,9 @@ meta-schema applied to each Schema Object.<a href="#section-4.10-2" class="pilcr
 supplies the declarations of <a href="#binding-parameters" class="auto internal xref">Section 4.1</a> and states the
 requirements specific to JSON Structure.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">A <strong>JSON Structure Schema Object</strong> is a Schema Object whose effective dialect
-(<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>) is one of the URIs in
-<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>.<a href="#section-5-2" class="pilcrow">¶</a></p>
+(<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>) is one of the canonical URIs in
+<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>, or a separately configured derived URI
+whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="pilcrow">¶</a></p>
 <div id="json-structure-binding-parameters">
 <section id="section-5.1">
         <h3 id="name-json-structure-binding-para">
@@ -2661,9 +2665,11 @@ components:
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-conformance" class="section-name selfRef">Conformance</a>
       </h2>
 <p id="section-7-1">A conforming JSON Structure Schema Object is a Schema Object whose effective
-dialect is one of the meta-schema URIs in <a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>
-and whose content is a valid JSON Structure schema for that meta-schema,
-including any add-ins it activates through <code>$uses</code>.<a href="#section-7-1" class="pilcrow">¶</a></p>
+dialect is one of the canonical meta-schema URIs in
+<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>, or a separately configured derived URI
+whose base dialect is one of those canonical URIs, and whose content is a
+valid JSON Structure schema for that meta-schema, including any add-ins it
+activates through <code>$uses</code>.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <p id="section-7-2">The roles below are defined for any dialect binding
 (<a href="#dialect-binding-requirements" class="auto internal xref">Section 4</a>); the parenthetical requirements name both
 the generic rule and, where one exists, its JSON Structure instantiation. An
