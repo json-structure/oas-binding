@@ -166,13 +166,18 @@ tooling MUST classify a JSON object at
 a Schema Object position as a Reference Object or a Schema Object before
 performing dialect selection, MUST classify by the fixed-field test alone, and
 MUST re-classify at each position independently. Dialect selection applies
-only to Schema Objects.
+only to Schema Objects. An object that carries `$ref` alongside any property
+outside the fixed set is not a valid Reference Object and MUST be rejected as
+invalid at the OAS layer; tooling MUST NOT reinterpret the extra properties as
+dialect Schema Object content.
 
-Also worth resolving while the text is open: "any properties added SHALL be
-ignored" and "cannot be extended" pull in opposite directions. Ignoring extra
-properties implies the object is still a Reference Object; the classification
-rule above requires that extra properties make it a Schema Object. One of the
-two readings should win explicitly.
+That last rule requires OAS to pick a reading it currently leaves open. "Any
+properties added SHALL be ignored" and "cannot be extended" pull in opposite
+directions: ignoring extra properties implies the object is still a Reference
+Object, while "cannot be extended" implies it is not one. A third option —
+reclassifying it as a Schema Object — is worse than either, because it hands a
+dialect processor an object the author plainly wrote as a reference. Rejection
+is the reading this binding assumes, and OAS should state it explicitly.
 
 ## 3. Unknown dialects have no defined behavior
 

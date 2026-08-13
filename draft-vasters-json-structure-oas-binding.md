@@ -693,7 +693,7 @@ constructs change meaning:
 | OAS / JSON Schema construct | JSON Structure equivalent |
 | ---- | ---- |
 | `type: string` + `format: date-time` / `uuid` / `binary` | dedicated types `datetime`, `uuid`, `binary` |
-| `type: integer` + `format: int64` | `int64` (and the other precise numeric types) |
+| `type: integer` + `format: int64` | `int64` (and the other precise numeric types); note that `int64`, `uint64`, `int128`, `uint128`, and `decimal` are represented as JSON strings, not numbers |
 | `nullable: true` | type union including `"null"` |
 | `discriminator` + `allOf` for subtyping | `abstract` + `$extends` |
 | `oneOf` of variants + `discriminator`, variants unrelated | `choice` with a `choices` map (tagged union, {{discriminated-unions}}) |
@@ -935,12 +935,21 @@ the type of a value as follows. All steps operate on the schema alone.
 3. The located declaration's `type` gives the JSON data type directly. JSON
    Structure requires `type` on every type declaration, so this step does not
    fail for a valid schema.
-4. Map the JSON Structure type to a JSON data type: the precise numeric types
-   (`int32`, `int64`, `float`, `double`, `decimal`, and the remaining numeric
-   types) map to number; `string`, `datetime`, `date`, `time`, `duration`,
-   `uuid`, `uri`, `binary`, and `jsonpointer` map to string; `boolean` maps to
-   boolean; `object`, `map`, and `choice` map to object; `array`, `set`, and
-   `tuple` map to array; `null` maps to null.
+4. Map the JSON Structure type to a JSON data type. The types `int64`,
+   `uint64`, `int128`, `uint128`, and `decimal` map to **string**: JSON
+   Structure represents them as strings because their ranges exceed the
+   interoperable range of a JSON number ({{JSTRUCT-CORE}}). The remaining
+   numeric types — `number`, `integer`, `int8`, `uint8`, `int16`, `uint16`,
+   `int32`, `uint32`, `float8`, `float`, and `double` — map to number.
+   `string`, `datetime`, `date`, `time`, `duration`, `uuid`, `uri`, `binary`,
+   and `jsonpointer` map to string; `boolean` maps to boolean; `object`,
+   `map`, and `choice` map to object; `array`, `set`, and `tuple` map to
+   array; `null` maps to null.
+
+   Tooling MUST NOT map the large-integer and decimal types to number. Doing
+   so produces an unquoted numeric literal in a form field, path segment,
+   query parameter, or header value, which loses precision and does not match
+   the JSON Structure representation of the same value.
 5. A type union yields "undetermined" unless exactly one member of the union
    remains after removing `null`, in which case that member's mapping applies.
    A `choice` used at a position requiring a scalar serialization yields
