@@ -2124,7 +2124,7 @@ constructs change meaning:<a href="#section-5.4.4-1" class="pilcrow">¶</a></p>
                   <code>type: integer</code> + <code>format: int64</code>
 </td>
                 <td class="text-left" rowspan="1" colspan="1">
-                  <code>int64</code> (and the other precise numeric types)</td>
+                  <code>int64</code> (and the other precise numeric types); note that <code>int64</code>, <code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> are represented as JSON strings, not numbers</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">
@@ -2458,12 +2458,21 @@ Structure requires <code>type</code> on every type declaration, so this step doe
 fail for a valid schema.<a href="#section-5.9-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.9-3.4">
-            <p id="section-5.9-3.4.1">Map the JSON Structure type to a JSON data type: the precise numeric types
-(<code>int32</code>, <code>int64</code>, <code>float</code>, <code>double</code>, <code>decimal</code>, and the remaining numeric
-types) map to number; <code>string</code>, <code>datetime</code>, <code>date</code>, <code>time</code>, <code>duration</code>,
-<code>uuid</code>, <code>uri</code>, <code>binary</code>, and <code>jsonpointer</code> map to string; <code>boolean</code> maps to
-boolean; <code>object</code>, <code>map</code>, and <code>choice</code> map to object; <code>array</code>, <code>set</code>, and
-<code>tuple</code> map to array; <code>null</code> maps to null.<a href="#section-5.9-3.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.9-3.4.1">Map the JSON Structure type to a JSON data type. The types <code>int64</code>,
+<code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> map to <strong>string</strong>: JSON
+Structure represents them as strings because their ranges exceed the
+interoperable range of a JSON number (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>). The remaining
+numeric types — <code>number</code>, <code>integer</code>, <code>int8</code>, <code>uint8</code>, <code>int16</code>, <code>uint16</code>,
+<code>int32</code>, <code>uint32</code>, <code>float8</code>, <code>float</code>, and <code>double</code> — map to number.
+<code>string</code>, <code>datetime</code>, <code>date</code>, <code>time</code>, <code>duration</code>, <code>uuid</code>, <code>uri</code>, <code>binary</code>,
+and <code>jsonpointer</code> map to string; <code>boolean</code> maps to boolean; <code>object</code>,
+<code>map</code>, and <code>choice</code> map to object; <code>array</code>, <code>set</code>, and <code>tuple</code> map to
+array; <code>null</code> maps to null.<a href="#section-5.9-3.4.1" class="pilcrow">¶</a></p>
+<p id="section-5.9-3.4.2">
+Tooling <span class="bcp14">MUST NOT</span> map the large-integer and decimal types to number. Doing
+so produces an unquoted numeric literal in a form field, path segment,
+query parameter, or header value, which loses precision and does not match
+the JSON Structure representation of the same value.<a href="#section-5.9-3.4.2" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.9-3.5">
             <p id="section-5.9-3.5.1">A type union yields "undetermined" unless exactly one member of the union

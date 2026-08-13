@@ -838,58 +838,63 @@ Table of Contents
    For readers migrating a Schema Object from the OAS dialect, the
    following constructs change meaning:
 
-   +===========================+======================================+
-   | OAS / JSON Schema         | JSON Structure equivalent            |
-   | construct                 |                                      |
-   +===========================+======================================+
-   | type: string + format:    | dedicated types datetime, uuid,      |
-   | date-time / uuid / binary | binary                               |
-   +---------------------------+--------------------------------------+
-   | type: integer + format:   | int64 (and the other precise numeric |
-   | int64                     | types)                               |
-   +---------------------------+--------------------------------------+
-   | nullable: true            | type union including "null"          |
-   +---------------------------+--------------------------------------+
-   | discriminator + allOf for | abstract + $extends                  |
-   | subtyping                 |                                      |
-   +---------------------------+--------------------------------------+
-   | oneOf of variants +       | choice with a choices map (tagged    |
-   | discriminator, variants   | union, Section 5.4.2)                |
-   | unrelated                 |                                      |
-   +---------------------------+--------------------------------------+
-   | oneOf of variants +       | choice with $extends and selector    |
-   | discriminator, variants   | (inline union, Section 5.4.2)        |
-   | share a base              |                                      |
-   +---------------------------+--------------------------------------+
-   | allOf / anyOf / oneOf as  | not used for composition;            |
-   | structural composition    | conditional-composition add-in is    |
-   |                           | validation-only                      |
-   +---------------------------+--------------------------------------+
-   | additionalProperties      | additionalProperties (unchanged:     |
-   | (boolean or schema)       | boolean, or a schema constraining    |
-   |                           | additional members)                  |
-   +---------------------------+--------------------------------------+
-   | required array            | required (unchanged; MAY also be an  |
-   |                           | array of arrays for mutually         |
-   |                           | exclusive alternative required sets) |
-   +---------------------------+--------------------------------------+
-   | enum                      | enum (unchanged)                     |
-   +---------------------------+--------------------------------------+
-   | const                     | const (unchanged)                    |
-   +---------------------------+--------------------------------------+
-   | readOnly / writeOnly      | not part of the JSON Structure type  |
-   |                           | system; retained as annotations on   |
-   |                           | individual properties entries        |
-   +---------------------------+--------------------------------------+
-   | deprecated on a property  | not part of the JSON Structure type  |
-   |                           | system; retained as an annotation on |
-   |                           | that property                        |
-   +---------------------------+--------------------------------------+
-   | $ref to another           | $import / $importdefs (Section 5.6)  |
-   | components.schemas entry  |                                      |
-   +---------------------------+--------------------------------------+
+    +======================+==========================================+
+    | OAS / JSON Schema    | JSON Structure equivalent                |
+    | construct            |                                          |
+    +======================+==========================================+
+    | type: string +       | dedicated types datetime, uuid, binary   |
+    | format: date-time /  |                                          |
+    | uuid / binary        |                                          |
+    +----------------------+------------------------------------------+
+    | type: integer +      | int64 (and the other precise numeric     |
+    | format: int64        | types); note that int64, uint64, int128, |
+    |                      | uint128, and decimal are represented as  |
+    |                      | JSON strings, not numbers                |
+    +----------------------+------------------------------------------+
+    | nullable: true       | type union including "null"              |
+    +----------------------+------------------------------------------+
+    | discriminator +      | abstract + $extends                      |
+    | allOf for subtyping  |                                          |
+    +----------------------+------------------------------------------+
+    | oneOf of variants +  | choice with a choices map (tagged union, |
+    | discriminator,       | Section 5.4.2)                           |
+    | variants unrelated   |                                          |
+    +----------------------+------------------------------------------+
+    | oneOf of variants +  | choice with $extends and selector        |
+    | discriminator,       | (inline union, Section 5.4.2)            |
+    | variants share a     |                                          |
+    | base                 |                                          |
+    +----------------------+------------------------------------------+
+    | allOf / anyOf /      | not used for composition; conditional-   |
+    | oneOf as structural  | composition add-in is validation-only    |
+    | composition          |                                          |
+    +----------------------+------------------------------------------+
+    | additionalProperties | additionalProperties (unchanged:         |
+    | (boolean or schema)  | boolean, or a schema constraining        |
+    |                      | additional members)                      |
+    +----------------------+------------------------------------------+
+    | required array       | required (unchanged; MAY also be an      |
+    |                      | array of arrays for mutually exclusive   |
+    |                      | alternative required sets)               |
+    +----------------------+------------------------------------------+
+    | enum                 | enum (unchanged)                         |
+    +----------------------+------------------------------------------+
+    | const                | const (unchanged)                        |
+    +----------------------+------------------------------------------+
+    | readOnly / writeOnly | not part of the JSON Structure type      |
+    |                      | system; retained as annotations on       |
+    |                      | individual properties entries            |
+    +----------------------+------------------------------------------+
+    | deprecated on a      | not part of the JSON Structure type      |
+    | property             | system; retained as an annotation on     |
+    |                      | that property                            |
+    +----------------------+------------------------------------------+
+    | $ref to another      | $import / $importdefs (Section 5.6)      |
+    | components.schemas   |                                          |
+    | entry                |                                          |
+    +----------------------+------------------------------------------+
 
-                                 Table 4
+                                  Table 4
 
    The three OAS annotation keywords above remain usable when they
    annotate an individual member inside properties, because the JSON
@@ -1122,12 +1127,22 @@ Table of Contents
        JSON Structure requires type on every type declaration, so this
        step does not fail for a valid schema.
 
-   4.  Map the JSON Structure type to a JSON data type: the precise
-       numeric types (int32, int64, float, double, decimal, and the
-       remaining numeric types) map to number; string, datetime, date,
-       time, duration, uuid, uri, binary, and jsonpointer map to string;
-       boolean maps to boolean; object, map, and choice map to object;
-       array, set, and tuple map to array; null maps to null.
+   4.  Map the JSON Structure type to a JSON data type.  The types
+       int64, uint64, int128, uint128, and decimal map to *string*: JSON
+       Structure represents them as strings because their ranges exceed
+       the interoperable range of a JSON number ([JSTRUCT-CORE]).  The
+       remaining numeric types — number, integer, int8, uint8, int16,
+       uint16, int32, uint32, float8, float, and double — map to number.
+       string, datetime, date, time, duration, uuid, uri, binary, and
+       jsonpointer map to string; boolean maps to boolean; object, map,
+       and choice map to object; array, set, and tuple map to array;
+       null maps to null.
+
+       Tooling MUST NOT map the large-integer and decimal types to
+       number.  Doing so produces an unquoted numeric literal in a form
+       field, path segment, query parameter, or header value, which
+       loses precision and does not match the JSON Structure
+       representation of the same value.
 
    5.  A type union yields "undetermined" unless exactly one member of
        the union remains after removing null, in which case that
