@@ -131,9 +131,10 @@ Dialect, meta-schema:
 
 JSON Structure Schema Object:
 : A Schema Object whose effective dialect ({{dialect-selection}})
-  is one of the JSON Structure meta-schema URIs. Such a Schema Object is a
-  JSON Structure schema and is processed per the JSON Structure
-  specifications.
+  is one of the canonical JSON Structure meta-schema URIs, or a separately
+  configured derived URI whose base dialect is one of those URIs. Such a
+  Schema Object is a JSON Structure schema and is processed per the JSON
+  Structure specifications.
 
 Schema resource:
 : A self-contained JSON Structure schema identified by an `$id`, within which
@@ -236,11 +237,13 @@ Reference Object is never itself dialect-selected, regardless of any
 
 A JSON object at a Schema Object position is a Reference Object if and only
 if it is limited to the fixed fields of the OAS Reference Object (`$ref`,
-`summary`, `description`) and carries no other properties. Any additional
-property makes the object a Schema Object instead, because the Reference
-Object "cannot be extended with additional properties" ({{OAS}}); such extra
-properties are not silently ignored, they change the object's kind. In
-particular, an object that carries `$schema` is always a Schema Object.
+`summary`, `description`) and carries no other properties. An object that
+contains `$ref` together with any other property outside that fixed set is
+not a valid Reference Object. Tooling MUST reject that object as invalid at
+the OAS layer before dialect selection; it MUST NOT reinterpret the extra
+properties as dialect Schema Object content. An object without `$ref` is
+classified as a Schema Object and is then subject to dialect selection,
+including when it carries `$schema`.
 
 A `components.schemas` entry that is a bare Reference Object (for example
 `{ "$ref": "#/components/schemas/Pet" }`) MUST NOT be treated as a schema in
@@ -584,8 +587,9 @@ supplies the declarations of {{binding-parameters}} and states the
 requirements specific to JSON Structure.
 
 A **JSON Structure Schema Object** is a Schema Object whose effective dialect
-({{dialect-selection}}) is one of the URIs in
-{{json-structure-meta-schema-uris}}.
+({{dialect-selection}}) is one of the canonical URIs in
+{{json-structure-meta-schema-uris}}, or a separately configured derived URI
+whose base dialect is one of those canonical URIs.
 
 ## JSON Structure Binding Parameters {#json-structure-binding-parameters}
 
@@ -1106,9 +1110,11 @@ components:
 # Conformance {#conformance}
 
 A conforming JSON Structure Schema Object is a Schema Object whose effective
-dialect is one of the meta-schema URIs in {{json-structure-meta-schema-uris}}
-and whose content is a valid JSON Structure schema for that meta-schema,
-including any add-ins it activates through `$uses`.
+dialect is one of the canonical meta-schema URIs in
+{{json-structure-meta-schema-uris}}, or a separately configured derived URI
+whose base dialect is one of those canonical URIs, and whose content is a
+valid JSON Structure schema for that meta-schema, including any add-ins it
+activates through `$uses`.
 
 The roles below are defined for any dialect binding
 ({{dialect-binding-requirements}}); the parenthetical requirements name both
