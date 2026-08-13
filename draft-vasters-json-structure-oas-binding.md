@@ -306,7 +306,7 @@ Pointer {{RFC6901}} from the Description's document root to the Schema
 Object, for example `/components/schemas/TelemetryMessage`.
 
 **Combine the two.** The default `$id` is the base URI with that JSON Pointer
-appended as an RFC 3986 fragment. The pointer uses RFC 6901 escaping for
+appended as an {{RFC3986}} fragment. The pointer uses {{RFC6901}} escaping for
 `~` and `/`, and fragment characters that are not permitted literally in a URI
 fragment MUST be percent-encoded. The base URI MUST be resolved according to
 the OAS base-URI rules before the fragment is appended; any existing fragment
