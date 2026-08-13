@@ -721,7 +721,7 @@ whose base dialect is one of those canonical URIs.
 | Identity comparison | Byte-exact; no normalization. |
 | Cross-document mechanism | `$import` and `$importdefs` {{JSTRUCT-IMPORT}}, whose values MUST be absolute URIs ({{cross-schema-reuse}}). |
 | Type determination | {{json-structure-serialization-inspection}}. |
-| Data media types | None. JSON Structure describes JSON data and defines no wire encoding of its own. Bodies are encoded per their media type ({{body-encodings}}). |
+| Data media types | None. JSON Structure defines no framing of its own. It does fix the JSON representation of several types ({{json-structure-body-encodings}}). |
 | Type naming and scope | A type is named by `name`. Scope is derived from the schema resource: a resource's scope is its root namespace ({{aggregate-namespaces}}). |
 | Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). No JSON Structure declaration inherits a value from an enclosing declaration. |
 | Usable schema forms | Every JSON Structure schema is a JSON object. All forms are usable. |
@@ -1230,6 +1230,43 @@ This separation lets a generator produce a deterministic memory layout from
 Core keywords while a gateway or server enforces the full validation and
 composition rules against the same schema.
 
+## Data Media Types and JSON Representation {#json-structure-body-encodings}
+
+This section supplies the data media types declaration required by
+{{body-encodings}}. The declaration is none.
+
+JSON Structure defines no message framing. It has no container format, no
+schema fingerprint, and no media type of its own. A body described by a JSON
+Structure Schema Object is carried in whatever media type its Media Type
+Object names, and this binding does not change how that media type frames the
+body. No schema travels with the body, so the Schema Object is the only
+schema, and the schema-on-the-wire requirements of {{body-encodings}} do not
+apply.
+
+JSON Structure does fix how several values appear inside a JSON body. These
+representations cannot be inferred from the value, and a consumer that reads a
+JSON Structure Schema Object as though it were an OAS-dialect schema gets them
+wrong ({{JSTRUCT-CORE}}):
+
+* `int64`, `uint64`, `int128`, `uint128`, and `decimal` appear as JSON
+  strings. Interoperable JSON numbers span -2^53 to 2^53-1, and these types
+  exceed that range.
+* `binary` appears as a string, Base64 by default. `contentEncoding` selects
+  another alphabet, and `contentCompression` names a compression applied
+  before the encoding.
+* `date`, `datetime`, `time`, and `duration` appear as strings in the
+  corresponding RFC 3339 productions.
+
+Tooling MUST apply these representations when it reads or writes a body of
+`application/json`, or of any media type whose payload is JSON. Tooling MUST
+NOT emit an `int64` as a JSON number. Tooling MUST NOT surface a quoted
+`int64` to an application as a string-typed value.
+
+JSON Structure encoding specifications that map the type system onto a
+non-JSON wire format are separate specifications. Each is a separate dialect
+binding and declares its own data media types under {{binding-parameters}}.
+This document does not cover them.
+
 ## Type Determination for Non-JSON Serializations {#json-structure-serialization-inspection}
 
 This section supplies the type-determination procedure required by
@@ -1561,6 +1598,14 @@ Untrusted schemas:
   validate it against its declared dialect before use and SHOULD apply the
   same input-handling precautions as for any other externally retrieved
   document.
+
+Compressed binary values:
+: A JSON Structure `binary` value MAY name a compression through
+  `contentCompression`, applied before the value is encoded
+  ({{json-structure-body-encodings}}). Decompression is driven by data on the
+  wire. Tooling MUST enforce a bound on the decompressed size of such a value
+  and on its decompression ratio, and MUST reject a value that exceeds either.
+  Tooling MUST reject a compression it has not been configured to accept.
 
 Otherwise, the security considerations of OAS {{OAS}} apply unchanged.
 
