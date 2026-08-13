@@ -488,6 +488,42 @@ Table of Contents
    TelemetryMessage.  An explicit identity on the Schema Object always
    takes precedence over this default.
 
+   A Schema Object outside components.schemas exercises the escaping
+   rules.  Consider an inline Schema Object at the JSON request body of
+   POST /orders/{orderId}, in a Description with the same base URI.  Two
+   of its reference-tokens contain characters that the two escaping
+   steps treat differently:
+
+    +=================+=====================+=========================+
+    |Reference-token  | After step 2 (JSON  | After step 3 (fragment  |
+    |                 | Pointer escaping)   | encoding)               |
+    +=================+=====================+=========================+
+    |paths            | paths               | paths                   |
+    +-----------------+---------------------+-------------------------+
+    |/orders/{orderId}| ~1orders~1{orderId} | ~1orders~1%7BorderId%7D |
+    +-----------------+---------------------+-------------------------+
+    |post             | post                | post                    |
+    +-----------------+---------------------+-------------------------+
+    |requestBody      | requestBody         | requestBody             |
+    +-----------------+---------------------+-------------------------+
+    |content          | content             | content                 |
+    +-----------------+---------------------+-------------------------+
+    |application/json | application~1json   | application~1json       |
+    +-----------------+---------------------+-------------------------+
+    |schema           | schema              | schema                  |
+    +-----------------+---------------------+-------------------------+
+
+                                  Table 2
+
+   A / inside a path template or a media type is part of the reference-
+   token, not a pointer separator, so step 2 escapes it as ~1.  That ~1
+   then passes through step 3 unchanged, because ~ and digits are
+   permitted literally in an [RFC3986] fragment.  The braces of the path
+   template are not permitted there, so step 3 percent-encodes them with
+   uppercase hexadecimal digits.  The resulting default identity is:
+
+https://example.com/api/openapi.yaml#/paths/~1orders~1%7BorderId%7D/post/requestBody/content/application~1json/schema
+
    Tooling APIs that process an encapsulated or offline Description MUST
    expose the selected base URI as an explicit input when it is not
    available from $self or a retrieval URI.  A filesystem path MUST NOT
@@ -723,7 +759,7 @@ Table of Contents
       |                  | resource root (Section 5.3).            |
       +------------------+-----------------------------------------+
 
-                                 Table 2
+                                 Table 3
 
 5.2.  JSON Structure Meta-Schema URIs
 
@@ -755,7 +791,7 @@ Table of Contents
    |                              |required to enable any of them.      |
    +------------------------------+-------------------------------------+
 
-                                  Table 3
+                                  Table 4
 
    The extended meta-schema is RECOMMENDED as the document default for
    API design, because it makes $import available while keeping
@@ -853,12 +889,30 @@ Table of Contents
      total:
        type: decimal
 
-   $schema is the effective dialect inherited from jsonSchemaDialect.
-   $id is the default identity of Section 4.5, in which /orders and
-   application/json appear as the escaped reference-tokens ~1orders and
-   application~1json. name comes from step 2: the path template /orders,
-   the method post, and the role requestBody, with the characters
-   outside the identifier set removed.
+   $schema is the effective dialect inherited from jsonSchemaDialect,
+   and $id is the default identity constructed per Section 4.5.
+
+   name comes from step 2.  Three parts of the position identify it, and
+   each contributes one segment:
+
+         +===============+========================+=============+
+         | Part          | Value at this position | Segment     |
+         +===============+========================+=============+
+         | Path template | /orders                | Orders      |
+         +---------------+------------------------+-------------+
+         | Method        | post                   | Post        |
+         +---------------+------------------------+-------------+
+         | Role          | requestBody            | RequestBody |
+         +---------------+------------------------+-------------+
+
+                                 Table 5
+
+   Each segment drops the characters outside [A-Za-z0-9_] and
+   capitalizes its first letter; the segments are then concatenated in
+   that order, giving OrdersPostRequestBody.  The remaining reference-
+   tokens of the pointer — paths, content, application/json, schema —
+   contribute nothing, because they are structural rather than
+   identifying.
 
    Distinct positions can still derive the same name.  Two media types
    under the same operation — application/json and application/xml at
@@ -1572,7 +1626,7 @@ Appendix A.  Migrating a Schema Object from the OAS Dialect
     | entry                |                                          |
     +----------------------+------------------------------------------+
 
-                                  Table 4
+                                  Table 6
 
    The three OAS annotation keywords above remain usable when they
    annotate an individual member inside properties, because the JSON

@@ -1695,11 +1695,116 @@ byte-exact unless the binding declares otherwise (<a href="#binding-parameters" 
 <code>https://example.com/api/openapi.yaml#/components/schemas/TelemetryMessage</code>.
 An explicit identity on the Schema Object always takes precedence over this
 default.<a href="#section-4.5-12" class="pilcrow">¶</a></p>
-<p id="section-4.5-13">Tooling APIs that process an encapsulated or offline Description <span class="bcp14">MUST</span> expose
+<p id="section-4.5-13">A Schema Object outside <code>components.schemas</code> exercises the escaping rules.
+Consider an inline Schema Object at the JSON request body of
+<code>POST /orders/{orderId}</code>, in a Description with the same base URI. Two of its
+reference-tokens contain characters that the two escaping steps treat
+differently:<a href="#section-4.5-13" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Reference-token</th>
+              <th class="text-left" rowspan="1" colspan="1">After step 2 (JSON Pointer escaping)</th>
+              <th class="text-left" rowspan="1" colspan="1">After step 3 (fragment encoding)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>paths</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>paths</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>paths</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>/orders/{orderId}</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>~1orders~1{orderId}</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>~1orders~1%7BorderId%7D</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>post</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>post</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>post</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>requestBody</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>requestBody</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>requestBody</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>content</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>content</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>content</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>application/json</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>application~1json</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>application~1json</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>schema</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>schema</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>schema</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.5-15">A <code>/</code> inside a path template or a media type is part of the reference-token,
+not a pointer separator, so step 2 escapes it as <code>~1</code>. That <code>~1</code> then passes
+through step 3 unchanged, because <code>~</code> and digits are permitted literally in
+an <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> <code>fragment</code>. The braces of the path template are not permitted
+there, so step 3 percent-encodes them with uppercase hexadecimal digits. The
+resulting default identity is:<a href="#section-4.5-15" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.5-16">
+<pre>
+https://example.com/api/openapi.yaml#/paths/~1orders~1%7BorderId%7D/post/requestBody/content/application~1json/schema
+</pre><a href="#section-4.5-16" class="pilcrow">¶</a>
+</div>
+<p id="section-4.5-17">Tooling APIs that process an encapsulated or offline Description <span class="bcp14">MUST</span> expose
 the selected base URI as an explicit input when it is not available from
 <code>$self</code> or a retrieval URI. A filesystem path <span class="bcp14">MUST NOT</span> be concatenated
 directly into the default identity; it <span class="bcp14">MUST</span> first be converted to the URI
-used by the tool's retrieval/base-URI model.<a href="#section-4.5-13" class="pilcrow">¶</a></p>
+used by the tool's retrieval/base-URI model.<a href="#section-4.5-17" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="materializing-defaults">
@@ -1931,8 +2036,8 @@ whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="
         <h3 id="name-json-structure-binding-para">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-json-structure-binding-para" class="section-name selfRef">JSON Structure Binding Parameters</a>
         </h3>
-<table class="center" id="table-2">
-          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<table class="center" id="table-3">
+          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Parameter</th>
@@ -1978,8 +2083,8 @@ whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-json-structure-meta-schema-" class="section-name selfRef">JSON Structure Meta-Schema URIs</a>
         </h3>
 <p id="section-5.2-1">The following URIs identify the JSON Structure dialects:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-3">
-          <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Meta-schema URI</th>
@@ -2107,13 +2212,55 @@ properties:
     type: decimal
 </pre><a href="#section-5.3-8" class="pilcrow">¶</a>
 </div>
-<p id="section-5.3-9"><code>$schema</code> is the effective dialect inherited from <code>jsonSchemaDialect</code>. <code>$id</code>
-is the default identity of <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>, in which <code>/orders</code>
-and <code>application/json</code> appear as the escaped reference-tokens <code>~1orders</code> and
-<code>application~1json</code>. <code>name</code> comes from step 2: the path template <code>/orders</code>,
-the method <code>post</code>, and the role <code>requestBody</code>, with the characters outside
-the identifier set removed.<a href="#section-5.3-9" class="pilcrow">¶</a></p>
-<p id="section-5.3-10">Distinct positions can still derive the same name. Two media types under the
+<p id="section-5.3-9"><code>$schema</code> is the effective dialect inherited from <code>jsonSchemaDialect</code>, and
+<code>$id</code> is the default identity constructed per <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>.<a href="#section-5.3-9" class="pilcrow">¶</a></p>
+<p id="section-5.3-10"><code>name</code> comes from step 2. Three parts of the position identify it, and each
+contributes one segment:<a href="#section-5.3-10" class="pilcrow">¶</a></p>
+<table class="center" id="table-5">
+          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Part</th>
+              <th class="text-left" rowspan="1" colspan="1">Value at this position</th>
+              <th class="text-left" rowspan="1" colspan="1">Segment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Path template</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>/orders</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>Orders</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Method</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>post</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>Post</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Role</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>requestBody</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>RequestBody</code>
+</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-5.3-12">Each segment drops the characters outside <code>[A-Za-z0-9_]</code> and capitalizes its
+first letter; the segments are then concatenated in that order, giving
+<code>OrdersPostRequestBody</code>. The remaining reference-tokens of the pointer —
+<code>paths</code>, <code>content</code>, <code>application/json</code>, <code>schema</code> — contribute nothing,
+because they are structural rather than identifying.<a href="#section-5.3-12" class="pilcrow">¶</a></p>
+<p id="section-5.3-13">Distinct positions can still derive the same name. Two media types under the
 same operation — <code>application/json</code> and <code>application/xml</code> at <code>POST /orders</code> —
 occupy different pointers but share path, method, and role; so do the path
 templates <code>/orders</code> and <code>/Orders</code>, which differ in the Description but not
@@ -2121,12 +2268,12 @@ after the leading character is capitalized. Tooling <span class="bcp14">MAY</spa
 distinguishing segments, such as the media type, provided the result stays
 deterministic. Where it cannot, it <span class="bcp14">MUST</span> reject the extraction rather than
 emit the same name twice; the author resolves the conflict by declaring an
-explicit <code>name</code> on one of the Schema Objects.<a href="#section-5.3-10" class="pilcrow">¶</a></p>
-<p id="section-5.3-11">A <code>components.schemas</code> entry usually needs none of this. An entry stored
+explicit <code>name</code> on one of the Schema Objects.<a href="#section-5.3-13" class="pilcrow">¶</a></p>
+<p id="section-5.3-14">A <code>components.schemas</code> entry usually needs none of this. An entry stored
 under <code>TelemetryMessage</code> derives <code>TelemetryMessage</code> by step 1. The component
 key remains the OAS address rather than the JSON Structure name, so an
 explicit <code>name</code> on the Schema Object still takes precedence and the two need
-not be equal.<a href="#section-5.3-11" class="pilcrow">¶</a></p>
+not be equal.<a href="#section-5.3-14" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="type-system">
@@ -2874,8 +3021,8 @@ document.<a href="#section-8-1.10.1" class="pilcrow">¶</a></p>
 normatively elsewhere in this document.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <p id="appendix-A-2">For readers migrating a Schema Object from the OAS dialect, the following
 constructs change meaning:<a href="#appendix-A-2" class="pilcrow">¶</a></p>
-<table class="center" id="table-4">
-        <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
+<table class="center" id="table-6">
+        <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">OAS / JSON Schema construct</th>
