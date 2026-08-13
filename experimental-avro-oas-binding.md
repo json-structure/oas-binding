@@ -53,15 +53,15 @@ The Avro dialect is selected by the URI:
 https://example.org/dialects/avro/1.12#
 ~~~
 
-Avro defines no meta-schema and no dialect URI, because it defines no
-`$schema` keyword to carry one. The URI above is a placeholder for the
-purposes of this document. A production binding requires a URI minted under
-the control of whoever governs the dialect. No such URI exists.
+Avro defines no meta-schema and no dialect URI. It defines no `$schema`
+keyword to carry one. The URI above is a placeholder for the purposes of this
+document. A production binding requires a URI minted under the control of
+whoever governs the dialect, and no such URI has been minted.
 
 Recognition of this URI is subject to "Recognizing and Rejecting Dialects" of
 [BINDING] unchanged. The binding declares no normalization, so matching is
 byte-exact. Avro has no derived-meta-schema mechanism, so the derived-URI rule
-of that section has nothing to apply to.
+of that section does not apply.
 
 # Usable Schema Forms
 
@@ -115,7 +115,7 @@ An Avro schema resource in an OpenAPI Description is addressable by its OAS
 location, and by nothing else. Tooling MUST NOT synthesize a URI identity and
 write it into an Avro Schema Object.
 
-Because there is no identity keyword, an extracted Avro Schema Object carries
+There is no identity keyword, so an extracted Avro Schema Object carries
 no identity. "Materializing Defaults for Standalone Processing" of [BINDING]
 reduces, for this binding, to `$schema` plus the namespace materialization of
 [Materializing Namespaces](#materializing-namespaces).
@@ -128,10 +128,11 @@ as follows.
 The OpenAPI layer is unchanged. An OAS `$ref` targeting an Avro Schema Object
 as a whole resolves per [OAS].
 
-The dialect layer is Avro's named-type reference: a JSON string in a schema
-position that names a type by fullname. It resolves only within the schema
-resource that contains it, subject to Avro's rule that a name is defined
-before it is used, in depth-first left-to-right traversal order [AVRO].
+The dialect layer is Avro's named-type reference, being a JSON string in a
+schema position that names a type by fullname. It resolves only within the
+schema resource that contains it, subject to Avro's rule that a name is
+defined before it is used, in depth-first left-to-right traversal order
+[AVRO].
 
 This binding declares no cross-document mechanism. "Resolving Cross-Document
 References" of [BINDING] therefore does not apply, and neither do its
@@ -145,8 +146,7 @@ Consequently:
 * Two `components.schemas` entries that each need a given type MUST each
   define it.
 * An Avro field type MUST NOT be an OAS Reference Object. A `$ref` at a field
-  type position is not an Avro schema, and Avro's metadata allowance does not
-  make it one.
+  type position is not an Avro schema.
 
 Reuse across schema resources is available only at the OpenAPI layer, through
 an OAS `$ref` targeting a whole Schema Object. A type needed at a position
@@ -173,61 +173,51 @@ null namespace [AVRO].
 A declaration's namespace is **undeclared** where nothing in that chain
 supplies one. Avro resolves such a declaration to the null namespace.
 
-The two cases need opposite treatment, and conflating them is what makes Avro
-look like it has no scoping problem.
+The two cases are subject to different rules, stated in the two sections
+below.
 
-## Declared Namespaces Are Binding
+## Declared Namespaces
 
 Where a namespace is declared, scope is author-declared and is not derived
 from the schema resource. A single Avro schema resource MAY populate several
 namespaces. Two schema resources of one Description MAY populate the same
-namespace, and where they do, that is the author placing them in one scope
-deliberately.
+namespace.
 
 Tooling MUST preserve a declared namespace exactly. Tooling MUST NOT rewrite,
 prefix, or qualify it.
 
-## Undeclared Namespaces Are Not a Scoping Decision
+## Undeclared Namespaces
 
 Every undeclared declaration in every schema resource of a Description
-resolves to the same null namespace. That is not the author choosing to share
-a scope. It is the absence of a choice, and it produces exactly the collision
-that two JSON Structure schema resources produce when their type spaces are
-flattened.
+resolves to the same null namespace. Two `components.schemas` entries that
+each define a record named `Pet`, neither declaring a namespace, both hold the
+fullname `Pet`. The Description states nothing about whether the two are the
+same type.
 
-Two `components.schemas` entries that each define a record named `Pet`,
-neither declaring a namespace, both hold the fullname `Pet`. Nothing either
-author wrote says the two are the same type. Aggregating them as one type
-would assert something the Description does not contain.
+Tooling MUST materialize a namespace for every undeclared declaration before
+aggregating, per [Materializing Namespaces](#materializing-namespaces). The
+materialized namespace is derived from the schema resource.
 
-Tooling MUST therefore materialize a namespace for every undeclared
-declaration before aggregating, per
-[Materializing Namespaces](#materializing-namespaces). The materialized
-namespace is derived from the schema resource, which is the scope boundary
-the Description's own structure implies.
-
-An Avro Schema Object SHOULD declare a namespace. Relying on materialization
-makes a type's identity depend on where the schema sits in the Description
-rather than on what the author intended, and moving a schema resource then
-changes the type.
+An Avro Schema Object SHOULD declare a namespace. Under materialization, a
+type's identity follows the schema's position in the Description, and moving
+a schema resource changes the type.
 
 ## Collisions After Materialization
 
 The rules below apply to fullnames as they stand once
 [Materializing Namespaces](#materializing-namespaces) has been applied. A
 collision that survives materialization is a collision between declared
-namespaces, and is therefore an author's arrangement rather than an artifact.
+namespaces.
 
 Where two declarations across schema resources share a fullname and are
-identical, the aggregate holds one declaration. Avro admits no other outcome,
-since a fullname has at most one definition [AVRO].
+identical, the aggregate holds one declaration. A fullname has at most one
+definition [AVRO].
 
 Where two declarations across schema resources share a fullname and differ,
 tooling MUST report a diagnostic identifying both. Tooling MUST NOT rename
 either declaration. Tooling MUST NOT select one and discard the other. Tooling
-MUST NOT synthesize a disambiguating namespace, because a synthesized
-namespace changes a fullname that consumers of the original resource already
-depend on.
+MUST NOT synthesize a disambiguating namespace. A synthesized namespace
+changes a fullname that consumers of the original resource already depend on.
 
 # Materializing Namespaces
 
@@ -263,11 +253,11 @@ namespace left implicit.
 
 ## Deriving the Resource Namespace
 
-A resource namespace is a valid Avro namespace, so each of its dot-separated
+A resource namespace is a valid Avro namespace. Each of its dot-separated
 parts MUST start with `[A-Za-z_]` and MUST subsequently contain only
 `[A-Za-z0-9_]` [AVRO]. OAS component keys are less restrictive, being
-`^[a-zA-Z0-9\.\-_]+$` [OAS], so a key may contain a hyphen or begin with a
-digit and not be usable.
+`^[a-zA-Z0-9\.\-_]+$` [OAS]. A key containing a hyphen, or beginning with a
+digit, is not usable.
 
 Tooling MUST derive the resource namespace in this order:
 
@@ -284,7 +274,7 @@ The derivation MUST be deterministic for the same Description and JSON
 Pointer. Where two schema resources derive the same resource namespace,
 tooling MUST reject the aggregation.
 
-## Example: An Inherited Declared Namespace
+## Example: Inherited Namespace
 
 In the schema below, `LineItem` is `com.example.sales.LineItem`:
 
@@ -318,21 +308,20 @@ Extracting the inner record MUST produce:
 Extracting it without the `namespace` produces `LineItem` in the null
 namespace, which is a different type with the same field list.
 
-## Materialization and the Wire
+## Effect on Encoded Data
 
-The two cases differ in whether they change the data on the wire, and tooling
-MUST NOT confuse them.
+The two materialization cases differ in their effect on encoded data.
 
 Materializing a declared namespace does not change the fullname. The Parsing
 Canonical Form transformation already replaces short names with fullnames
-using the applicable namespaces [AVRO], so the schema as written and the
-schema with the namespace written out have the same canonical form and the
-same fingerprint. This materialization is wire-neutral.
+using the applicable namespaces [AVRO]. The schema as written and the schema
+with the namespace written out therefore have the same canonical form and the
+same fingerprint.
 
-Materializing a resource namespace does change the fullname, and therefore
-changes the canonical form and the fingerprint.
+Materializing a resource namespace changes the fullname, and with it the
+canonical form and the fingerprint.
 
-Resource-namespace materialization is for the aggregate type space and for
+Resource-namespace materialization applies to the aggregate type space and to
 code generation. Tooling MUST encode and decode message bodies against the
 schema as written, with declared namespaces materialized and undeclared ones
 left in the null namespace. Tooling MUST compute fingerprints against that
@@ -340,11 +329,11 @@ same form. Tooling MUST NOT put a resource-namespace-materialized schema on
 the wire, and MUST NOT compute a fingerprint from one.
 
 Where a Description uses a media type of
-[Encodings and Media Types](#encodings-and-media-types), an author who leaves
-namespaces undeclared therefore gets one type identity for code generation
-and a different fullname on the wire. Declaring namespaces avoids the split.
+[Encodings and Media Types](#encodings-and-media-types) and leaves namespaces
+undeclared, the aggregate type space and the wire hold different fullnames for
+the same declaration. Declaring namespaces keeps the two the same.
 
-## A Note on Parsing Canonical Form
+## Parsing Canonical Form
 
 The Parsing Canonical Form transformation keeps only the attributes relevant
 to parsing data, which are `type`, `name`, `fields`, `symbols`, `items`,
@@ -359,8 +348,7 @@ This section supplies the data media types declaration required by
 Avro specifies two serialization encodings, binary and JSON [AVRO]. Two
 additional framings wrap the binary encoding: single-object encoding and the
 Object Container File. The four differ in what they carry alongside the data,
-which is what determines whether a body can be decoded from the Description
-alone.
+and therefore in whether a body can be decoded from the Description alone.
 
 | Media type | Framing | Carries the schema |
 | ---- | ---- | ---- |
@@ -372,9 +360,9 @@ alone.
 Binary encoding "does not include field names, self-contained information
 about the types of individual bytes, nor field or record separators", so
 "readers are wholly reliant on the schema used when the data was encoded"
-[AVRO]. The JSON encoding is no better in this respect. It "does not
-distinguish between int and long, float and double, records and maps, enums
-and strings" [AVRO], and the schema is equally required to read it.
+[AVRO]. The JSON encoding also requires the schema. It "does not distinguish
+between int and long, float and double, records and maps, enums and strings"
+[AVRO].
 
 A body of any of these media types MUST NOT be subjected to the procedure of
 [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations).
@@ -385,47 +373,47 @@ decoded as a whole by the Avro codec.
 
 Avro has no IANA-registered media type. Of the four above, only `avro/binary`
 appears in [AVRO], and it appears there for a different payload than this
-binding gives it. See
-[The `avro/binary` Collision](#the-avrobinary-collision).
+binding gives it, per
+[Conflict with Avro RPC](#conflict-with-avro-rpc).
 
-`application/avro+json` is a widespread convention with no registration. The
-two `vnd.apache.avro` media types are provisional names coined by this
-document, because no name exists for those framings.
+`application/avro+json` is a convention in common use with no registration.
+The two `vnd.apache.avro` media types are provisional names coined by this
+document, no name being defined for those framings.
 
 A deployment MAY use other media types for these framings. Where it does, the
 Description MUST make the framing unambiguous, and tooling MUST NOT infer a
 framing from a media type this binding does not declare.
 
-## The `avro/binary` Collision
+## Conflict with Avro RPC
 
 [AVRO] specifies `avro/binary` as the HTTP content type for Avro RPC, under
-"HTTP as Transport". An Avro RPC body is not a bare datum. It carries a
-handshake, framed buffers, a request or response metadata map, a message name
-or error flag, and only then the parameters or response value.
+"HTTP as Transport". An Avro RPC body carries a handshake, framed buffers, a
+request or response metadata map, a message name or error flag, and then the
+parameters or response value.
 
 This binding uses `avro/binary` for a bare binary-encoded datum, which is the
 prevailing usage in HTTP APIs that are not Avro RPC. The two payloads share a
 media type and are not interchangeable.
 
 Tooling conforming to this binding MUST treat an `avro/binary` body as a bare
-datum. It MUST NOT expect an Avro RPC handshake, framing, or call header.
-An API that speaks Avro RPC is not described by this binding
+datum. It MUST NOT expect an Avro RPC handshake, framing, or call header. An
+API that speaks Avro RPC is outside the scope of this binding
 ([Protocols](#protocols)).
 
 ## Writer's Schema and Reader's Schema
 
-Avro decodes with two schemas: the writer's schema, which the data was encoded
-against, and the reader's schema, which the application expects. Where they
-differ, the reader resolves them per the schema resolution rules of [AVRO].
+Avro decodes with two schemas. The writer's schema is the one the data was
+encoded against, and the reader's schema is the one the application expects.
+Where they differ, the reader resolves them per the schema resolution rules of
+[AVRO].
 
 The media type determines what role the Schema Object plays.
 
 For `avro/binary` and `application/avro+json`, the body carries no schema. The
 Schema Object is the writer's schema. Tooling MUST encode a body of these
 media types against the Schema Object. Tooling MUST NOT decode such a body
-unless it has established the writer's schema, either because it accepts the
-Schema Object as the writer's schema or because it obtained the writer's
-schema out of band.
+until it has established the writer's schema, either by accepting the Schema
+Object as the writer's schema or by obtaining the writer's schema out of band.
 
 For `application/vnd.apache.avro.single-object`, the body carries an 8-byte
 fingerprint of the writer's schema in Parsing Canonical Form. Tooling MUST
@@ -440,8 +428,8 @@ Tooling MUST decode the file against the schema the file carries, and MUST NOT
 decode it against the Schema Object. Tooling MAY use the Schema Object as the
 reader's schema, and MUST report a diagnostic where the two fail to resolve.
 
-The body outranks the Description for this media type. A Description that
-disagrees with a container file describes an expectation, not the data.
+For this media type the Schema Object states what the Description expects, and
+the file states what the data is.
 
 ## Schema Evolution and the Description
 
@@ -456,11 +444,10 @@ field the reader requires are not.
 
 This binding defines no mechanism for a Description to carry more than one
 version of a schema. Where readers and writers may hold different versions, a
-Description MUST use
-`application/vnd.apache.avro.single-object` or
+Description MUST use `application/vnd.apache.avro.single-object` or
 `application/vnd.apache.avro.ocf`, whose framings identify the writer's schema
 on the wire. Tooling MUST NOT rely on schema resolution for an `avro/binary`
-or `application/avro+json` body, because nothing in that body identifies which
+or `application/avro+json` body. Nothing in such a body identifies which
 schema it was written against.
 
 ## Sequential Bodies
@@ -484,7 +471,7 @@ metadata property. Implementations are required to support `null` and
 The codec is internal to the file. It is not HTTP `Content-Encoding`, and
 tooling MUST NOT set or interpret `Content-Encoding` on its behalf.
 
-## Fields That Are Not Parts
+## Fields Within a Datum
 
 A `bytes` or `fixed` field inside an Avro datum is encoded inside the Avro
 framing. It is not a `multipart` part and carries no media type of its own.
@@ -500,9 +487,8 @@ This binding covers Avro schema declarations. It does not cover Avro protocol
 declarations, the `messages` and `errors` constructs, the handshake, message
 framing, or the call format [AVRO].
 
-An OpenAPI Description already describes the operation layer. Avro's protocol
-wire format is a competing operation layer, and binding both would describe
-the same API twice, inconsistently.
+An OpenAPI Description describes the operation layer, as does Avro's protocol
+wire format. This binding does not combine the two.
 
 # Type Determination for Non-JSON Serializations
 
@@ -516,7 +502,7 @@ a body of one of the media types in
 decoded by the Avro codec as a whole.
 
 The table below is the mapping of Avro's JSON encoding [AVRO]. That encoding
-governs, and not the spelling of the Avro type name.
+governs the result, and the spelling of the Avro type name does not.
 
 | Avro type | JSON data type |
 | ---- | ---- |
@@ -556,7 +542,7 @@ to the data.
 
 ## Byte-Valued Strings
 
-`bytes` and `fixed` map to string, but not to arbitrary text. The JSON
+`bytes` and `fixed` map to string. That string is not arbitrary text. The JSON
 encoding of a byte sequence is a string in which Unicode code points 0 to 255
 map to unsigned 8-bit byte values 0 to 255 [AVRO].
 
@@ -614,8 +600,8 @@ encoded as JSON `null` when its branch is `null`, and otherwise as a JSON
 object with one member, whose name is the branch's name and whose value is the
 recursively encoded value.
 
-A union therefore yields "undetermined", and tooling MUST report a diagnostic
-identifying the value rather than serializing it.
+A union therefore yields "undetermined". Tooling MUST report a diagnostic
+identifying the value, and MUST NOT serialize it.
 
 Tooling MUST NOT reduce a two-branch union containing `null` to its other
 branch. A field of type `["null", "string"]` does not serialize as a bare
@@ -745,8 +731,7 @@ components:
 ~~~
 
 As written, every declaration is in the null namespace, and both entries hold
-the fullname `Pet`. Neither author wrote anything placing the two in one
-scope.
+the fullname `Pet`. The Description places nothing in a shared scope.
 
 Materialization derives a resource namespace from each component key and
 produces four distinct fullnames:
@@ -757,12 +742,12 @@ produces four distinct fullnames:
 | `PetListResponse` | root record | `PetListResponse.PetListResponse` |
 | `PetListResponse` | nested `Pet` | `PetListResponse.Pet` |
 
-The aggregate holds two distinct pet types, which is what the Description
-describes. No diagnostic is reported, because no collision survives.
+The aggregate holds two distinct pet types. No diagnostic is reported, no
+collision having survived materialization.
 
 On the wire, both records remain `Pet` in the null namespace. Their
-fingerprints differ, because their field lists differ. An author who wants the
-type identity and the wire identity to agree declares namespaces explicitly.
+fingerprints differ, their field lists being different. Declaring namespaces
+explicitly keeps the type identity and the wire identity the same.
 
 ## Operations Over Each Framing
 
@@ -799,16 +784,16 @@ paths:
 ~~~
 
 For the two request media types, `Pet` is the writer's schema. A client
-encodes against it, and a server that cannot accept it as the writer's schema
-MUST reject the request rather than guess.
+encodes against it. A server that cannot accept `Pet` as the writer's schema
+MUST reject the request.
 
 For the `200` response on `/pets`, the body carries a fingerprint. A client
 MUST compare it against the fingerprint of `Pet` in Parsing Canonical Form
 before decoding against `Pet`.
 
 For `/pets/export`, the file carries `avro.schema`, and that schema decodes
-the file. `Pet` is the reader's schema, and `itemSchema` marks it as
-describing one object rather than the container.
+the file. `Pet` is the reader's schema. `itemSchema` marks it as describing
+one object in the file, not the container.
 
 # Conformance
 
@@ -853,7 +838,7 @@ Dialect confusion:
 
 Schemas carried in a message body:
 : An Object Container File carries a writer's schema in its `avro.schema`
-  metadata property, and decoding the file means parsing a schema supplied by
+  metadata property. Decoding the file means parsing a schema supplied by
   whoever produced the body. That schema is untrusted input, and it drives
   allocation. Tooling MUST validate it as an Avro schema declaration before
   use. Tooling MUST bound what it will accept from it, at least on the size of
@@ -876,7 +861,7 @@ Decompression:
   decompression ratio. Tooling MUST reject a codec it has not been configured
   to accept, and MUST NOT treat an unrecognized `avro.codec` value as `null`.
 
-Fingerprints are not a security mechanism:
+Schema fingerprints:
 : The single-object framing identifies the writer's schema by a 64-bit
   CRC-64-AVRO fingerprint. [AVRO] states that Avro fingerprints "are not meant
   to provide any security guarantees" and recommends that surrounding
