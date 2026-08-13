@@ -9,9 +9,9 @@
 <meta content="
        This document defines a binding that allows an OpenAPI Specification (OAS)
   Schema Object to be expressed as a JSON Structure  
-schema, using the schema-dialect selection mechanism — the  $schema  keyword
-and the  jsonSchemaDialect  field, introduced in OAS 3.1 — that OAS already
-provides. The binding is strictly additive and opt-in on a per-Schema-Object
+schema. It uses the schema-dialect selection mechanism OAS already provides:
+the  $schema  keyword and the  jsonSchemaDialect  field, introduced in OAS
+3.1. The binding is strictly additive and opt-in on a per-Schema-Object
 basis. It introduces no new OpenAPI keywords, objects, or namespaces, and it
 does not modify, fork, or republish the OpenAPI Specification. 
     " name="description">
@@ -1084,9 +1084,9 @@ svg {
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document defines a binding that allows an OpenAPI Specification (OAS)
 <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> Schema Object to be expressed as a JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>
-schema, using the schema-dialect selection mechanism — the <code>$schema</code> keyword
-and the <code>jsonSchemaDialect</code> field, introduced in OAS 3.1 — that OAS already
-provides. The binding is strictly additive and opt-in on a per-Schema-Object
+schema. It uses the schema-dialect selection mechanism OAS already provides:
+the <code>$schema</code> keyword and the <code>jsonSchemaDialect</code> field, introduced in OAS
+3.1. The binding is strictly additive and opt-in on a per-Schema-Object
 basis. It introduces no new OpenAPI keywords, objects, or namespaces, and it
 does not modify, fork, or republish the OpenAPI Specification.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
@@ -1187,10 +1187,13 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
                 <p id="section-toc.1-1.4.2.8.1"><a href="#section-4.8" class="auto internal xref">4.8</a>.  <a href="#name-resolving-cross-document-re" class="internal xref">Resolving Cross-Document References</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.9">
-                <p id="section-toc.1-1.4.2.9.1"><a href="#section-4.9" class="auto internal xref">4.9</a>.  <a href="#name-schema-inspection-for-non-j" class="internal xref">Schema Inspection for Non-JSON Serializations</a></p>
+                <p id="section-toc.1-1.4.2.9.1"><a href="#section-4.9" class="auto internal xref">4.9</a>.  <a href="#name-type-identity-and-scope" class="internal xref">Type Identity and Scope</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.10">
-                <p id="section-toc.1-1.4.2.10.1"><a href="#section-4.10" class="auto internal xref">4.10</a>. <a href="#name-validating-the-description-" class="internal xref">Validating the Description Itself</a></p>
+                <p id="section-toc.1-1.4.2.10.1"><a href="#section-4.10" class="auto internal xref">4.10</a>. <a href="#name-schema-inspection-for-non-j" class="internal xref">Schema Inspection for Non-JSON Serializations</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.11">
+                <p id="section-toc.1-1.4.2.11.1"><a href="#section-4.11" class="auto internal xref">4.11</a>. <a href="#name-validating-the-description-" class="internal xref">Validating the Description Itself</a></p>
 </li>
             </ul>
 </li>
@@ -1232,13 +1235,16 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
                 <p id="section-toc.1-1.5.2.6.1"><a href="#section-5.6" class="auto internal xref">5.6</a>.  <a href="#name-cross-schema-reuse-with-imp" class="internal xref">Cross-Schema Reuse with <code>$import</code> and <code>$importdefs</code></a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.7">
-                <p id="section-toc.1-1.5.2.7.1"><a href="#section-5.7" class="auto internal xref">5.7</a>.  <a href="#name-activating-add-ins-with-use" class="internal xref">Activating Add-ins with <code>$uses</code></a></p>
+                <p id="section-toc.1-1.5.2.7.1"><a href="#section-5.7" class="auto internal xref">5.7</a>.  <a href="#name-namespaces-across-schema-re" class="internal xref">Namespaces Across Schema Resources</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.8">
-                <p id="section-toc.1-1.5.2.8.1"><a href="#section-5.8" class="auto internal xref">5.8</a>.  <a href="#name-code-generation-and-runtime" class="internal xref">Code Generation and Runtime Validation</a></p>
+                <p id="section-toc.1-1.5.2.8.1"><a href="#section-5.8" class="auto internal xref">5.8</a>.  <a href="#name-activating-add-ins-with-use" class="internal xref">Activating Add-ins with <code>$uses</code></a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.9">
-                <p id="section-toc.1-1.5.2.9.1"><a href="#section-5.9" class="auto internal xref">5.9</a>.  <a href="#name-type-determination-for-non-" class="internal xref">Type Determination for Non-JSON Serializations</a></p>
+                <p id="section-toc.1-1.5.2.9.1"><a href="#section-5.9" class="auto internal xref">5.9</a>.  <a href="#name-code-generation-and-runtime" class="internal xref">Code Generation and Runtime Validation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.10">
+                <p id="section-toc.1-1.5.2.10.1"><a href="#section-5.10" class="auto internal xref">5.10</a>. <a href="#name-type-determination-for-non-" class="internal xref">Type Determination for Non-JSON Serializations</a></p>
 </li>
             </ul>
 </li>
@@ -1293,17 +1299,17 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
 responses, parameters, headers, and other message components with <strong>Schema
 Objects</strong>. By default a Schema Object is a JSON Schema (Draft 2020-12) document
 expressed in the OAS dialect.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Since OAS 3.1, the version that introduced Schema Object dialect selection,
-OAS does not hard-wire that default. A Schema Object can declare a
-different <strong>dialect</strong> through the <code>$schema</code> keyword, or inherit a
+<p id="section-1-2">OAS 3.1 introduced Schema Object dialect selection. Since that version, OAS
+does not hard-wire the default. A Schema Object can declare a different
+<strong>dialect</strong> through the <code>$schema</code> keyword. It can also inherit a
 document-wide default through the OpenAPI Object's <code>jsonSchemaDialect</code> field.
-This document uses that existing seam, and nothing else, to let a Schema
+This document uses that existing mechanism, and nothing else, to let a Schema
 Object be a JSON Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span> schema.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">The result is a strictly additive, opt-in binding:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-4.1">
           <p id="section-1-4.1.1">Adoption is per Schema Object. A single Schema Object, an entire
-<code>components.schemas</code> map, or a whole Description can use JSON Structure; the
+<code>components.schemas</code> map, or a whole Description can use JSON Structure. The
 rest of the Description is unaffected.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-4.2">
@@ -1318,9 +1324,9 @@ available to API designers and to code generators.<a href="#section-1-4.3.1" cla
 </li>
       </ul>
 <p id="section-1-5">This document defines how conforming tooling recognizes such a Schema Object,
-how it is processed, and how its references resolve. It adds no fields to
-the OpenAPI Specification; OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> remains authoritative for everything
-this document does not modify.<a href="#section-1-5" class="pilcrow">¶</a></p>
+how it is processed, and how its references resolve. It adds no fields to the
+OpenAPI Specification. OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span> remains authoritative for everything this
+document does not modify.<a href="#section-1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-terminology">
@@ -1383,48 +1389,48 @@ describing an API.<a href="#section-2-3.12.1" class="pilcrow">¶</a></p>
       <h2 id="name-scope-and-relationship-to-t">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-scope-and-relationship-to-t" class="section-name selfRef">Scope and Relationship to the OpenAPI Specification</a>
       </h2>
-<p id="section-3-1">This document is a profile, or binding, layered on OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, applicable to
-any OpenAPI Description whose OAS version provides Schema Object dialect
-selection through <code>$schema</code> and <code>jsonSchemaDialect</code> — introduced in OAS 3.1
-and retained in every subsequent OAS 3.x version. It is normative only where
-it states requirements about JSON Structure Schema Objects.<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">This document's base-URI mechanisms (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>) rely in
-part on OAS features that postdate OAS 3.1: the OpenAPI Object's <code>$self</code>
-field is defined starting with OAS 3.2 and has no equivalent in OAS 3.1.
-Tooling operating against an OAS 3.1 Description <span class="bcp14">MUST</span> skip the <code>$self</code> step
-of <a href="#default-id-construction" class="auto internal xref">Section 4.5</a> entirely and proceed to the next applicable
-base-URI source; the absence of <code>$self</code> in an OAS 3.1 Description is
-expected and <span class="bcp14">MUST NOT</span> be treated as an error. In all other respects OAS
-applies unchanged and is authoritative.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-1">This document is a binding layered on OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>. It applies to any OpenAPI
+Description whose OAS version provides Schema Object dialect selection through
+<code>$schema</code> and <code>jsonSchemaDialect</code>. OAS 3.1 introduced that mechanism, and
+every subsequent OAS 3.x version retains it. This document is normative only
+where it states requirements about JSON Structure Schema Objects.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">The base-URI rules of <a href="#default-id-construction" class="auto internal xref">Section 4.5</a> rely in part on OAS features
+that postdate OAS 3.1. The OpenAPI Object's <code>$self</code> field is defined starting
+with OAS 3.2 and has no equivalent in OAS 3.1. Tooling operating against an
+OAS 3.1 Description <span class="bcp14">MUST</span> skip the <code>$self</code> step of
+<a href="#default-id-construction" class="auto internal xref">Section 4.5</a> and proceed to the next applicable base-URI
+source. The absence of <code>$self</code> in an OAS 3.1 Description is expected and <span class="bcp14">MUST NOT</span> be treated as an error. In all other respects OAS applies unchanged and is
+authoritative.<a href="#section-3-2" class="pilcrow">¶</a></p>
 <p id="section-3-3">Where this document and OAS both describe the behavior of a Schema Object,
 this document governs only those Schema Objects whose dialect is a JSON
 Structure meta-schema (<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>). A Schema Object
 that does not select a JSON Structure meta-schema is a plain OAS Schema
 Object and is outside the scope of this document.<a href="#section-3-3" class="pilcrow">¶</a></p>
 <p id="section-3-4">Selecting a dialect other than the OAS default is an OAS-sanctioned
-operation, not an extension of it. OAS states that <code>$schema</code> on a schema
-resource root "<span class="bcp14">MUST</span> be used to determine which dialect should be used when
-processing the schema," that this permits Schema Objects complying with
-other drafts of JSON Schema than Draft 2020-12, and that tooling "<span class="bcp14">MAY</span>
-support additional values of <code>$schema</code>" (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "Specifying Schema
-Dialects"). The JSON Schema drafts reachable that way are themselves
-mutually incompatible: successive drafts have redefined <code>integer</code>, changed
-whether keywords adjacent to <code>$ref</code> apply, changed <code>format</code> from assertion to
+operation. OAS states that <code>$schema</code> on a schema resource root "<span class="bcp14">MUST</span> be used
+to determine which dialect should be used when processing the schema." OAS
+further states that this permits Schema Objects complying with other drafts of
+JSON Schema than Draft 2020-12, and that tooling "<span class="bcp14">MAY</span> support additional
+values of <code>$schema</code>" (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "Specifying Schema Dialects").<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">The JSON Schema drafts reachable that way are themselves mutually
+incompatible. Successive drafts have redefined <code>integer</code>, changed whether
+keywords adjacent to <code>$ref</code> apply, changed <code>format</code> from assertion to
 annotation, and changed the meaning of <code>items</code> while leaving its syntax
-intact, each altering the validation outcome of an unmodified document. A
-dialect is therefore already understood to be a distinct language selected by
-URI, not a variant of the OAS dialect. This document adds one more such
-language and introduces no mechanism that OAS does not already define.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">This document does not modify, fork, or republish the OpenAPI Specification.<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">This document is organized in two parts. <a href="#dialect-binding-requirements" class="auto internal xref">Section 4</a>
-states requirements that apply to binding <em>any</em> schema dialect into an
-OpenAPI Description; it is written without reference to JSON Structure and is
+intact. Each of those changes alters the validation outcome of an unmodified
+document. A dialect is therefore already a distinct language selected by URI.
+This document adds one more such language and introduces no mechanism that OAS
+does not already define.<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">This document does not modify, fork, or republish the OpenAPI Specification.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">This document is organized in two parts. <a href="#dialect-binding-requirements" class="auto internal xref">Section 4</a>
+states requirements that apply to binding any schema dialect into an OpenAPI
+Description. It is written without reference to JSON Structure and is
 parameterized by a small set of declarations that a binding supplies.
 <a href="#json-structure-binding" class="auto internal xref">Section 5</a> supplies those declarations for JSON Structure and
-states the requirements specific to it. The first part exists because OAS
-defines dialect <em>selection</em> but not dialect <em>processing</em>; if a future OAS
-version specifies that layer, the first part of this document can be replaced
-by a reference to it without affecting the second.<a href="#section-3-6" class="pilcrow">¶</a></p>
+states the requirements specific to it.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8">OAS defines dialect selection. It does not define dialect processing, and the
+first part covers that layer. If a future OAS version specifies it, the first
+part of this document can be replaced by a reference to it without affecting
+the second.<a href="#section-3-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dialect-binding-requirements">
@@ -1455,7 +1461,7 @@ dialect-specific inputs the rest of this part requires.<a href="#section-4.1-1" 
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Dialect URIs</td>
-              <td class="text-left" rowspan="1" colspan="1">The exact URIs that select the dialect, and for each, the vocabularies or add-ins active by default and those merely offered for opt-in.</td>
+              <td class="text-left" rowspan="1" colspan="1">The exact URIs that select the dialect, and for each, the vocabularies or add-ins active by default and those offered for opt-in.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Identity keyword</td>
@@ -1471,7 +1477,11 @@ dialect-specific inputs the rest of this part requires.<a href="#section-4.1-1" 
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Type determination</td>
-              <td class="text-left" rowspan="1" colspan="1">The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations (<a href="#serialization-inspection" class="auto internal xref">Section 4.9</a>).</td>
+              <td class="text-left" rowspan="1" colspan="1">The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations (<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>).</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Type naming and scope</td>
+              <td class="text-left" rowspan="1" colspan="1">What names a type in the dialect, and what constitutes one schema resource's scope for those names (<a href="#type-scope" class="auto internal xref">Section 4.9</a>). A binding <span class="bcp14">MAY</span> declare that its dialect names no types, in which case <a href="#type-scope" class="auto internal xref">Section 4.9</a> imposes no aggregation requirement.</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Self-description</td>
@@ -1492,30 +1502,27 @@ Object.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <p id="section-4.2-1">Before dialect selection can apply, tooling <span class="bcp14">MUST</span> determine whether a JSON
 object occupying a Schema Object position is an OAS <strong>Reference Object</strong>
 (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "Reference Object") or a <strong>Schema Object</strong>. The two are distinct
-object types that happen to be accepted at the same positions, and only a
-Schema Object is subject to dialect selection (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>); a
-Reference Object is never itself dialect-selected, regardless of any
-<code>jsonSchemaDialect</code> default in scope.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+object types accepted at the same positions. Only a Schema Object is subject
+to dialect selection (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>). A Reference Object is never
+dialect-selected, whatever <code>jsonSchemaDialect</code> default is in scope.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 <p id="section-4.2-2">A JSON object at a Schema Object position is a Reference Object if and only
 if it is limited to the fixed fields of the OAS Reference Object (<code>$ref</code>,
 <code>summary</code>, <code>description</code>) and carries no other properties. An object that
 contains <code>$ref</code> together with any other property outside that fixed set is
 not a valid Reference Object. Tooling <span class="bcp14">MUST</span> reject that object as invalid at
-the OAS layer before dialect selection; it <span class="bcp14">MUST NOT</span> reinterpret the extra
+the OAS layer before dialect selection. It <span class="bcp14">MUST NOT</span> reinterpret the extra
 properties as dialect Schema Object content. An object without <code>$ref</code> is
 classified as a Schema Object and is then subject to dialect selection,
 including when it carries <code>$schema</code>.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
 <p id="section-4.2-3">A <code>components.schemas</code> entry that is a bare Reference Object (for example
 <code>{ "$ref": "#/components/schemas/Pet" }</code>) <span class="bcp14">MUST NOT</span> be treated as a schema in
-the selected dialect merely because the document default <code>jsonSchemaDialect</code>
-names that dialect. It remains an OAS Reference Object, resolved entirely on
-the OpenAPI reference layer (<a href="#reference-model" class="auto internal xref">Section 4.7</a>); dialect selection does not
-apply to it, because it has no schema content of its own to select a dialect
-for.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
-<p id="section-4.2-4">Tooling <span class="bcp14">MUST</span> classify a Schema Object position by this rule before
-performing dialect selection, and <span class="bcp14">MUST</span> re-classify at every Schema Object
-position independently; classification is not inherited from a containing
-resource.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+the selected dialect when the document default <code>jsonSchemaDialect</code> names that
+dialect. It remains an OAS Reference Object and is resolved on the OpenAPI
+reference layer (<a href="#reference-model" class="auto internal xref">Section 4.7</a>). It has no schema content of its own,
+and dialect selection therefore does not apply to it.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">Tooling <span class="bcp14">MUST</span> classify a Schema Object position by this rule before performing
+dialect selection. Tooling <span class="bcp14">MUST</span> re-classify at every Schema Object position
+independently. Classification is not inherited from a containing resource.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dialect-selection">
@@ -1542,21 +1549,22 @@ Object.<a href="#section-4.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-4.3-3">A dialect whose schemas natively carry <code>$schema</code> yields self-describing
-Schema Objects: pasting such a schema into a Schema Object position, with its
+Schema Objects. Pasting such a schema into a Schema Object position, with its
 <code>$schema</code> intact, is sufficient to select the dialect.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
 <p id="section-4.3-4">A <strong>schema-resource root</strong> is a Schema Object that is independently addressable
 by the OpenAPI Description or that tooling extracts as an independent schema
-document. This includes every entry in <code>components.schemas</code> and an inline
-Schema Object at a request body, response, parameter, callback, webhook, or
-other OAS Schema Object position when tooling extracts it for standalone
-processing. Schema Objects nested inside an already-selected resource are part
-of that resource; they do not establish a second dialect selection context. A
-nested <code>$schema</code> value <span class="bcp14">MUST NOT</span> override the resource-root dialect and <span class="bcp14">MUST</span> be
-rejected if it would make the nested object ambiguous.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
-<p id="section-4.3-5">Dialect selection is per schema-resource root, not global to the Description.
+document. This includes every entry in <code>components.schemas</code>. It also includes
+an inline Schema Object at a request body, response, parameter, callback,
+webhook, or other OAS Schema Object position, once tooling extracts it for
+standalone processing.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
+<p id="section-4.3-5">Schema Objects nested inside an already-selected resource are part of that
+resource. They do not establish a second dialect selection context. A nested
+<code>$schema</code> value <span class="bcp14">MUST NOT</span> override the resource-root dialect. Tooling <span class="bcp14">MUST</span>
+reject a nested <code>$schema</code> that would make the nested object ambiguous.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+<p id="section-4.3-6">Dialect selection is per schema-resource root, not global to the Description.
 An OpenAPI Description <span class="bcp14">MAY</span> contain ordinary OAS Schema Objects and Schema
 Objects in one or more bound dialects. Tooling <span class="bcp14">MUST</span> apply the effective
-dialect independently at each resource root.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+dialect independently at each resource root.<a href="#section-4.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dialect-recognition">
@@ -1581,9 +1589,9 @@ updated binding.<a href="#section-4.4-1.2.1" class="pilcrow">¶</a></p>
           <li class="normal" id="section-4.4-1.3">
             <p id="section-4.4-1.3.1">Tooling that does not recognize a dialect URI <span class="bcp14">MUST</span> treat the Schema Object
 as an unknown dialect. It <span class="bcp14">MUST NOT</span> process the Schema Object as an
-OAS-dialect (JSON Schema Draft 2020-12) schema, because unrelated dialects
-routinely assign different meaning to the same keyword spellings. A reader
-<span class="bcp14">MUST</span> preserve the raw Schema Object and its surrounding Description for
+OAS-dialect (JSON Schema Draft 2020-12) schema. Unrelated dialects routinely
+assign different meaning to the same keyword spellings. A reader <span class="bcp14">MUST</span>
+preserve the raw Schema Object and its surrounding Description for
 pass-through or explicit diagnostic handling, and <span class="bcp14">MUST NOT</span> silently
 deserialize it as an OAS Schema Object. A tool <span class="bcp14">MAY</span> fail the operation when
 it cannot preserve or expose the unknown object, but <span class="bcp14">MUST</span> report the
@@ -1616,15 +1624,15 @@ Object lacking them is extracted for standalone processing.<a href="#section-4.4
 <a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-default-resource-identity" class="section-name selfRef">Default Resource Identity</a>
         </h3>
 <p id="section-4.5-1">This section applies when the binding declares an identity keyword
-(<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>); "identity keyword" below means that keyword.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+(<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). "Identity keyword" below means that keyword.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
 <p id="section-4.5-2">A resource-root Schema Object <span class="bcp14">SHOULD</span> carry its own identity keyword. When it
-does not, tooling still needs a stable, unique identifier for it — for
-example, to run the Schema Object through a standalone validator for its
-dialect. This section defines how tooling <span class="bcp14">MUST</span> construct that default, by
-combining the Description's base URI with the Schema Object's location inside
+does not, tooling still needs a stable, unique identifier for it, for example
+to run the Schema Object through a standalone validator for its dialect. This
+section defines how tooling <span class="bcp14">MUST</span> construct that default. The construction
+combines the Description's base URI with the Schema Object's location inside
 the Description.<a href="#section-4.5-2" class="pilcrow">¶</a></p>
 <p id="section-4.5-3">A default identity constructed this way is for standalone processing only. It
-is NOT registered as a target for the dialect's cross-document mechanism:
+is NOT registered as a target for the dialect's cross-document mechanism.
 <a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a> matches exclusively against explicitly declared
 identities. A Schema Object intended to be reachable by another entry in the
 Description <span class="bcp14">MUST</span> carry an explicit identity.<a href="#section-4.5-3" class="pilcrow">¶</a></p>
@@ -1637,8 +1645,8 @@ Determination and Reference Resolution", of <span>[<a href="#OAS" class="cite xr
             <p id="section-4.5-5.1.1">the OpenAPI Object's <code>$self</code> field, if present (OAS Appendix F.1);<a href="#section-4.5-5.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.5-5.2">
-            <p id="section-4.5-5.2.1">otherwise, the base URI of an encapsulating entity, if any — for example,
-a <code>multipart/related</code> archive (OAS Appendix F.2);<a href="#section-4.5-5.2.1" class="pilcrow">¶</a></p>
+            <p id="section-4.5-5.2.1">otherwise, the base URI of an encapsulating entity, if any, such as a
+<code>multipart/related</code> archive (OAS Appendix F.2);<a href="#section-4.5-5.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.5-5.3">
             <p id="section-4.5-5.3.1">otherwise, the Description's retrieval URI: the URI it was actually
@@ -1649,8 +1657,8 @@ fetched from (OAS Appendix F.3);<a href="#section-4.5-5.3.1" class="pilcrow">¶<
 defines one (OAS Appendix F.4).<a href="#section-4.5-5.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-4.5-6">If none of these applies — for example, the Description was authored offline
-and never assigned a location or a <code>$self</code> value — tooling <span class="bcp14">MUST</span> require an
+<p id="section-4.5-6">None of these applies to a Description that was authored offline and never
+assigned a location or a <code>$self</code> value. In that case tooling <span class="bcp14">MUST</span> require an
 explicit identity on the Schema Object and <span class="bcp14">MUST NOT</span> proceed with extraction,
 cross-document resolution, or standalone validation until one is supplied.<a href="#section-4.5-6" class="pilcrow">¶</a></p>
 <p id="section-4.5-7"><strong>Find the Schema Object's location.</strong> Tooling <span class="bcp14">MUST</span> determine the JSON
@@ -1671,24 +1679,24 @@ percent-encoding: a literal <code>~</code> becomes <code>~0</code> and a literal
 <code>~1</code>. Join the escaped tokens with <code>/</code> to form the JSON Pointer string.<a href="#section-4.5-9.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.5-9.3">
-            <p id="section-4.5-9.3.1">Percent-encode the resulting pointer string for use as a URI fragment:
-every octet not permitted literally in an <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> <code>fragment</code>
-production <span class="bcp14">MUST</span> be percent-encoded, including any literal <code>%</code> character
-(which becomes <code>%25</code>) so that the result cannot be misread as containing
-a percent-encoded triple that was never intended as one. Percent-encoding
-<span class="bcp14">MUST</span> use uppercase hexadecimal digits (for example <code>%2F</code>, not <code>%2f</code>).<a href="#section-4.5-9.3.1" class="pilcrow">¶</a></p>
+            <p id="section-4.5-9.3.1">Percent-encode the resulting pointer string for use as a URI fragment.
+Every octet not permitted literally in an <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> <code>fragment</code>
+production <span class="bcp14">MUST</span> be percent-encoded. This includes any literal <code>%</code>
+character, which becomes <code>%25</code>, so that the result cannot be misread as a
+percent-encoded triple. Percent-encoding <span class="bcp14">MUST</span> use uppercase hexadecimal
+digits, for example <code>%2F</code> and not <code>%2f</code>.<a href="#section-4.5-9.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.5-9.4">
             <p id="section-4.5-9.4.1">The base URI <span class="bcp14">MUST</span> be resolved according to the OAS base-URI rules before
-the fragment is appended; any existing fragment on the base URI <span class="bcp14">MUST</span> be
+the fragment is appended. Any existing fragment on the base URI <span class="bcp14">MUST</span> be
 removed first.<a href="#section-4.5-9.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-4.5-10">The result has the form <code>base-URI</code> + <code>#</code> + <code>percent-encoded-JSON-Pointer</code>.<a href="#section-4.5-10" class="pilcrow">¶</a></p>
-<p id="section-4.5-11">This construction <span class="bcp14">MUST</span> be deterministic and idempotent: re-deriving the
+<p id="section-4.5-11">This construction <span class="bcp14">MUST</span> be deterministic and idempotent. Re-deriving the
 default identity for the same Schema Object location in the same Description
-<span class="bcp14">MUST</span> always produce the same byte sequence, because identity comparison is
-byte-exact unless the binding declares otherwise (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>).<a href="#section-4.5-11" class="pilcrow">¶</a></p>
+<span class="bcp14">MUST</span> always produce the same byte sequence. Identity comparison is byte-exact
+unless the binding declares otherwise (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>).<a href="#section-4.5-11" class="pilcrow">¶</a></p>
 <p id="section-4.5-12">For example, if the Description's base URI is
 <code>https://example.com/api/openapi.yaml</code> and the Schema Object is at
 <code>/components/schemas/TelemetryMessage</code>, the default identity is
@@ -1790,11 +1798,11 @@ differently:<a href="#section-4.5-13" class="pilcrow">¶</a></p>
           </tbody>
         </table>
 <p id="section-4.5-15">A <code>/</code> inside a path template or a media type is part of the reference-token,
-not a pointer separator, so step 2 escapes it as <code>~1</code>. That <code>~1</code> then passes
-through step 3 unchanged, because <code>~</code> and digits are permitted literally in
-an <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> <code>fragment</code>. The braces of the path template are not permitted
-there, so step 3 percent-encodes them with uppercase hexadecimal digits. The
-resulting default identity is:<a href="#section-4.5-15" class="pilcrow">¶</a></p>
+not a pointer separator. Step 2 therefore escapes it as <code>~1</code>. That <code>~1</code> then
+passes through step 3 unchanged, since <code>~</code> and digits are permitted literally
+in an <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> <code>fragment</code>. The braces of the path template are not
+permitted there, so step 3 percent-encodes them with uppercase hexadecimal
+digits. The resulting default identity is:<a href="#section-4.5-15" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-4.5-16">
 <pre>
 https://example.com/api/openapi.yaml#/paths/~1orders~1%7BorderId%7D/post/requestBody/content/application~1json/schema
@@ -1803,8 +1811,8 @@ https://example.com/api/openapi.yaml#/paths/~1orders~1%7BorderId%7D/post/request
 <p id="section-4.5-17">Tooling APIs that process an encapsulated or offline Description <span class="bcp14">MUST</span> expose
 the selected base URI as an explicit input when it is not available from
 <code>$self</code> or a retrieval URI. A filesystem path <span class="bcp14">MUST NOT</span> be concatenated
-directly into the default identity; it <span class="bcp14">MUST</span> first be converted to the URI
-used by the tool's retrieval/base-URI model.<a href="#section-4.5-17" class="pilcrow">¶</a></p>
+directly into the default identity. It <span class="bcp14">MUST</span> first be converted to the URI
+used by the tool's retrieval and base-URI model.<a href="#section-4.5-17" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="materializing-defaults">
@@ -1813,11 +1821,11 @@ used by the tool's retrieval/base-URI model.<a href="#section-4.5-17" class="pil
 <a href="#section-4.6" class="section-number selfRef">4.6. </a><a href="#name-materializing-defaults-for-" class="section-name selfRef">Materializing Defaults for Standalone Processing</a>
         </h3>
 <p id="section-4.6-1">A Schema Object embedded in an OpenAPI Description commonly omits <code>$schema</code>
-(relying on <code>jsonSchemaDialect</code>, <a href="#dialect-selection" class="auto internal xref">Section 4.3</a>) and its identity
-keyword (relying on <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>). Both are
-OAS-context-dependent conveniences: a standalone validator for the dialect
-has no notion of <code>jsonSchemaDialect</code> and no notion of the Schema Object's
-position within a larger document.<a href="#section-4.6-1" class="pilcrow">¶</a></p>
+and its identity keyword. <code>$schema</code> is supplied by <code>jsonSchemaDialect</code>
+(<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>) and the identity by <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>. Both
+are conveniences that depend on OAS context. A standalone validator for the
+dialect has no notion of <code>jsonSchemaDialect</code> and no notion of the Schema
+Object's position within a larger document.<a href="#section-4.6-1" class="pilcrow">¶</a></p>
 <p id="section-4.6-2">Tooling that extracts a Schema Object from its containing Description in
 order to validate it, incorporate it elsewhere, or otherwise process it
 outside OAS context <span class="bcp14">MUST</span> first materialize both defaults as literal
@@ -1841,9 +1849,9 @@ will supply them.<a href="#section-4.6-4" class="pilcrow">¶</a></p>
 and that an inline Schema Object might not supply (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>).
 Tooling performing an extraction <span class="bcp14">MUST</span> materialize those as well. Any
 materialized value <span class="bcp14">MUST</span> be deterministic for the same Description and JSON
-Pointer, and where it could collide with a declaration already present in the
-extracted document, tooling <span class="bcp14">MUST</span> reject the extraction rather than silently
-rename either declaration.<a href="#section-4.6-5" class="pilcrow">¶</a></p>
+Pointer. Where a materialized value could collide with a declaration already
+present in the extracted document, tooling <span class="bcp14">MUST</span> reject the extraction. Tooling
+<span class="bcp14">MUST NOT</span> rename either declaration.<a href="#section-4.6-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="reference-model">
@@ -1858,23 +1866,23 @@ not mix:<a href="#section-4.7-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.7-2.1">
             <p id="section-4.7-2.1.1">The OpenAPI reference layer: an outer OpenAPI <code>$ref</code> that targets a Schema
-Object as a whole (for example <code>#/components/schemas/TelemetryMessage</code>).
+Object as a whole, for example <code>#/components/schemas/TelemetryMessage</code>.
 This resolves per OAS <span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, unchanged, at any position in the
-Description — including inside a Schema Object that has not itself adopted
-a bound dialect, such as an array wrapper's
+Description. That includes positions inside a Schema Object that has not
+itself adopted a bound dialect, such as an array wrapper's
 <code>items: { "$ref": "#/components/schemas/Pet" }</code>.<a href="#section-4.7-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.7-2.2">
             <p id="section-4.7-2.2.1">The dialect's own reference layer: whatever referencing keywords the
-dialect defines, used <em>within</em> a Schema Object that has adopted that
-dialect. These resolve as the dialect specifies, which need not resemble
-OAS reference resolution and need not be able to reach OAS component
-addresses at all.<a href="#section-4.7-2.2.1" class="pilcrow">¶</a></p>
+dialect defines, used within a Schema Object that has adopted that
+dialect. These resolve as the dialect specifies. That resolution need not
+resemble OAS reference resolution and need not be able to reach OAS
+component addresses at all.<a href="#section-4.7-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-4.7-3">Because dialect selection is per schema-resource-root (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>),
-these layers are scoped, not global: the dialect's rules apply only once a
-reference node is already inside that resource's own body. An ordinary OAS
+<p id="section-4.7-3">Dialect selection is per schema-resource-root (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>). These
+layers are therefore scoped, not global. The dialect's rules apply only once
+a reference node is already inside that resource's own body. An ordinary OAS
 <code>$ref</code> pointing <em>at</em> a resource from outside it stays on the OpenAPI
 reference layer and is untouched.<a href="#section-4.7-3" class="pilcrow">¶</a></p>
 <p id="section-4.7-4">Tooling <span class="bcp14">MUST</span> determine the reference layer before resolving a reference. At
@@ -1893,10 +1901,11 @@ has independently undergone dialect selection.<a href="#section-4.7-4" class="pi
         </h3>
 <p id="section-4.8-1">This section applies when the binding declares a cross-document mechanism
 (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>).<a href="#section-4.8-1" class="pilcrow">¶</a></p>
-<p id="section-4.8-2">A Description registers a set of schema resources: every Schema Object in a
-bound dialect that carries an explicit identity (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>).
-Tooling <span class="bcp14">MUST</span> attempt to resolve a cross-document reference in the following
-order, using the first source that satisfies it:<a href="#section-4.8-2" class="pilcrow">¶</a></p>
+<p id="section-4.8-2">A Description registers a set of schema resources. The set comprises every
+Schema Object in a bound dialect that carries an explicit identity
+(<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>). Tooling <span class="bcp14">MUST</span> attempt to resolve a
+cross-document reference in the following order, using the first source that
+satisfies it:<a href="#section-4.8-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-4.8-3">
 <li id="section-4.8-3.1">
             <p id="section-4.8-3.1.1">a registered identity within the Description;<a href="#section-4.8-3.1.1" class="pilcrow">¶</a></p>
@@ -1913,107 +1922,136 @@ previously retrieved schema resource, without performing network access;<a href=
 disabled by default. Tooling <span class="bcp14">MUST NOT</span> attempt network retrieval unless it has
 been explicitly configured to allow it. When retrieval is disabled, not
 supported, or not enabled for the target host, tooling <span class="bcp14">MUST</span> fail with a
-diagnostic identifying the unresolved reference; it <span class="bcp14">MUST NOT</span> silently skip it
-or substitute an empty definition. When network retrieval is enabled, tooling
-<span class="bcp14">MUST</span> provide controls for allowed schemes and hosts, maximum document size,
-retrieval timeouts, redirect policy, caching, and cycle detection, and <span class="bcp14">MUST</span>
-prevent cross-document resolution from becoming an SSRF or unrestricted
-local-file access primitive.<a href="#section-4.8-4" class="pilcrow">¶</a></p>
-<p id="section-4.8-5">Identity comparison uses two related but distinct notions, both derived from
-an explicitly declared identity:<a href="#section-4.8-5" class="pilcrow">¶</a></p>
+diagnostic identifying the unresolved reference. Tooling <span class="bcp14">MUST NOT</span> silently
+skip the reference or substitute an empty definition.<a href="#section-4.8-4" class="pilcrow">¶</a></p>
+<p id="section-4.8-5">When network retrieval is enabled, tooling <span class="bcp14">MUST</span> provide controls for allowed
+schemes and hosts, maximum document size, retrieval timeouts, redirect policy,
+caching, and cycle detection. Tooling <span class="bcp14">MUST</span> prevent cross-document resolution
+from becoming an SSRF or unrestricted local-file access primitive.<a href="#section-4.8-5" class="pilcrow">¶</a></p>
+<p id="section-4.8-6">Identity comparison uses two related but distinct notions. Both are derived
+from an explicitly declared identity:<a href="#section-4.8-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.8-6.1">
-            <p id="section-4.8-6.1.1"><strong>Resource identity</strong> is the identity value exactly as declared, including
+<li class="normal" id="section-4.8-7.1">
+            <p id="section-4.8-7.1.1"><strong>Resource identity</strong> is the identity value exactly as declared, including
 any fragment it carries. It is the value used as the base URI for
-references resolved within that resource.<a href="#section-4.8-6.1.1" class="pilcrow">¶</a></p>
+references resolved within that resource.<a href="#section-4.8-7.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.8-6.2">
-            <p id="section-4.8-6.2.1"><strong>Lookup key</strong> is the fragment-free form of a resource identity: the same
-absolute URI with any fragment removed. It is used exclusively for matching
-a cross-document reference against registered resources.<a href="#section-4.8-6.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-4.8-7.2">
+            <p id="section-4.8-7.2.1"><strong>Lookup key</strong> is the fragment-free form of a resource identity: the same
+absolute URI with any fragment removed. It is used only for matching a
+cross-document reference against registered resources.<a href="#section-4.8-7.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-4.8-7">Matching compares lookup keys: tooling <span class="bcp14">MUST</span> strip any fragment from the
-reference value, and <span class="bcp14">MUST</span> strip any fragment from each registered identity,
-before comparing the two byte-for-byte. Because this comparison discards
-fragments, two different registered identities that share the same
-fragment-free prefix collide as lookup keys even though they remain distinct
-resource identities; tooling <span class="bcp14">MUST</span> reject a Description in which more than one
-registered identity reduces to the same lookup key, and <span class="bcp14">MUST</span> reject a
-Description that registers the same resource identity more than once.<a href="#section-4.8-7" class="pilcrow">¶</a></p>
-<p id="section-4.8-8">A schema resource retrieved from outside the Description need not itself be
+<p id="section-4.8-8">Matching compares lookup keys. Tooling <span class="bcp14">MUST</span> strip any fragment from the
+reference value and from each registered identity, then compare the two
+byte-for-byte.<a href="#section-4.8-8" class="pilcrow">¶</a></p>
+<p id="section-4.8-9">This comparison discards fragments. Two registered identities that share a
+fragment-free prefix therefore reduce to the same lookup key, even though they
+remain distinct resource identities. Tooling <span class="bcp14">MUST</span> reject a Description in
+which more than one registered identity reduces to the same lookup key.
+Tooling <span class="bcp14">MUST</span> reject a Description that registers the same resource identity
+more than once.<a href="#section-4.8-9" class="pilcrow">¶</a></p>
+<p id="section-4.8-10">A schema resource retrieved from outside the Description need not itself be
 an OpenAPI Description or a JSON Schema document. OAS requires every document
 in an OpenAPI Description to have an OpenAPI Object or a Schema Object at its
 root (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "OpenAPI Description Structure"), and treats other roots as
 implementation-defined. Such a retrieved resource is therefore not part of
-the OAD: it is an input to dialect processing, obtained and interpreted under
+the OAD. It is an input to dialect processing, obtained and interpreted under
 this section and the dialect's own rules, and OAS document-structure
 requirements do not apply to it. Tooling <span class="bcp14">MUST NOT</span> attempt to parse it as an
-OpenAPI document, and <span class="bcp14">MUST NOT</span> expose its contents at OAS component addresses.<a href="#section-4.8-8" class="pilcrow">¶</a></p>
+OpenAPI document, and <span class="bcp14">MUST NOT</span> expose its contents at OAS component addresses.<a href="#section-4.8-10" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="type-scope">
+<section id="section-4.9">
+        <h3 id="name-type-identity-and-scope">
+<a href="#section-4.9" class="section-number selfRef">4.9. </a><a href="#name-type-identity-and-scope" class="section-name selfRef">Type Identity and Scope</a>
+        </h3>
+<p id="section-4.9-1">A Description can hold many schema resources. These are every
+<code>components.schemas</code> entry, and every inline Schema Object at a request body,
+response, parameter, or header position. Each is a separate resource with its
+own identity (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>) and its own scope for whatever
+names its dialect gives to types.<a href="#section-4.9-1" class="pilcrow">¶</a></p>
+<p id="section-4.9-2">Type identity is outside the scope of OAS, which places "class hierarchies"
+in the application form of the data, "beyond the scope of this
+specification" (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "Parsing and Serializing"). A binding supplies it,
+as it supplies the other parameters of <a href="#binding-parameters" class="auto internal xref">Section 4.1</a>.<a href="#section-4.9-2" class="pilcrow">¶</a></p>
+<p id="section-4.9-3">Scope becomes observable once a consumer treats the Description as a single
+type space. A code generator does this when it emits one module for the
+Description. Two resources can carry the same type name without either being
+wrong, since neither is in the other's scope. A consumer that flattens them
+produces a collision that exists nowhere in the Description.<a href="#section-4.9-3" class="pilcrow">¶</a></p>
+<p id="section-4.9-4">A dialect binding <span class="bcp14">MUST</span> declare what names a type in its dialect and what
+constitutes a resource's scope (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>). Tooling that
+aggregates the Schema Objects of a Description into one type space <span class="bcp14">MUST</span>
+preserve the resource boundary as a scope boundary. It <span class="bcp14">MUST NOT</span> merge the
+type declarations of two schema resources into a single scope. It <span class="bcp14">MUST NOT</span>
+rename a declaration to resolve a collision that arises only from merging.
+Where the dialect cannot express the resulting scopes, tooling <span class="bcp14">MUST</span> report a
+diagnostic and <span class="bcp14">MUST NOT</span> choose a name on the author's behalf.<a href="#section-4.9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="serialization-inspection">
-<section id="section-4.9">
+<section id="section-4.10">
         <h3 id="name-schema-inspection-for-non-j">
-<a href="#section-4.9" class="section-number selfRef">4.9. </a><a href="#name-schema-inspection-for-non-j" class="section-name selfRef">Schema Inspection for Non-JSON Serializations</a>
+<a href="#section-4.10" class="section-number selfRef">4.10. </a><a href="#name-schema-inspection-for-non-j" class="section-name selfRef">Schema Inspection for Non-JSON Serializations</a>
         </h3>
-<p id="section-4.9-1">For media types whose serialization is not self-describing as to type —
+<p id="section-4.10-1">Some media types are not self-describing as to type. These include
 <code>application/x-www-form-urlencoded</code>, <code>multipart</code> media types, and <code>text/plain</code>
-values in Parameter, Header, and Encoding Objects — OAS requires
+values in Parameter, Header, and Encoding Objects. For those, OAS requires
 implementations to inspect the schema to determine each value's type before
 parsing or serializing it (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>, "Parsing and Serializing"). OAS states
 that procedure in terms of the OAS dialect's own keywords, following <code>$ref</code>
 and <code>allOf</code>. That procedure does not apply to a Schema Object in another
-dialect, because those keywords need not exist or need not mean the same
-thing.<a href="#section-4.9-1" class="pilcrow">¶</a></p>
-<p id="section-4.9-2">A binding <span class="bcp14">MUST</span> declare an equivalent type-determination procedure
+dialect, whose keywords need not exist or need not mean the same thing.<a href="#section-4.10-1" class="pilcrow">¶</a></p>
+<p id="section-4.10-2">A binding <span class="bcp14">MUST</span> declare an equivalent type-determination procedure
 (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>) that, given a starting-point Schema Object in its
 dialect, yields for each named or positioned value either a determined JSON
 data type or an explicit "undetermined" result. The procedure <span class="bcp14">MUST</span> be
-deterministic and <span class="bcp14">MUST NOT</span> depend on instance data.<a href="#section-4.9-2" class="pilcrow">¶</a></p>
-<p id="section-4.9-3">Tooling <span class="bcp14">MUST</span> use the binding's procedure, and <span class="bcp14">MUST NOT</span> fall back to the OAS
-procedure, whenever a Schema Object in a bound dialect appears in:<a href="#section-4.9-3" class="pilcrow">¶</a></p>
+deterministic and <span class="bcp14">MUST NOT</span> depend on instance data.<a href="#section-4.10-2" class="pilcrow">¶</a></p>
+<p id="section-4.10-3">Tooling <span class="bcp14">MUST</span> use the binding's procedure, and <span class="bcp14">MUST NOT</span> fall back to the OAS
+procedure, whenever a Schema Object in a bound dialect appears in:<a href="#section-4.10-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.9-4.1">
-            <p id="section-4.9-4.1.1">a Media Type Object's <code>schema</code> or <code>itemSchema</code> for a non-JSON media type;<a href="#section-4.9-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-4.10-4.1">
+            <p id="section-4.10-4.1.1">a Media Type Object's <code>schema</code> or <code>itemSchema</code> for a non-JSON media type;<a href="#section-4.10-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.9-4.2">
-            <p id="section-4.9-4.2.1">a Parameter or Header Object using <code>schema</code> rather than <code>content</code>;<a href="#section-4.9-4.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-4.10-4.2">
+            <p id="section-4.10-4.2.1">a Parameter or Header Object using <code>schema</code> rather than <code>content</code>;<a href="#section-4.10-4.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.9-4.3">
-            <p id="section-4.9-4.3.1">a value correlated with an Encoding Object through <code>encoding</code>,
-<code>prefixEncoding</code>, or <code>itemEncoding</code>.<a href="#section-4.9-4.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-4.10-4.3">
+            <p id="section-4.10-4.3.1">a value correlated with an Encoding Object through <code>encoding</code>,
+<code>prefixEncoding</code>, or <code>itemEncoding</code>.<a href="#section-4.10-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-4.9-5">Where the procedure yields "undetermined", tooling <span class="bcp14">MUST</span> report a diagnostic
-identifying the value rather than guessing a type. Where a binding declares
-no such procedure, its dialect <span class="bcp14">MUST NOT</span> be used at the positions listed
-above, and tooling <span class="bcp14">MUST</span> reject a Description that does so.<a href="#section-4.9-5" class="pilcrow">¶</a></p>
-<p id="section-4.9-6">The <code>itemSchema</code> field applies its Schema Object to each item of a sequential
+<p id="section-4.10-5">Where the procedure yields "undetermined", tooling <span class="bcp14">MUST</span> report a diagnostic
+identifying the value and <span class="bcp14">MUST NOT</span> guess a type. Where a binding declares no
+such procedure, its dialect <span class="bcp14">MUST NOT</span> be used at the positions listed above,
+and tooling <span class="bcp14">MUST</span> reject a Description that does so.<a href="#section-4.10-5" class="pilcrow">¶</a></p>
+<p id="section-4.10-6">The <code>itemSchema</code> field applies its Schema Object to each item of a sequential
 media type independently (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>). A Schema Object in a bound dialect is
 valid at an <code>itemSchema</code> position on the same terms as at a <code>schema</code>
-position: it is a schema-resource root (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>), and it
-describes one item, not the sequence.<a href="#section-4.9-6" class="pilcrow">¶</a></p>
+position. It is a schema-resource root (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>), and it
+describes one item, not the sequence.<a href="#section-4.10-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="validating-the-description">
-<section id="section-4.10">
+<section id="section-4.11">
         <h3 id="name-validating-the-description-">
-<a href="#section-4.10" class="section-number selfRef">4.10. </a><a href="#name-validating-the-description-" class="section-name selfRef">Validating the Description Itself</a>
+<a href="#section-4.11" class="section-number selfRef">4.11. </a><a href="#name-validating-the-description-" class="section-name selfRef">Validating the Description Itself</a>
         </h3>
-<p id="section-4.10-1">The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
+<p id="section-4.11-1">The OpenAPI Initiative publishes two JSON Schemas per OAS minor version for
 validating OpenAPI documents. The <code>schema</code> iteration deliberately does not
-validate Schema Objects, because it makes no assumption about the dialect in
+validate Schema Objects, since it makes no assumption about the dialect in
 use. The <code>schema-base</code> iteration does validate them, and constrains
-<code>jsonSchemaDialect</code> and <code>$schema</code> to the OAS dialect.<a href="#section-4.10-1" class="pilcrow">¶</a></p>
-<p id="section-4.10-2">A Description that uses any bound dialect is therefore validatable against
+<code>jsonSchemaDialect</code> and <code>$schema</code> to the OAS dialect.<a href="#section-4.11-1" class="pilcrow">¶</a></p>
+<p id="section-4.11-2">A Description that uses any bound dialect is therefore validatable against
 the <code>schema</code> iteration and is NOT validatable against the <code>schema-base</code>
-iteration; a <code>schema-base</code> failure caused solely by a bound dialect URI is
+iteration. A <code>schema-base</code> failure caused solely by a bound dialect URI is
 expected and is not a defect in the Description. Tooling that validates
 Descriptions <span class="bcp14">MUST NOT</span> treat <code>schema-base</code> as the authoritative structural
-check for a Description containing bound-dialect Schema Objects, and <span class="bcp14">SHOULD</span>
-validate against the <code>schema</code> iteration together with the dialect's own
-meta-schema applied to each Schema Object.<a href="#section-4.10-2" class="pilcrow">¶</a></p>
+check for a Description containing bound-dialect Schema Objects. Such tooling
+<span class="bcp14">SHOULD</span> validate against the <code>schema</code> iteration together with the dialect's own
+meta-schema applied to each Schema Object.<a href="#section-4.11-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2066,7 +2104,11 @@ whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Type determination</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.9</a>.</td>
+                <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.10</a>.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">Type naming and scope</td>
+              <td class="text-left" rowspan="1" colspan="1">A type is named by <code>name</code>; a resource's scope is its root namespace (<a href="#aggregate-namespaces" class="auto internal xref">Section 5.7</a>).</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Self-description</td>
@@ -2113,16 +2155,16 @@ whose base dialect is one of those canonical URIs.<a href="#section-5-2" class="
           </tbody>
         </table>
 <p id="section-5.2-3">The extended meta-schema is <span class="bcp14">RECOMMENDED</span> as the document default for API
-design, because it makes <code>$import</code> available while keeping validation and
+design. It makes <code>$import</code> available while keeping validation and
 composition opt-in.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <p id="section-5.2-4">JSON Structure Core permits a custom meta-schema to extend one of these by
 giving the derived meta-schema its own <code>$id</code> and using <code>$import</code> to pull in
 the foundational meta-schema's definitions (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, "Meta-Schemas").
-Such a URI is subject to the derived-URI rule of <a href="#dialect-recognition" class="auto internal xref">Section 4.4</a>;
-configuring tooling to recognize one typically means resolving the
+Such a URI is subject to the derived-URI rule of <a href="#dialect-recognition" class="auto internal xref">Section 4.4</a>.
+Configuring tooling to recognize one typically means resolving the
 meta-schema document once, offline, and confirming that it imports one of the
 three canonical meta-schemas. A custom meta-schema <span class="bcp14">MUST</span> document which
-add-ins it activates by default and which it merely offers.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+add-ins it activates by default and which it only offers.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="json-structure-materializing-name">
@@ -2132,49 +2174,52 @@ add-ins it activates by default and which it merely offers.<a href="#section-5.2
         </h3>
 <p id="section-5.3-1">Beyond the <code>$schema</code> and <code>$id</code> materialization required by
 <a href="#materializing-defaults" class="auto internal xref">Section 4.6</a>, every JSON Structure schema resource root <span class="bcp14">MUST</span>
-carry a <code>name</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. This requirement is unconditional: it
+carry a <code>name</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. This requirement is unconditional. It
 applies to a root that declares <code>type</code> at the top level, to a root that uses
 <code>$root</code> to designate a type defined under its own <code>definitions</code>, and to a
-root that only holds <code>definitions</code> and is never itself instantiated. Within
-an OpenAPI Description it applies to every <code>components.schemas</code> entry, and to
-an anonymous inline Schema Object at a request body, response, or parameter
-position once that object is extracted for standalone validation. Tooling
-performing such an extraction <span class="bcp14">MUST</span> materialize a <code>name</code> when the Schema
-Object does not supply one, for example by deriving it from the Schema
-Object's JSON Pointer location (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>).<a href="#section-5.3-1" class="pilcrow">¶</a></p>
-<p id="section-5.3-2">The materialized name <span class="bcp14">MUST</span> be a valid JSON Structure identifier and <span class="bcp14">MUST</span> be
+root that only holds <code>definitions</code> and is never itself instantiated.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-2">Within an OpenAPI Description the requirement applies to every
+<code>components.schemas</code> entry. It also applies to an anonymous inline Schema
+Object at a request body, response, or parameter position, once that object is
+extracted for standalone validation. Tooling performing such an extraction
+<span class="bcp14">MUST</span> materialize a <code>name</code> when the Schema Object does not supply one, for
+example by deriving it from the Schema Object's JSON Pointer location
+(<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>).<a href="#section-5.3-2" class="pilcrow">¶</a></p>
+<p id="section-5.3-3">The materialized name <span class="bcp14">MUST</span> be a valid JSON Structure identifier and <span class="bcp14">MUST</span> be
 stable for the same Description and JSON Pointer. If the derived name
 collides with a declared name in the extracted document, tooling <span class="bcp14">MUST</span> reject
-the extraction rather than silently rename either declaration. The OpenAPI
-component key remains the OAS address; it does not implicitly replace an
-explicit JSON Structure <code>name</code>.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3-3">A JSON Pointer cannot be used as a name unchanged. JSON Structure restricts
+the extraction and <span class="bcp14">MUST NOT</span> rename either declaration. The OpenAPI component
+key remains the OAS address. It does not implicitly replace an explicit JSON
+Structure <code>name</code>. A further uniqueness requirement applies across the schema
+resources of one Description when they are aggregated
+(<a href="#aggregate-namespaces" class="auto internal xref">Section 5.7</a>).<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.3-4">A JSON Pointer cannot be used as a name unchanged. JSON Structure restricts
 identifiers to <code>[A-Za-z_][A-Za-z0-9_]*</code> (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>), which excludes
 the <code>/</code> and <code>~</code> a pointer is built from. Reproducing the whole pointer is
-also unnecessary: <code>$id</code> already records the exact location, so <code>name</code> only
+also unnecessary. <code>$id</code> already records the exact location, so <code>name</code> only
 has to be a stable, readable identifier that is unique within the extracted
-document. Tooling <span class="bcp14">SHOULD</span> derive one in this order:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.3-4">
-<li id="section-5.3-4.1">
-            <p id="section-5.3-4.1.1">If the Schema Object is a <code>components.schemas</code> entry whose component key
+document. Tooling <span class="bcp14">SHOULD</span> derive one in this order:<a href="#section-5.3-4" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3-5">
+<li id="section-5.3-5.1">
+            <p id="section-5.3-5.1.1">If the Schema Object is a <code>components.schemas</code> entry whose component key
 is already a valid JSON Structure identifier, use the component key. OAS
 constrains component keys to <code>^[a-zA-Z0-9\.\-_]+$</code> (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>), so most
-keys in existing Descriptions qualify unchanged.<a href="#section-5.3-4.1.1" class="pilcrow">¶</a></p>
+keys in existing Descriptions qualify unchanged.<a href="#section-5.3-5.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.3-4.2">
-            <p id="section-5.3-4.2.1">Otherwise, derive from the identifying parts of the position — for a
-request body or response, the path template, the HTTP method, and the
-role — rather than from every reference-token of the pointer.<a href="#section-5.3-4.2.1" class="pilcrow">¶</a></p>
+          <li id="section-5.3-5.2">
+            <p id="section-5.3-5.2.1">Otherwise, derive the name from the identifying parts of the position. For
+a request body or response, those are the path template, the HTTP method,
+and the role. Do not use every reference-token of the pointer.<a href="#section-5.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.3-4.3">
-            <p id="section-5.3-4.3.1">If neither produces a valid identifier, reject the extraction and require
-an explicit <code>name</code>.<a href="#section-5.3-4.3.1" class="pilcrow">¶</a></p>
+          <li id="section-5.3-5.3">
+            <p id="section-5.3-5.3.1">If neither produces a valid identifier, reject the extraction and require
+an explicit <code>name</code>.<a href="#section-5.3-5.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.3-5">Consider a Description that selects the JSON Structure Core dialect for the
+<p id="section-5.3-6">Consider a Description that selects the JSON Structure Core dialect for the
 whole document and carries an anonymous inline Schema Object at a request
-body position:<a href="#section-5.3-5" class="pilcrow">¶</a></p>
-<div class="lang-yaml sourcecode" id="section-5.3-6">
+body position:<a href="#section-5.3-6" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.3-7">
 <pre>
 openapi: 3.2.0
 $self: https://example.com/api/openapi.yaml
@@ -2192,14 +2237,14 @@ paths:
                   type: uuid
                 total:
                   type: decimal
-</pre><a href="#section-5.3-6" class="pilcrow">¶</a>
+</pre><a href="#section-5.3-7" class="pilcrow">¶</a>
 </div>
-<p id="section-5.3-7">The Schema Object declares no <code>$schema</code>, no <code>$id</code>, and no <code>name</code>. None of the
-three is needed while it is read in place, because the dialect comes from
-<code>jsonSchemaDialect</code> and the position within the Description supplies the
+<p id="section-5.3-8">The Schema Object declares no <code>$schema</code>, no <code>$id</code>, and no <code>name</code>. None of the
+three is needed while it is read in place. The dialect comes from
+<code>jsonSchemaDialect</code>, and the position within the Description supplies the
 address. Extraction for standalone validation removes both, so all three <span class="bcp14">MUST</span>
-be materialized:<a href="#section-5.3-7" class="pilcrow">¶</a></p>
-<div class="lang-yaml sourcecode" id="section-5.3-8">
+be materialized:<a href="#section-5.3-8" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.3-9">
 <pre>
 $schema: https://json-structure.org/meta/core/v0/#
 $id: https://example.com/api/openapi.yaml#/paths/~1orders/post/requestBody/content/application~1json/schema
@@ -2210,12 +2255,12 @@ properties:
     type: uuid
   total:
     type: decimal
-</pre><a href="#section-5.3-8" class="pilcrow">¶</a>
+</pre><a href="#section-5.3-9" class="pilcrow">¶</a>
 </div>
-<p id="section-5.3-9"><code>$schema</code> is the effective dialect inherited from <code>jsonSchemaDialect</code>, and
-<code>$id</code> is the default identity constructed per <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>.<a href="#section-5.3-9" class="pilcrow">¶</a></p>
-<p id="section-5.3-10"><code>name</code> comes from step 2. Three parts of the position identify it, and each
-contributes one segment:<a href="#section-5.3-10" class="pilcrow">¶</a></p>
+<p id="section-5.3-10"><code>$schema</code> is the effective dialect inherited from <code>jsonSchemaDialect</code>, and
+<code>$id</code> is the default identity constructed per <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>.<a href="#section-5.3-10" class="pilcrow">¶</a></p>
+<p id="section-5.3-11"><code>name</code> comes from step 2. Three parts of the position identify it, and each
+contributes one segment:<a href="#section-5.3-11" class="pilcrow">¶</a></p>
 <table class="center" id="table-5">
           <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
@@ -2255,25 +2300,25 @@ contributes one segment:<a href="#section-5.3-10" class="pilcrow">¶</a></p>
             </tr>
           </tbody>
         </table>
-<p id="section-5.3-12">Each segment drops the characters outside <code>[A-Za-z0-9_]</code> and capitalizes its
-first letter; the segments are then concatenated in that order, giving
-<code>OrdersPostRequestBody</code>. The remaining reference-tokens of the pointer —
-<code>paths</code>, <code>content</code>, <code>application/json</code>, <code>schema</code> — contribute nothing,
-because they are structural rather than identifying.<a href="#section-5.3-12" class="pilcrow">¶</a></p>
-<p id="section-5.3-13">Distinct positions can still derive the same name. Two media types under the
-same operation — <code>application/json</code> and <code>application/xml</code> at <code>POST /orders</code> —
-occupy different pointers but share path, method, and role; so do the path
-templates <code>/orders</code> and <code>/Orders</code>, which differ in the Description but not
-after the leading character is capitalized. Tooling <span class="bcp14">MAY</span> append further
-distinguishing segments, such as the media type, provided the result stays
-deterministic. Where it cannot, it <span class="bcp14">MUST</span> reject the extraction rather than
-emit the same name twice; the author resolves the conflict by declaring an
-explicit <code>name</code> on one of the Schema Objects.<a href="#section-5.3-13" class="pilcrow">¶</a></p>
-<p id="section-5.3-14">A <code>components.schemas</code> entry usually needs none of this. An entry stored
+<p id="section-5.3-13">Each segment drops the characters outside <code>[A-Za-z0-9_]</code> and capitalizes its
+first letter. The segments are then concatenated in that order, giving
+<code>OrdersPostRequestBody</code>. The remaining reference-tokens of the pointer,
+<code>paths</code>, <code>content</code>, <code>application/json</code>, and <code>schema</code>, contribute nothing.
+They are structural, not identifying.<a href="#section-5.3-13" class="pilcrow">¶</a></p>
+<p id="section-5.3-14">Distinct positions can still derive the same name. Two media types under one
+operation, <code>application/json</code> and <code>application/xml</code> at <code>POST /orders</code>, occupy
+different pointers but share path, method, and role. So do the path templates
+<code>/orders</code> and <code>/Orders</code>, which differ in the Description but not after the
+leading character is capitalized. Tooling <span class="bcp14">MAY</span> append further distinguishing
+segments, such as the media type, provided the result stays deterministic.
+Where it cannot, it <span class="bcp14">MUST</span> reject the extraction and <span class="bcp14">MUST NOT</span> emit the same
+name twice. The author resolves the conflict by declaring an explicit <code>name</code>
+on one of the Schema Objects.<a href="#section-5.3-14" class="pilcrow">¶</a></p>
+<p id="section-5.3-15">A <code>components.schemas</code> entry usually needs none of this. An entry stored
 under <code>TelemetryMessage</code> derives <code>TelemetryMessage</code> by step 1. The component
-key remains the OAS address rather than the JSON Structure name, so an
-explicit <code>name</code> on the Schema Object still takes precedence and the two need
-not be equal.<a href="#section-5.3-14" class="pilcrow">¶</a></p>
+key remains the OAS address and not the JSON Structure name. An explicit
+<code>name</code> on the Schema Object therefore still takes precedence, and the two
+need not be equal.<a href="#section-5.3-15" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="type-system">
@@ -2282,12 +2327,13 @@ not be equal.<a href="#section-5.3-14" class="pilcrow">¶</a></p>
 <a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-type-system" class="section-name selfRef">Type System</a>
         </h3>
 <p id="section-5.4-1">Within a JSON Structure Schema Object, keywords are interpreted per JSON
-Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, which defines the full type system: primitive and
-precise numeric types, the <code>object</code>/<code>array</code>/<code>set</code>/<code>map</code>/<code>tuple</code>/<code>choice</code>
-compound types and their member/item/value declarations, nullability via type
-union, and inheritance via <code>abstract</code> and <code>$extends</code>. These JSON Structure
-constructs replace the correspondingly named OAS / JSON Schema constructs,
-which do not apply in this dialect.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+Structure <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>, which defines the full type system. That type
+system covers primitive and precise numeric types, the
+<code>object</code>/<code>array</code>/<code>set</code>/<code>map</code>/<code>tuple</code>/<code>choice</code> compound types and their
+member, item, and value declarations, nullability via type union, and
+inheritance via <code>abstract</code> and <code>$extends</code>. These JSON Structure constructs
+replace the correspondingly named OAS and JSON Schema constructs, which do
+not apply in this dialect.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
 <div id="inheritance">
 <section id="section-5.4.1">
           <h4 id="name-inheritance">
@@ -2308,10 +2354,10 @@ type extension.<a href="#section-5.4.1-1" class="pilcrow">¶</a></p>
 tagged-union or inline-union form, with <code>selector</code> naming the discriminant
 property (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>).<a href="#section-5.4.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.4.2-2">A JSON Structure Schema Object <span class="bcp14">MUST NOT</span> include the OAS <code>discriminator</code>
-field: its presence makes the Schema Object non-conforming with this binding.
+field. Its presence makes the Schema Object non-conforming with this binding.
 Tooling <span class="bcp14">MUST NOT</span> interpret an OAS <code>discriminator</code> field as a discriminator
-when present, and <span class="bcp14">MUST</span> use <code>selector</code> as JSON Structure's own discriminator
-mechanism instead.<a href="#section-5.4.2-2" class="pilcrow">¶</a></p>
+when present. Tooling <span class="bcp14">MUST</span> use <code>selector</code>, which is JSON Structure's own
+discriminator mechanism.<a href="#section-5.4.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="type-system-conditional-composition">
@@ -2323,7 +2369,7 @@ mechanism instead.<a href="#section-5.4.2-2" class="pilcrow">¶</a></p>
 keywords of the <code>JSONStructureConditionalComposition</code> add-in <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span>
 are boolean validation combinators only. They do not merge or intersect type
 definitions and <span class="bcp14">MUST NOT</span> be interpreted as structural composition. Structural
-reuse is expressed exclusively with <code>$extends</code> (<a href="#inheritance" class="auto internal xref">Section 5.4.1</a>) and <code>$import</code>
+reuse is expressed only with <code>$extends</code> (<a href="#inheritance" class="auto internal xref">Section 5.4.1</a>) and <code>$import</code>
 (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>).<a href="#section-5.4.3-1" class="pilcrow">¶</a></p>
 <p id="section-5.4.3-2"><a href="#construct-mapping" class="auto internal xref">Appendix A</a> tabulates the OAS-dialect constructs that change meaning
 in this dialect, for readers migrating an existing Schema Object.<a href="#section-5.4.3-2" class="pilcrow">¶</a></p>
@@ -2338,33 +2384,34 @@ in this dialect, for readers migrating an existing Schema Object.<a href="#secti
         </h3>
 <p id="section-5.5-1">The two reference layers of <a href="#reference-model" class="auto internal xref">Section 4.7</a> are instantiated for JSON
 Structure as follows. The OpenAPI layer is unchanged. The dialect layer is
-<code>$ref</code>, <code>$extends</code>, and <code>$import</code> used <em>within</em> a Schema Object that has
-adopted a JSON Structure dialect: <code>$ref</code> and <code>$extends</code> address named types
-under the schema's own <code>#/definitions/...</code>, and cross-document reuse instead
-uses the <code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>
+<code>$ref</code>, <code>$extends</code>, and <code>$import</code> used within a Schema Object that has
+adopted a JSON Structure dialect. <code>$ref</code> and <code>$extends</code> address named types
+under the schema's own <code>#/definitions/...</code>. Cross-document reuse uses the
+<code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> instead
 (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>). An inner <code>$ref</code> <span class="bcp14">MUST NOT</span> be used to reach a
 <code>components.schemas</code> entry.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
 <p id="section-5.5-2">After a resource root has adopted a JSON Structure dialect, a <code>$ref</code>
 encountered inside its body is valid only where JSON Structure Core permits
 it: as the value of <code>type</code>, or through the corresponding <code>$extends</code> and
 import forms.<a href="#section-5.5-2" class="pilcrow">¶</a></p>
-<p id="section-5.5-3">An OAS/JSON Schema <code>$ref</code> is a general-purpose node-reference mechanism: a
-sibling property that can stand in for an entire Schema Object at any
-position (<code>{ "$ref": "#/components/schemas/Foo" }</code>). JSON Structure has no
-equivalent: its <code>$ref</code> exists solely to name the type referenced by a <code>type</code>
-attribute. Consequently <code>$ref</code> <span class="bcp14">MUST</span> only appear as the value of a <code>type</code>
-attribute (<code>{ "type": { "$ref": "#/definitions/Foo" } }</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>)
-and <span class="bcp14">MUST NOT</span> be used as a sibling property standing in for a whole schema.<a href="#section-5.5-3" class="pilcrow">¶</a></p>
+<p id="section-5.5-3">An OAS or JSON Schema <code>$ref</code> is a general-purpose node-reference mechanism. It
+is a sibling property that can stand in for an entire Schema Object at any
+position, as in <code>{ "$ref": "#/components/schemas/Foo" }</code>. JSON Structure has
+no equivalent. Its <code>$ref</code> exists only to name the type referenced by a <code>type</code>
+attribute. <code>$ref</code> <span class="bcp14">MUST</span> therefore appear only as the value of a <code>type</code>
+attribute, as in <code>{ "type": { "$ref": "#/definitions/Foo" } }</code>
+(<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>). It <span class="bcp14">MUST NOT</span> be used as a sibling property standing in for
+a whole schema.<a href="#section-5.5-3" class="pilcrow">¶</a></p>
 <div id="reference-model-ref-placement">
 <section id="section-5.5.1">
           <h4 id="name-ref-names-a-type-not-a-node">
 <a href="#section-5.5.1" class="section-number selfRef">5.5.1. </a><a href="#name-ref-names-a-type-not-a-node" class="section-name selfRef"><code>$ref</code> Names a Type, Not a Node</a>
           </h4>
 <p id="section-5.5.1-1">This is easy to lose sight of when moving a <code>properties</code>, <code>items</code>, or
-<code>choices</code> member from a plain OAS/JSON Schema Schema Object into a JSON
-Structure Schema Object, because the OAS reference syntax parses without
-complaint at the same position. Assume the array schema below has itself
-adopted the JSON Structure dialect:<a href="#section-5.5.1-1" class="pilcrow">¶</a></p>
+<code>choices</code> member from a plain OAS or JSON Schema Schema Object into a JSON
+Structure Schema Object. The OAS reference syntax parses without complaint at
+the same position. Assume the array schema below has itself adopted the JSON
+Structure dialect:<a href="#section-5.5.1-1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.5.1-2">
 <pre>
 {
@@ -2373,15 +2420,15 @@ adopted the JSON Structure dialect:<a href="#section-5.5.1-1" class="pilcrow">¶
 }
 </pre><a href="#section-5.5.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-5.5.1-3">This is NOT valid JSON Structure. <code>$ref</code> here is a sibling of <code>items</code> rather
-than the value of a <code>type</code> attribute, and it targets a <code>components.schemas</code>
+<p id="section-5.5.1-3">This is NOT valid JSON Structure. <code>$ref</code> here is a sibling of <code>items</code>, not
+the value of a <code>type</code> attribute. It also targets a <code>components.schemas</code>
 entry, which JSON Structure's own <code>$ref</code> cannot reach in any case
-(<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>): <code>$ref</code> and <code>$extends</code> are document-local,
-addressing only the schema's own <code>#/definitions</code>. A generic JSON/YAML parser
-accepts the form above, so the violation only surfaces when the Schema
-Object is validated with a JSON Structure-aware tool. The principled form
-names a type for <code>items</code> to hold and points that type reference at a locally
-defined type:<a href="#section-5.5.1-3" class="pilcrow">¶</a></p>
+(<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>), since <code>$ref</code> and <code>$extends</code> are document-local and
+address only the schema's own <code>#/definitions</code>. A generic JSON or YAML parser
+accepts the form above, so the violation surfaces only when the Schema Object
+is validated with a JSON Structure-aware tool. The principled form names a
+type for <code>items</code> to hold and points that type reference at a locally defined
+type:<a href="#section-5.5.1-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.5.1-4">
 <pre>
 {
@@ -2404,8 +2451,9 @@ defined type:<a href="#section-5.5.1-3" class="pilcrow">¶</a></p>
 Object, an ordinary OAS <code>$ref</code> to <code>#/components/schemas/Pet</code> is used at that
 position instead of duplicating it. Only positions nested inside another
 Schema Object's <code>properties</code>, <code>items</code>, or <code>choices</code> require the local
-<code>definitions</code> copy, because those positions cannot carry an OAS <code>$ref</code> of
-their own.<a href="#section-5.5.1-5" class="pilcrow">¶</a></p>
+<code>definitions</code> copy. Those positions cannot carry an OAS <code>$ref</code> of
+their own. <a href="#aggregate-namespaces" class="auto internal xref">Section 5.7</a> governs how such a copy relates to a
+like-named declaration in another schema resource.<a href="#section-5.5.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2415,74 +2463,195 @@ their own.<a href="#section-5.5.1-5" class="pilcrow">¶</a></p>
         <h3 id="name-cross-schema-reuse-with-imp">
 <a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-cross-schema-reuse-with-imp" class="section-name selfRef">Cross-Schema Reuse with <code>$import</code> and <code>$importdefs</code></a>
         </h3>
-<p id="section-5.6-1">Because <code>$ref</code> and <code>$extends</code> are document-local, a JSON Structure Schema
-Object cannot reach a type defined in another <code>components.schemas</code> entry
-through them. Reuse across entries, and across documents, uses the
-<code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>, which is active by default
-under the extended and validation meta-schemas and defines the <code>$import</code> and
-<code>$importdefs</code> keywords, their copy-not-link semantics, definition shadowing,
-import error handling, and cycle rejection.<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<p id="section-5.6-1"><code>$ref</code> and <code>$extends</code> are document-local. A JSON Structure Schema Object
+cannot reach a type defined in another <code>components.schemas</code> entry through
+them. Reuse across entries, and across documents, uses the
+<code>JSONStructureImport</code> add-in <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>. That add-in is active by
+default under the extended and validation meta-schemas. It defines the
+<code>$import</code> and <code>$importdefs</code> keywords, their copy-not-link semantics,
+definition shadowing, import error handling, and cycle rejection.<a href="#section-5.6-1" class="pilcrow">¶</a></p>
 <p id="section-5.6-2"><code>$import</code> and <code>$importdefs</code> are this binding's cross-document mechanism
 (<a href="#binding-parameters" class="auto internal xref">Section 4.1</a>), and their values <span class="bcp14">MUST</span> be absolute URIs per
-<span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>. This binding does not relax that requirement or
-introduce relative import URIs for use inside an OpenAPI Description; a JSON
-Structure Schema Object with a relative <code>$import</code>/<code>$importdefs</code> value is
-non-conforming, and tooling <span class="bcp14">MUST</span> reject it rather than attempt to resolve it
-against the importing resource's base URI.<a href="#section-5.6-2" class="pilcrow">¶</a></p>
+<span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>. This binding does not relax that requirement and does not
+introduce relative import URIs for use inside an OpenAPI Description. A JSON
+Structure Schema Object with a relative <code>$import</code> or <code>$importdefs</code> value is
+non-conforming. Tooling <span class="bcp14">MUST</span> reject it and <span class="bcp14">MUST NOT</span> resolve it against the
+importing resource's base URI.<a href="#section-5.6-2" class="pilcrow">¶</a></p>
 <p id="section-5.6-3">Resolution follows <a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a> unchanged: an in-Description
 <code>$id</code> match first, then a caller-supplied registry or cache, then optional
 and explicitly enabled network retrieval. Resource identity is the declared
-<code>$id</code>; the lookup key is that value with any fragment removed. A JSON
+<code>$id</code>. The lookup key is that value with any fragment removed. A JSON
 Structure Schema Object that is to be importable therefore <span class="bcp14">MUST</span> declare an
-explicit <code>$id</code> (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>); a default-constructed <code>$id</code> is
+explicit <code>$id</code> (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>). A default-constructed <code>$id</code> is
 never used for import matching.<a href="#section-5.6-3" class="pilcrow">¶</a></p>
 <p id="section-5.6-4">Once a resource is obtained, tooling validates that it is a JSON Structure
-schema and copies its definitions into the designated namespace, identically
-whether the resource came from the Description, a cache, or the network. A
-resource obtained from outside the Description is not part of the OAD
-(<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>), so a single canonical type library can be
-shared across many APIs without itself being an OpenAPI document. Import
-errors, deduplication, and cycle rejection follow <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>
-unchanged; an importing entry <span class="bcp14">MUST</span> additionally activate, through its
-meta-schema or its own <code>$uses</code>, any add-ins used by the definitions it
-imports.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
+schema and copies its definitions into the designated namespace. It does so
+identically whether the resource came from the Description, a cache, or the
+network. A resource obtained from outside the Description is not part of the
+OAD (<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>). A single canonical type library can
+therefore be shared across many APIs without itself being an OpenAPI
+document. Import errors, deduplication, and cycle rejection follow
+<span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span> unchanged. An importing entry <span class="bcp14">MUST</span> additionally activate,
+through its meta-schema or its own <code>$uses</code>, any add-ins used by the
+definitions it imports.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="aggregate-namespaces">
+<section id="section-5.7">
+        <h3 id="name-namespaces-across-schema-re">
+<a href="#section-5.7" class="section-number selfRef">5.7. </a><a href="#name-namespaces-across-schema-re" class="section-name selfRef">Namespaces Across Schema Resources</a>
+        </h3>
+<p id="section-5.7-1">This section supplies the type naming and scope declaration required by
+<a href="#type-scope" class="auto internal xref">Section 4.9</a>. A JSON Structure type is named by <code>name</code>, and a schema
+resource's scope is its root namespace (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>).<a href="#section-5.7-1" class="pilcrow">¶</a></p>
+<p id="section-5.7-2">Two entries of one Description can therefore each declare a type named <code>Pet</code>
+without either being wrong. <a href="#reference-model-ref-placement" class="auto internal xref">Section 5.5.1</a> makes that a
+routine outcome. A type needed at a nested <code>properties</code>, <code>items</code>, or
+<code>choices</code> position has to be copied into the containing resource's own
+<code>definitions</code>, since that position cannot carry an OAS <code>$ref</code>.<a href="#section-5.7-2" class="pilcrow">¶</a></p>
+<p id="section-5.7-3">The aggregate required by <a href="#type-scope" class="auto internal xref">Section 4.9</a> is a JSON Structure document whose
+root <code>definitions</code> carries one namespace per schema resource, named by that
+resource's <code>name</code> (<a href="#json-structure-materializing-name" class="auto internal xref">Section 5.3</a>). The resource's
+root type and everything under its own <code>definitions</code>, nested namespaces
+included, are placed in that namespace unchanged except for pointer
+rewriting. A document-local <code>$ref</code>, <code>$extends</code>, or <code>$root</code> that addressed
+<code>#/definitions/X</code> within the resource <span class="bcp14">MUST</span> be rewritten to address <code>X</code> under
+the resource's namespace. Definitions that <code>$import</code> or <code>$importdefs</code> copied
+into a resource (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>) are already part of that resource's
+namespace hierarchy and move with it.<a href="#section-5.7-3" class="pilcrow">¶</a></p>
+<p id="section-5.7-4">The namespaces are keyed on <code>name</code>. A <code>name</code> <span class="bcp14">MUST</span> therefore be unique across
+the schema resources of one Description for that Description to be
+aggregatable. OAS component keys are unique by construction, and step 1 of
+<a href="#json-structure-materializing-name" class="auto internal xref">Section 5.3</a> carries that uniqueness into the
+derived names. A duplicate can only come from an explicit <code>name</code> that repeats
+another resource's. Tooling <span class="bcp14">MUST</span> reject such a Description when aggregating.<a href="#section-5.7-4" class="pilcrow">¶</a></p>
+<p id="section-5.7-5">The aggregate is a type library, not an instance schema. It declares no
+<code>type</code> and no <code>$root</code> of its own. It does not replace the individual
+resources, each of which remains addressable by its own <code>$id</code>
+(<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>).<a href="#section-5.7-5" class="pilcrow">¶</a></p>
+<p id="section-5.7-6">Consider a Description with a <code>Pet</code> entry and a <code>PetListResponse</code> entry that
+needs a pet type at a nested <code>items</code> position:<a href="#section-5.7-6" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.7-7">
+<pre>
+components:
+  schemas:
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+      required: [id, name]
+    PetListResponse:
+      name: PetListResponse
+      type: object
+      properties:
+        pets:
+          type: array
+          items:
+            type: { $ref: "#/definitions/Pet" }
+      required: [pets]
+      definitions:
+        Pet:
+          name: Pet
+          type: object
+          properties:
+            id: { type: uuid }
+            name: { type: string }
+            tags:
+              type: set
+              items: { type: string }
+          required: [id, name]
+</pre><a href="#section-5.7-7" class="pilcrow">¶</a>
+</div>
+<p id="section-5.7-8">The two <code>Pet</code> declarations are different types. The nested one carries <code>tags</code>
+and the component entry does not. Each resource validates on its own.
+Aggregated, they occupy separate namespaces, and the inner <code>$ref</code> is
+rewritten to match:<a href="#section-5.7-8" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.7-9">
+<pre>
+$schema: https://json-structure.org/meta/core/v0/#
+$id: https://api.example.com/openapi.yaml#types
+name: PetstoreTypes
+definitions:
+  Pet:
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+      required: [id, name]
+  PetListResponse:
+    PetListResponse:
+      name: PetListResponse
+      type: object
+      properties:
+        pets:
+          type: array
+          items:
+            type: { $ref: "#/definitions/PetListResponse/Pet" }
+      required: [pets]
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+        tags:
+          type: set
+          items: { type: string }
+      required: [id, name]
+</pre><a href="#section-5.7-9" class="pilcrow">¶</a>
+</div>
+<p id="section-5.7-10">The <code>$id</code> and <code>name</code> at the aggregate root are assigned by the aggregating
+tool. This document does not prescribe their form. How a namespace is then
+rendered in a target language is likewise outside the scope of this document,
+whether as a package, a module, a nested class, or a name prefix. What is
+required is that the two <code>Pet</code> declarations stay distinguishable at the
+schema level, so that the choice remains available.<a href="#section-5.7-10" class="pilcrow">¶</a></p>
+<p id="section-5.7-11">An author who wants one <code>Pet</code> rather than two says so in the Description, by
+giving the shared type its own resource and pulling it in with <code>$import</code> or
+<code>$importdefs</code> (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>) instead of copying it. The import
+names the namespace the copy lands in, so the scoping is the author's rather
+than the aggregating tool's.<a href="#section-5.7-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="annotations-and-units">
-<section id="section-5.7">
+<section id="section-5.8">
         <h3 id="name-activating-add-ins-with-use">
-<a href="#section-5.7" class="section-number selfRef">5.7. </a><a href="#name-activating-add-ins-with-use" class="section-name selfRef">Activating Add-ins with <code>$uses</code></a>
+<a href="#section-5.8" class="section-number selfRef">5.8. </a><a href="#name-activating-add-ins-with-use" class="section-name selfRef">Activating Add-ins with <code>$uses</code></a>
         </h3>
-<p id="section-5.7-1">Under the extended meta-schema, non-Core add-ins are offered but not active; a
-schema activates them through <code>$uses</code>, an array of add-in tokens declared at
-the schema root. Under the validation meta-schema, all add-ins are active by
-default.<a href="#section-5.7-1" class="pilcrow">¶</a></p>
-<p id="section-5.7-2">Following the convention established by the add-in specifications themselves
+<p id="section-5.8-1">Under the extended meta-schema, non-Core add-ins are offered but not active.
+A schema activates them through <code>$uses</code>, an array of add-in tokens declared
+at the schema root. Under the validation meta-schema, all add-ins are active
+by default.<a href="#section-5.8-1" class="pilcrow">¶</a></p>
+<p id="section-5.8-2">Following the convention established by the add-in specifications themselves
 <span>[<a href="#JSTRUCT-UNITS" class="cite xref">JSTRUCT-UNITS</a>]</span> <span>[<a href="#JSTRUCT-VALIDATION" class="cite xref">JSTRUCT-VALIDATION</a>]</span> <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span>, <code>$uses</code> is
 placed at the root of the JSON Structure schema document to activate add-ins
 offered by that document's own <code>$schema</code> meta-schema. Tooling conforming to
-this binding <span class="bcp14">MUST</span> support <code>$uses</code> in that position.<a href="#section-5.7-2" class="pilcrow">¶</a></p>
-<p id="section-5.7-3">This meta-schema-level usage is distinct from the document-instance <code>$offers</code>
-/ <code>$uses</code> mechanism JSON Structure Core also defines, where a schema
+this binding <span class="bcp14">MUST</span> support <code>$uses</code> in that position.<a href="#section-5.8-2" class="pilcrow">¶</a></p>
+<p id="section-5.8-3">This meta-schema-level usage is distinct from the document-instance <code>$offers</code>
+and <code>$uses</code> mechanism JSON Structure Core also defines. There, a schema
 document advertises its own custom add-in types through <code>$offers</code>, and a
 separate JSON <em>instance</em> document that conforms to that schema selects among
 them with its own top-level <code>$uses</code> <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. The two share a keyword
-name but operate in different scopes: this section's <code>$uses</code> selects add-ins
+name but operate in different scopes. This section's <code>$uses</code> selects add-ins
 that the schema's own meta-schema offers to it. A JSON Structure Schema
 Object embedded in an OpenAPI Description <span class="bcp14">MAY</span> additionally use <code>$offers</code> to
-advertise custom add-in types to instance documents; doing so has no effect
-on this section's meta-schema-level <code>$uses</code>.<a href="#section-5.7-3" class="pilcrow">¶</a></p>
-<p id="section-5.7-4">A custom meta-schema recognized under <a href="#dialect-recognition" class="auto internal xref">Section 4.4</a> <span class="bcp14">MUST</span>
-explicitly document which add-ins it activates by default and which it
-merely offers for opt-in through <code>$uses</code>; "all add-ins" is not a
-well-defined active set without a specific meta-schema to enumerate it
-against, and tooling <span class="bcp14">MUST NOT</span> assume a custom meta-schema's active/offered
-sets mirror those of the canonical meta-schema it extends.<a href="#section-5.7-4" class="pilcrow">¶</a></p>
-<p id="section-5.7-5">For example, <code>JSONStructureUnits</code> <span>[<a href="#JSTRUCT-UNITS" class="cite xref">JSTRUCT-UNITS</a>]</span> is offered, but not
-active, under the extended meta-schema; a schema that wants to annotate
+advertise custom add-in types to instance documents. Doing so has no effect
+on this section's meta-schema-level <code>$uses</code>.<a href="#section-5.8-3" class="pilcrow">¶</a></p>
+<p id="section-5.8-4">A custom meta-schema recognized under <a href="#dialect-recognition" class="auto internal xref">Section 4.4</a> <span class="bcp14">MUST</span>
+explicitly document which add-ins it activates by default and which it only
+offers for opt-in through <code>$uses</code>. "All add-ins" is not a well-defined active
+set without a specific meta-schema to enumerate it against. Tooling <span class="bcp14">MUST NOT</span>
+assume that a custom meta-schema's active and offered sets mirror those of
+the canonical meta-schema it extends.<a href="#section-5.8-4" class="pilcrow">¶</a></p>
+<p id="section-5.8-5">For example, <code>JSONStructureUnits</code> <span>[<a href="#JSTRUCT-UNITS" class="cite xref">JSTRUCT-UNITS</a>]</span> is offered, but not
+active, under the extended meta-schema. A schema that wants to annotate
 numeric properties with <code>unit</code>, <code>ucumUnit</code>, and <code>symbol</code> <span class="bcp14">MUST</span> list it in
-<code>$uses</code>:<a href="#section-5.7-5" class="pilcrow">¶</a></p>
-<div class="lang-yaml sourcecode" id="section-5.7-6">
+<code>$uses</code>:<a href="#section-5.8-5" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.8-6">
 <pre>
 components:
   schemas:
@@ -2498,111 +2667,111 @@ components:
           type: double
           ucumUnit: "Cel"
           symbol: "°C"
-</pre><a href="#section-5.7-6" class="pilcrow">¶</a>
+</pre><a href="#section-5.8-6" class="pilcrow">¶</a>
 </div>
-<p id="section-5.7-7">Omitting <code>JSONStructureUnits</code> from <code>$uses</code> while still using <code>unit</code>,
+<p id="section-5.8-7">Omitting <code>JSONStructureUnits</code> from <code>$uses</code> while still using <code>unit</code>,
 <code>ucumUnit</code>, or <code>symbol</code> leaves those keywords unrecognized under the extended
-meta-schema; tooling <span class="bcp14">MUST</span> treat them as unknown properties in that case,
-rather than silently applying <code>JSONStructureUnits</code> semantics. Under the
-validation meta-schema, <code>JSONStructureUnits</code> is active by default and <code>$uses</code>
-is not required to enable it.<a href="#section-5.7-7" class="pilcrow">¶</a></p>
+meta-schema. Tooling <span class="bcp14">MUST</span> treat them as unknown properties in that case, and
+<span class="bcp14">MUST NOT</span> silently apply <code>JSONStructureUnits</code> semantics. Under the validation
+meta-schema, <code>JSONStructureUnits</code> is active by default and <code>$uses</code> is not
+required to enable it.<a href="#section-5.8-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="code-generation-and-runtime-validation">
-<section id="section-5.8">
+<section id="section-5.9">
         <h3 id="name-code-generation-and-runtime">
-<a href="#section-5.8" class="section-number selfRef">5.8. </a><a href="#name-code-generation-and-runtime" class="section-name selfRef">Code Generation and Runtime Validation</a>
+<a href="#section-5.9" class="section-number selfRef">5.9. </a><a href="#name-code-generation-and-runtime" class="section-name selfRef">Code Generation and Runtime Validation</a>
         </h3>
-<p id="section-5.8-1">Processing a JSON Structure Schema Object separates memory layout from
-constraint checking:<a href="#section-5.8-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-5.8-2">
-          <dt id="section-5.8-2.1">Code generation:</dt>
-          <dd style="margin-left: 1.5em" id="section-5.8-2.2">
-            <p id="section-5.8-2.2.1">The generated in-memory type <span class="bcp14">SHOULD</span> be derived solely from the JSON
+<p id="section-5.9-1">Processing a JSON Structure Schema Object separates memory layout from
+constraint checking:<a href="#section-5.9-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.9-2">
+          <dt id="section-5.9-2.1">Code generation:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.9-2.2">
+            <p id="section-5.9-2.2.1">The generated in-memory type <span class="bcp14">SHOULD</span> be derived only from the JSON
 Structure Core structural keywords: <code>type</code>, <code>name</code>, <code>properties</code>, <code>items</code>,
 <code>values</code>, <code>tuple</code>, <code>choices</code>, <code>selector</code>, <code>abstract</code>, <code>$extends</code>,
-<code>required</code>, <code>additionalProperties</code>, and the <code>precision</code>/<code>scale</code> and
+<code>required</code>, <code>additionalProperties</code>, and the <code>precision</code>, <code>scale</code>, and
 <code>maxLength</code> storage constraints. Constraint keywords contributed by the
 <code>JSONStructureValidation</code> <span>[<a href="#JSTRUCT-VALIDATION" class="cite xref">JSTRUCT-VALIDATION</a>]</span> and
 <code>JSONStructureConditionalComposition</code> <span>[<a href="#JSTRUCT-COMPOSITION" class="cite xref">JSTRUCT-COMPOSITION</a>]</span> add-ins are
-runtime validation rules and <span class="bcp14">SHOULD NOT</span> change the generated type.<a href="#section-5.8-2.2.1" class="pilcrow">¶</a></p>
+runtime validation rules and <span class="bcp14">SHOULD NOT</span> change the generated type.<a href="#section-5.9-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-5.8-2.3">Runtime validation:</dt>
-          <dd style="margin-left: 1.5em" id="section-5.8-2.4">
-            <p id="section-5.8-2.4.1">Whether those add-ins are active is determined by the selected meta-schema:
-opt-in through <code>$uses</code> under the extended meta-schema, or active by default
-under the validation meta-schema. Conditional-composition keywords are
-evaluated as boolean value validation (<a href="#type-system-conditional-composition" class="auto internal xref">Section 5.4.3</a>),
-never as structural composition.<a href="#section-5.8-2.4.1" class="pilcrow">¶</a></p>
+<dt id="section-5.9-2.3">Runtime validation:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.9-2.4">
+            <p id="section-5.9-2.4.1">The selected meta-schema determines whether those add-ins are active. They
+are opt-in through <code>$uses</code> under the extended meta-schema, and active by
+default under the validation meta-schema. Conditional-composition keywords
+are evaluated as boolean value validation
+(<a href="#type-system-conditional-composition" class="auto internal xref">Section 5.4.3</a>), never as structural composition.<a href="#section-5.9-2.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-5.8-3">This separation lets a generator produce a deterministic memory layout from
+<p id="section-5.9-3">This separation lets a generator produce a deterministic memory layout from
 Core keywords while a gateway or server enforces the full validation and
-composition rules against the same schema.<a href="#section-5.8-3" class="pilcrow">¶</a></p>
+composition rules against the same schema.<a href="#section-5.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="json-structure-serialization-inspection">
-<section id="section-5.9">
+<section id="section-5.10">
         <h3 id="name-type-determination-for-non-">
-<a href="#section-5.9" class="section-number selfRef">5.9. </a><a href="#name-type-determination-for-non-" class="section-name selfRef">Type Determination for Non-JSON Serializations</a>
+<a href="#section-5.10" class="section-number selfRef">5.10. </a><a href="#name-type-determination-for-non-" class="section-name selfRef">Type Determination for Non-JSON Serializations</a>
         </h3>
-<p id="section-5.9-1">This section supplies the type-determination procedure required by
-<a href="#serialization-inspection" class="auto internal xref">Section 4.9</a>.<a href="#section-5.9-1" class="pilcrow">¶</a></p>
-<p id="section-5.9-2">Given a starting-point JSON Structure Schema Object, tooling <span class="bcp14">MUST</span> determine
-the type of a value as follows. All steps operate on the schema alone.<a href="#section-5.9-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.9-3">
-<li id="section-5.9-3.1">
-            <p id="section-5.9-3.1.1">Resolve the starting point to a type definition: follow <code>$root</code> from a
+<p id="section-5.10-1">This section supplies the type-determination procedure required by
+<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>.<a href="#section-5.10-1" class="pilcrow">¶</a></p>
+<p id="section-5.10-2">Given a starting-point JSON Structure Schema Object, tooling <span class="bcp14">MUST</span> determine
+the type of a value as follows. All steps operate on the schema alone.<a href="#section-5.10-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.10-3">
+<li id="section-5.10-3.1">
+            <p id="section-5.10-3.1.1">Resolve the starting point to a type definition. Follow <code>$root</code> from a
 resource root, and follow a <code>type</code> whose value is a <code>$ref</code> to the named
 type it designates. Follow <code>$extends</code> to incorporate inherited members.
 Imported namespaces are resolved first (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>), so a
-<code>$ref</code> into an imported namespace is followed the same way.<a href="#section-5.9-3.1.1" class="pilcrow">¶</a></p>
+<code>$ref</code> into an imported namespace is followed the same way.<a href="#section-5.10-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.9-3.2">
-            <p id="section-5.9-3.2.1">Locate the value: a named member under <code>properties</code>, a positional element
+          <li id="section-5.10-3.2">
+            <p id="section-5.10-3.2.1">Locate the value: a named member under <code>properties</code>, a positional element
 under <code>tuple</code>, the item type under <code>items</code>, or the value type under
-<code>values</code>.<a href="#section-5.9-3.2.1" class="pilcrow">¶</a></p>
+<code>values</code>.<a href="#section-5.10-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.9-3.3">
-            <p id="section-5.9-3.3.1">The located declaration's <code>type</code> gives the JSON data type directly. JSON
+          <li id="section-5.10-3.3">
+            <p id="section-5.10-3.3.1">The located declaration's <code>type</code> gives the JSON data type directly. JSON
 Structure requires <code>type</code> on every type declaration, so this step does not
-fail for a valid schema.<a href="#section-5.9-3.3.1" class="pilcrow">¶</a></p>
+fail for a valid schema.<a href="#section-5.10-3.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.9-3.4">
-            <p id="section-5.9-3.4.1">Map the JSON Structure type to a JSON data type. The types <code>int64</code>,
-<code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> map to <strong>string</strong>: JSON
-Structure represents them as strings because their ranges exceed the
+          <li id="section-5.10-3.4">
+            <p id="section-5.10-3.4.1">Map the JSON Structure type to a JSON data type. The types <code>int64</code>,
+<code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> map to <strong>string</strong>. JSON
+Structure represents them as strings, since their ranges exceed the
 interoperable range of a JSON number (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>). The remaining
-numeric types — <code>number</code>, <code>integer</code>, <code>int8</code>, <code>uint8</code>, <code>int16</code>, <code>uint16</code>,
-<code>int32</code>, <code>uint32</code>, <code>float8</code>, <code>float</code>, and <code>double</code> — map to number.
+numeric types map to number: <code>number</code>, <code>integer</code>, <code>int8</code>, <code>uint8</code>,
+<code>int16</code>, <code>uint16</code>, <code>int32</code>, <code>uint32</code>, <code>float8</code>, <code>float</code>, and <code>double</code>.
 <code>string</code>, <code>datetime</code>, <code>date</code>, <code>time</code>, <code>duration</code>, <code>uuid</code>, <code>uri</code>, <code>binary</code>,
-and <code>jsonpointer</code> map to string; <code>boolean</code> maps to boolean; <code>object</code>,
-<code>map</code>, and <code>choice</code> map to object; <code>array</code>, <code>set</code>, and <code>tuple</code> map to
-array; <code>null</code> maps to null.<a href="#section-5.9-3.4.1" class="pilcrow">¶</a></p>
-<p id="section-5.9-3.4.2">
+and <code>jsonpointer</code> map to string. <code>boolean</code> maps to boolean. <code>object</code>,
+<code>map</code>, and <code>choice</code> map to object. <code>array</code>, <code>set</code>, and <code>tuple</code> map to
+array. <code>null</code> maps to null.<a href="#section-5.10-3.4.1" class="pilcrow">¶</a></p>
+<p id="section-5.10-3.4.2">
 Tooling <span class="bcp14">MUST NOT</span> map the large-integer and decimal types to number. Doing
 so produces an unquoted numeric literal in a form field, path segment,
 query parameter, or header value, which loses precision and does not match
-the JSON Structure representation of the same value.<a href="#section-5.9-3.4.2" class="pilcrow">¶</a></p>
+the JSON Structure representation of the same value.<a href="#section-5.10-3.4.2" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.9-3.5">
-            <p id="section-5.9-3.5.1">A type union yields "undetermined" unless exactly one member of the union
+          <li id="section-5.10-3.5">
+            <p id="section-5.10-3.5.1">A type union yields "undetermined" unless exactly one member of the union
 remains after removing <code>null</code>, in which case that member's mapping applies.
 A <code>choice</code> used at a position requiring a scalar serialization yields
-"undetermined".<a href="#section-5.9-3.5.1" class="pilcrow">¶</a></p>
+"undetermined".<a href="#section-5.10-3.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.9-4">Because JSON Structure requires an explicit <code>type</code> everywhere and has no
-keyword that makes a declaration apply conditionally to the data, this
-procedure never needs to inspect instance data and never has to reconcile
-competing <code>type</code> assertions the way the OAS-dialect procedure does.<a href="#section-5.9-4" class="pilcrow">¶</a></p>
-<p id="section-5.9-5">Values that map to object or array are serialized as <code>application/json</code> by
-default in an Encoding Object, exactly as for the OAS dialect; a <code>binary</code>
+<p id="section-5.10-4">JSON Structure requires an explicit <code>type</code> everywhere and has no keyword that
+makes a declaration apply conditionally to the data. This procedure therefore
+never needs to inspect instance data, and never has to reconcile competing
+<code>type</code> assertions the way the OAS-dialect procedure does.<a href="#section-5.10-4" class="pilcrow">¶</a></p>
+<p id="section-5.10-5">Values that map to object or array are serialized as <code>application/json</code> by
+default in an Encoding Object, exactly as for the OAS dialect. A <code>binary</code>
 value carries no <code>contentEncoding</code> and is serialized as
 <code>application/octet-stream</code> unless an Encoding Object's <code>contentType</code> says
-otherwise.<a href="#section-5.9-5" class="pilcrow">¶</a></p>
+otherwise.<a href="#section-5.10-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2617,10 +2786,10 @@ otherwise.<a href="#section-5.9-5" class="pilcrow">¶</a></p>
         <h3 id="name-a-single-json-structure-sch">
 <a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-a-single-json-structure-sch" class="section-name selfRef">A Single JSON Structure Schema Object</a>
         </h3>
-<p id="section-6.1-1">The following <code>components.schemas</code> entry is a JSON Structure Schema Object:
-its <code>$schema</code> selects the JSON Structure Core dialect, so <code>type</code>,
+<p id="section-6.1-1">The following <code>components.schemas</code> entry is a JSON Structure Schema Object.
+Its <code>$schema</code> selects the JSON Structure Core dialect, so <code>type</code>,
 <code>properties</code>, and the primitive type names are interpreted per JSON
-Structure rather than per the OAS dialect. It is referenced from elsewhere in
+Structure and not per the OAS dialect. It is referenced from elsewhere in
 the OpenAPI Description with an ordinary OpenAPI <code>$ref</code> to
 <code>#/components/schemas/TelemetryMessage</code>.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
 <div class="lang-yaml sourcecode" id="section-6.1-2">
@@ -2652,7 +2821,7 @@ components:
         </h3>
 <p id="section-6.2-1">An OpenAPI Object <span class="bcp14">MAY</span> set <code>jsonSchemaDialect</code> once, so that Schema Objects
 need not repeat <code>$schema</code> individually (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>). Here the same
-<code>TelemetryMessage</code> schema omits both its own <code>$schema</code> and its own <code>$id</code>; the
+<code>TelemetryMessage</code> schema omits both its own <code>$schema</code> and its own <code>$id</code>. The
 document default supplies the dialect, and the default-construction rule
 (<a href="#default-id-construction" class="auto internal xref">Section 4.5</a>) supplies the identifier.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <div class="lang-yaml sourcecode" id="section-6.2-2">
@@ -2692,10 +2861,10 @@ properties:
     type: double
 </pre><a href="#section-6.2-4" class="pilcrow">¶</a>
 </div>
-<p id="section-6.2-5">A Schema Object that carries its own <code>$schema</code> and/or <code>$id</code> (as in
-<a href="#example-single-schema-object" class="auto internal xref">Section 6.1</a>) overrides the corresponding default; the
-two defaults compose independently per keyword, not as an all-or-nothing
-pair.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+<p id="section-6.2-5">A Schema Object that carries its own <code>$schema</code> or <code>$id</code>, as in
+<a href="#example-single-schema-object" class="auto internal xref">Section 6.1</a>, overrides the corresponding default. The
+two defaults compose independently per keyword. They are not an
+all-or-nothing pair.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-cross-schema-reuse">
@@ -2786,18 +2955,18 @@ components:
       <h2 id="name-conformance">
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-conformance" class="section-name selfRef">Conformance</a>
       </h2>
-<p id="section-7-1">A conforming JSON Structure Schema Object is a Schema Object whose effective
-dialect is one of the canonical meta-schema URIs in
+<p id="section-7-1">A conforming JSON Structure Schema Object is a Schema Object that meets two
+conditions. Its effective dialect is one of the canonical meta-schema URIs in
 <a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>, or a separately configured derived URI
-whose base dialect is one of those canonical URIs, and whose content is a
-valid JSON Structure schema for that meta-schema, including any add-ins it
+whose base dialect is one of those canonical URIs. Its content is a valid
+JSON Structure schema for that meta-schema, including any add-ins it
 activates through <code>$uses</code>.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <p id="section-7-2">The roles below are defined for any dialect binding
-(<a href="#dialect-binding-requirements" class="auto internal xref">Section 4</a>); the parenthetical requirements name both
+(<a href="#dialect-binding-requirements" class="auto internal xref">Section 4</a>). The parenthetical requirements name both
 the generic rule and, where one exists, its JSON Structure instantiation. An
-implementation <span class="bcp14">MAY</span> conform to any subset of these roles; a component that
-fills only one role (for example, a documentation renderer that never
-resolves imports) is not required to implement the others.<a href="#section-7-2" class="pilcrow">¶</a></p>
+implementation <span class="bcp14">MAY</span> conform to any subset of these roles. A component that
+fills only one role, such as a documentation renderer that never resolves
+imports, is not required to implement the others.<a href="#section-7-2" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-7-3">
         <dt id="section-7-3.1">Reader:</dt>
         <dd style="margin-left: 1.5em" id="section-7-3.2">
@@ -2807,7 +2976,7 @@ and determines the effective dialect of every Schema Object
 (<a href="#dialect-selection" class="auto internal xref">Section 4.3</a>). A conforming Reader <span class="bcp14">MUST</span> classify before selecting
 a dialect, <span class="bcp14">MUST</span> recognize the dialect URIs its binding declares
 (<a href="#json-structure-meta-schema-uris" class="auto internal xref">Section 5.2</a>), and <span class="bcp14">MUST NOT</span> process a Schema Object
-in a bound dialect as an OAS-dialect schema, or vice versa
+in a bound dialect as an OAS-dialect schema, or the reverse
 (<a href="#dialect-recognition" class="auto internal xref">Section 4.4</a>).<a href="#section-7-3.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -2815,7 +2984,7 @@ in a bound dialect as an OAS-dialect schema, or vice versa
         <dd style="margin-left: 1.5em" id="section-7-3.4">
           <p id="section-7-3.4.1">Validates that the content of a Schema Object is well-formed in its
 effective dialect, including any vocabularies active through that dialect
-or opted into by the schema (<a href="#annotations-and-units" class="auto internal xref">Section 5.7</a>). A conforming
+or opted into by the schema (<a href="#annotations-and-units" class="auto internal xref">Section 5.8</a>). A conforming
 Schema Validator <span class="bcp14">MUST</span> reject a Schema Object that is not valid under its
 effective dialect and <span class="bcp14">MUST NOT</span> silently ignore unrecognized keywords to
 force validity.<a href="#section-7-3.4.1" class="pilcrow">¶</a></p>
@@ -2833,34 +3002,34 @@ retrieval, <span class="bcp14">MUST</span> reject cycles, and <span class="bcp14
         <dd class="break"></dd>
 <dt id="section-7-3.7">Instance Validator:</dt>
         <dd style="margin-left: 1.5em" id="section-7-3.8">
-          <p id="section-7-3.8.1">Validates instances (request/response bodies, parameters) against a Schema
-Object in its dialect, applying both structural and constraint keywords
-(<a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.8</a>).<a href="#section-7-3.8.1" class="pilcrow">¶</a></p>
+          <p id="section-7-3.8.1">Validates instances, such as request and response bodies and parameters,
+against a Schema Object in its dialect. It applies both structural and
+constraint keywords (<a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.9</a>).<a href="#section-7-3.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-7-3.9">Codec / Code Generator:</dt>
         <dd style="margin-left: 1.5em" id="section-7-3.10">
           <p id="section-7-3.10.1">Produces an in-memory type or wire (de)serializer from a Schema Object. A
-conforming Codec or Code Generator <span class="bcp14">MUST</span> derive memory layout solely from
+conforming Codec or Code Generator <span class="bcp14">MUST</span> derive memory layout only from
 the dialect's structural keywords
-(<a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.8</a>), <span class="bcp14">MUST</span> use the binding's type
+(<a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.9</a>). It <span class="bcp14">MUST</span> use the binding's type
 determination procedure for non-JSON serializations
-(<a href="#serialization-inspection" class="auto internal xref">Section 4.9</a>, <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.9</a>),
-and <span class="bcp14">MUST</span> reject, rather than silently reinterpret under OAS/JSON Schema
-semantics, any construct it does not support. Falling back to OAS-dialect
-interpretation of an unsupported construct is non-conforming, because
-different dialects assign different meaning to the same keywords
-(<a href="#type-system" class="auto internal xref">Section 5.4</a>).<a href="#section-7-3.10.1" class="pilcrow">¶</a></p>
+(<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>, <a href="#json-structure-serialization-inspection" class="auto internal xref">Section 5.10</a>).
+It <span class="bcp14">MUST</span> reject any construct it does not support, and <span class="bcp14">MUST NOT</span> silently
+reinterpret that construct under OAS or JSON Schema semantics. Falling back
+to OAS-dialect interpretation of an unsupported construct is
+non-conforming. Different dialects assign different meaning to the same
+keywords (<a href="#type-system" class="auto internal xref">Section 5.4</a>).<a href="#section-7-3.10.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
 <p id="section-7-4">A tool that implements more than one role <span class="bcp14">MUST</span> keep the roles' failure modes
-distinct: a Schema Validator rejection <span class="bcp14">MUST NOT</span> be silently downgraded to a
-warning by a Codec operating on the same schema, and vice versa. Across
-whichever roles it implements, conforming tooling <span class="bcp14">MUST</span> keep the OpenAPI and
-dialect reference layers separate (<a href="#reference-model" class="auto internal xref">Section 4.7</a>).<a href="#section-7-4" class="pilcrow">¶</a></p>
+distinct. A Schema Validator rejection <span class="bcp14">MUST NOT</span> be silently downgraded to a
+warning by a Codec operating on the same schema, and the reverse holds too.
+Across whichever roles it implements, conforming tooling <span class="bcp14">MUST</span> keep the
+OpenAPI and dialect reference layers separate (<a href="#reference-model" class="auto internal xref">Section 4.7</a>).<a href="#section-7-4" class="pilcrow">¶</a></p>
 <p id="section-7-5">Conforming tooling <span class="bcp14">SHOULD</span> honor the code-generation and runtime-validation
-separation of <a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.8</a>.<a href="#section-7-5" class="pilcrow">¶</a></p>
+separation of <a href="#code-generation-and-runtime-validation" class="auto internal xref">Section 5.9</a>.<a href="#section-7-5" class="pilcrow">¶</a></p>
 <p id="section-7-6">A Description that contains only plain OAS Schema Objects is unaffected by
 this document and remains a conforming OpenAPI Description.<a href="#section-7-6" class="pilcrow">¶</a></p>
 </section>
@@ -2873,42 +3042,42 @@ this document and remains a conforming OpenAPI Description.<a href="#section-7-6
 <span class="break"></span><dl class="dlParallel" id="section-8-1">
         <dt id="section-8-1.1">Cross-document retrieval:</dt>
         <dd style="margin-left: 1.5em" id="section-8-1.2">
-          <p id="section-8-1.2.1">A dialect's cross-document mechanism — for JSON Structure,
-<code>$import</code>/<code>$importdefs</code> — can reference external URIs. Tooling <span class="bcp14">MUST</span> resolve
-in-Description identity matches before any network access, <span class="bcp14">MUST</span> use a
-secure transport such as HTTPS for external retrieval, and <span class="bcp14">MUST</span> constrain
-automatic retrieval with an allow-list of permitted hosts or URI prefixes,
-connection and read timeouts, and response size limits to prevent
-server-side request forgery and resource exhaustion against internal or
-otherwise unintended targets. Network retrieval <span class="bcp14">MUST</span> be disabled unless
-explicitly enabled (<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>). Tooling <span class="bcp14">SHOULD</span> cache
-retrieved schemas.<a href="#section-8-1.2.1" class="pilcrow">¶</a></p>
+          <p id="section-8-1.2.1">A dialect's cross-document mechanism can reference external URIs. For JSON
+Structure that mechanism is <code>$import</code> and <code>$importdefs</code>. Tooling <span class="bcp14">MUST</span>
+resolve in-Description identity matches before any network access, and <span class="bcp14">MUST</span>
+use a secure transport such as HTTPS for external retrieval. Tooling <span class="bcp14">MUST</span>
+constrain automatic retrieval with an allow-list of permitted hosts or URI
+prefixes, connection and read timeouts, and response size limits. These
+constraints prevent server-side request forgery and resource exhaustion
+against internal or otherwise unintended targets. Network retrieval <span class="bcp14">MUST</span> be
+disabled unless explicitly enabled (<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>). Tooling
+<span class="bcp14">SHOULD</span> cache retrieved schemas.<a href="#section-8-1.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-8-1.3">Resources outside the OpenAPI Description:</dt>
         <dd style="margin-left: 1.5em" id="section-8-1.4">
           <p id="section-8-1.4.1">A schema resource retrieved from outside the Description is not part of the
-OAD (<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>) and has therefore not passed whatever
+OAD (<a href="#cross-document-resolution" class="auto internal xref">Section 4.8</a>). It has therefore not passed whatever
 checks the deployment applies to OpenAPI documents. Tooling <span class="bcp14">MUST</span> subject
 such a resource to the same limits, transport requirements, and validation
-as any other externally retrieved document, and <span class="bcp14">MUST NOT</span> grant it the trust
-extended to the entry document merely because a schema in the Description
-named it.<a href="#section-8-1.4.1" class="pilcrow">¶</a></p>
+as any other externally retrieved document. Tooling <span class="bcp14">MUST NOT</span> grant it the
+trust extended to the entry document only because a schema in the
+Description named it.<a href="#section-8-1.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-8-1.5">Cyclic and pathological cross-document graphs:</dt>
         <dd style="margin-left: 1.5em" id="section-8-1.6">
           <p id="section-8-1.6.1">Before expanding any import, tooling <span class="bcp14">MUST</span> construct the complete import
 dependency graph reachable from a JSON Structure Schema Object, following
-<code>$import</code>/<code>$importdefs</code> transitively through every resource it reaches,
-and <span class="bcp14">MUST</span> detect cycles in that graph before copying any definitions from
-it. A cycle anywhere in the graph <span class="bcp14">MUST</span> cause the entire import to be
-rejected atomically: tooling <span class="bcp14">MUST NOT</span> apply a partial set of definitions
+<code>$import</code> and <code>$importdefs</code> transitively through every resource it reaches.
+Tooling <span class="bcp14">MUST</span> detect cycles in that graph before copying any definitions
+from it. A cycle anywhere in the graph <span class="bcp14">MUST</span> cause the entire import to be
+rejected atomically. Tooling <span class="bcp14">MUST NOT</span> apply a partial set of definitions
 from a graph that is later found to be cyclic or otherwise invalid.
 Tooling <span class="bcp14">MUST</span> also reject an import graph in which two distinct resources
 declare the same <code>$id</code>, whether both are external or one is external and
-one is in-Description; such a graph is ambiguous and <span class="bcp14">MUST</span> be treated as
-an import error rather than resolved by source precedence. Tooling <span class="bcp14">MUST</span>
+one is in-Description. Such a graph is ambiguous. Tooling <span class="bcp14">MUST</span> treat it as
+an import error and <span class="bcp14">MUST NOT</span> resolve it by source precedence. Tooling <span class="bcp14">MUST</span>
 enforce finite, configurable upper bounds, and <span class="bcp14">MUST</span> reject an import graph
 that exceeds them, on at least: the total number of distinct imported
 resources; the total decoded byte size of all imported resources combined;
@@ -2916,19 +3085,19 @@ the import nesting depth from the importing resource; the fan-out (direct
 import count) of any single resource; the decompression ratio of any
 compressed transport encoding; and the number of HTTP redirects followed
 per retrieval. Exceeding any bound <span class="bcp14">MUST</span> be treated as an import error
-under <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>, not as a silent truncation.<a href="#section-8-1.6.1" class="pilcrow">¶</a></p>
+under <span>[<a href="#JSTRUCT-IMPORT" class="cite xref">JSTRUCT-IMPORT</a>]</span>, and <span class="bcp14">MUST NOT</span> be treated as a silent truncation.<a href="#section-8-1.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-8-1.7">Dialect confusion:</dt>
         <dd style="margin-left: 1.5em" id="section-8-1.8">
-          <p id="section-8-1.8.1">Because JSON Schema, JSON Structure, and other dialects share keyword
-spellings (for example <code>type</code>, <code>properties</code>, <code>$ref</code>) with differing
-semantics, tooling <span class="bcp14">MUST NOT</span> process a Schema Object in a bound dialect as
-an OAS-dialect schema, or vice versa. Misidentifying the dialect can
-silently change validation outcomes. The same hazard applies to type
-determination for non-JSON serializations: applying the OAS-dialect
-inspection procedure to another dialect can silently produce the wrong wire
-type (<a href="#serialization-inspection" class="auto internal xref">Section 4.9</a>).<a href="#section-8-1.8.1" class="pilcrow">¶</a></p>
+          <p id="section-8-1.8.1">JSON Schema, JSON Structure, and other dialects share keyword spellings
+such as <code>type</code>, <code>properties</code>, and <code>$ref</code>, with differing semantics. Tooling
+<span class="bcp14">MUST NOT</span> process a Schema Object in a bound dialect as an OAS-dialect
+schema, or the reverse. Misidentifying the dialect can silently change
+validation outcomes. The same hazard applies to type determination for
+non-JSON serializations. Applying the OAS-dialect inspection procedure to
+another dialect can silently produce the wrong wire type
+(<a href="#serialization-inspection" class="auto internal xref">Section 4.10</a>).<a href="#section-8-1.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-8-1.9">Untrusted schemas:</dt>
@@ -3121,17 +3290,17 @@ constructs change meaning:<a href="#appendix-A-2" class="pilcrow">¶</a></p>
         </tbody>
       </table>
 <p id="appendix-A-4">The three OAS annotation keywords above remain usable when they annotate an
-individual member inside <code>properties</code>, because the JSON Structure member
-type definitions permit additional properties beyond the JSON Structure
-keyword set <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. They <span class="bcp14">MUST NOT</span> be placed at the root of a
-JSON Structure Schema Object (for example, <code>deprecated: true</code> describing the
-entire schema resource): the root of a JSON Structure schema document is a
-closed object type that permits only the keywords JSON Structure Core
-defines for it, and validating such a root against its meta-schema fails if
-an OAS-only annotation is added there. A resource-level deprecation notice
-<span class="bcp14">MUST</span> instead be conveyed through <code>description</code> prose or a <code>x-</code>-prefixed OAS
-specification extension on the Schema Object, not by adding <code>deprecated</code> as
-a root sibling of <code>$schema</code>/<code>type</code>/<code>name</code>.<a href="#appendix-A-4" class="pilcrow">¶</a></p>
+individual member inside <code>properties</code>. The JSON Structure member type
+definitions permit additional properties beyond the JSON Structure keyword
+set <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. They <span class="bcp14">MUST NOT</span> be placed at the root of a JSON Structure
+Schema Object, as in a <code>deprecated: true</code> describing the entire schema
+resource. The root of a JSON Structure schema document is a closed object
+type that permits only the keywords JSON Structure Core defines for it, and
+validating such a root against its meta-schema fails if an OAS-only
+annotation is added there. A resource-level deprecation notice <span class="bcp14">MUST</span> instead
+be conveyed through <code>description</code> prose or an <code>x-</code>-prefixed OAS specification
+extension on the Schema Object. It <span class="bcp14">MUST NOT</span> be conveyed by adding
+<code>deprecated</code> as a root sibling of <code>$schema</code>, <code>type</code>, or <code>name</code>.<a href="#appendix-A-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="acknowledgments">
