@@ -420,6 +420,73 @@ and
 
 The limits are the part implementations skip and attackers find.
 
+## 11. There is no scoping framework for the schemas of a Description
+
+**Today.** A Description holds many schema resources: every
+[`components.schemas`](https://spec.openapis.org/oas/v3.2.0.html#components-object)
+entry, and every inline Schema Object at a request body, response, parameter,
+or header position. OAS gives each of them an identity, through `$self`,
+`$id`, and JSON Pointer. It gives none of them a type identity, and it defines
+no relationship between the name scopes they establish.
+
+The omission is deliberate at the data-model layer:
+[§4.24.4](https://spec.openapis.org/oas/v3.2.0.html#parsing-and-serializing)
+places "class hierarchies" in the application form, "beyond the scope of this
+specification." But
+[§2](https://spec.openapis.org/oas/v3.2.0.html#introduction)
+states that an OAD "can then be used by ... code generation tools to generate
+servers and clients in various programming languages," and a code generator
+has to name every type it emits.
+
+The one name-inference rule OAS states is for XML nodes rather than types
+([§4.26.3](https://spec.openapis.org/oas/v3.2.0.html#xml-node-names)): the
+component key names a `components.schemas` entry, a property name names a
+property schema, and "in all other cases ... no name can be inferred" and an
+explicit name MUST be present. Component keys are the closest thing to a type
+namespace OAS has, and their permitted syntax
+([§4.7.1](https://spec.openapis.org/oas/v3.2.0.html#components-object):
+`^[a-zA-Z0-9\.\-_]+$`, with `my.org.User` among the given examples) shows
+authors already encoding namespaces into them by convention, with no meaning
+assigned by the specification.
+
+**Gap.** Two schema resources in one Description can define different types
+under the same name. Neither is in the other's scope, so neither is wrong. The
+collision exists only for a consumer that flattens the Description into a
+single type space — which is what a code generator does.
+
+This is the one gap in this document that bites the OAS dialect itself with no
+other dialect involved. Two Schema Objects can each declare a `$defs/Pet` of a
+different shape, and nothing in the specification constrains what a generator
+should call them. Each generator therefore picks its own answer, so one
+Description yields different type names in different tools, and adding an
+unrelated schema can rename an existing generated type.
+
+The gap widens once other dialects are admitted, because a dialect can have
+first-class named types and namespaces. JSON Structure requires a `name` on
+every type and scopes `definitions` into a namespace hierarchy, so it can
+express the resulting scopes exactly — but only once something establishes
+that the resources are separate scopes at all.
+
+**Proposal.**
+
+1. State that each schema resource in a Description establishes a distinct
+   name scope, and that the resources of one Description do not share a scope.
+2. Require a consumer that aggregates the schemas of a Description into a
+   single type space to preserve the resource boundary as a scope boundary,
+   and to neither merge two resources' declarations into one scope nor rename
+   a declaration to resolve a collision that arises only from merging.
+3. Define a deterministic scope name per resource, along the lines the XML
+   node-name rule already sets: the component key for a `components.schemas`
+   entry, a name derived from the identifying parts of the position for an
+   inline schema, and an error where neither yields one.
+4. Add to the binding declarations of gap 1: what names a type in the dialect,
+   and what constitutes one resource's scope. A dialect that names no types
+   declares that, and the aggregation requirement does not apply to it.
+
+Points 1 through 3 are dialect-neutral and would settle the OAS dialect's own
+behavior. Point 4 is what carries the framework to the dialects the extension
+point already admits.
+
 ---
 
 ## What this would let us delete
@@ -436,8 +503,9 @@ The limits are the part implementations skip and attackers find.
 | 8. Non-OAD resources | One paragraph of "Resolving Cross-Document References." |
 | 9. Conformance roles | The role definitions in "Conformance"; the JSON Structure specifics stay. |
 | 10. Retrieval security | The ordering and limits text in "Resolving Cross-Document References" and most of "Security Considerations." |
+| 11. Scoping framework | "Type Identity and Scope" in full; the JSON Structure namespace construction stays. |
 
-Adopting all ten would reduce the binding to a dialect URI table, a type
+Adopting all eleven would reduce the binding to a dialect URI table, a type
 system mapping, the reference and import rules peculiar to JSON Structure, and
 a parameter table. Roughly a third of its current normative weight.
 
@@ -455,11 +523,13 @@ for 3.3.
 Proposal 7 is a publishing change, not a specification change, and is already
 under discussion in #4147. It could land independently of any of the others.
 
-Proposals 1, 5, 6, and 9 are structural. Proposal 6 in particular requires
+Proposals 1, 5, 6, 9, and 11 are structural. Proposal 6 in particular requires
 refactoring existing normative text in
 [§4.24.4.2](https://spec.openapis.org/oas/v3.2.0.html#non-json-data),
 and proposal 9 introduces a
-vocabulary that would ripple through the document. These fit the Moonwalk
+vocabulary that would ripple through the document. Proposal 11 is the one that
+would change output authors see today, since it settles type naming for the
+OAS dialect itself. These fit the Moonwalk
 principle of loose coupling between "HTTP interfaces" and "content schema
 formats" and may be better placed there — with the caveat that Moonwalk has
 no planned end date, and these problems exist in shipping tooling today.

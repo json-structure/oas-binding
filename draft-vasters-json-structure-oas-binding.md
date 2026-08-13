@@ -219,6 +219,7 @@ dialect-specific inputs the rest of this part requires.
 | Identity comparison | Whether identity comparison is byte-exact or subject to a declared normalization. |
 | Cross-document mechanism | The keyword(s), if any, by which a resource incorporates definitions from another resource, and whether their values are absolute URIs. A binding MAY declare that its dialect has no such mechanism. |
 | Type determination | The procedure by which tooling determines the data type of a value from the schema, for use with non-JSON serializations ({{serialization-inspection}}). |
+| Type naming and scope | What names a type in the dialect, and what constitutes one schema resource's scope for those names ({{type-scope}}). A binding MAY declare that its dialect names no types, in which case {{type-scope}} imposes no aggregation requirement. |
 | Self-description | Whether an extracted resource requires additional keywords to be materialized beyond identity and dialect ({{materializing-defaults}}). |
 
 A binding MUST NOT redefine the OAS meaning of `$schema`, `jsonSchemaDialect`,
@@ -552,6 +553,46 @@ this section and the dialect's own rules, and OAS document-structure
 requirements do not apply to it. Tooling MUST NOT attempt to parse it as an
 OpenAPI document, and MUST NOT expose its contents at OAS component addresses.
 
+## Type Identity and Scope {#type-scope}
+
+A Description can hold many schema resources: every `components.schemas`
+entry, and every inline Schema Object at a request body, response, parameter,
+or header position. Each is a separate resource with its own identity
+({{default-id-construction}}) and its own scope for whatever names its
+dialect gives to types.
+
+OAS defines no relationship between those scopes, because it defines no type
+identity at all. The application form of the data "incorporates ... possibly
+additional information such as class hierarchies that are beyond the scope of
+this specification" ({{OAS}}, "Parsing and Serializing"), while an OAD is
+expected to be used by "code generation tools to generate servers and clients
+in various programming languages" ({{OAS}}, "Introduction"). The one
+name-inference rule OAS does state is for XML nodes rather than types: the
+component key names a `components.schemas` entry, a property name names a
+property schema, and in all other cases "no name can be inferred" and an
+explicit name is required ({{OAS}}, "XML Node Names").
+
+The gap surfaces when a consumer treats the Description as a single type
+space, which is what a code generator does when it emits one module for the
+Description. Two resources can carry the same type name without either being
+wrong, because neither is in the other's scope. A consumer that flattens them
+produces a collision that exists nowhere in the Description.
+
+A dialect binding MUST declare what names a type in its dialect and what
+constitutes a resource's scope ({{binding-parameters}}). Tooling that
+aggregates the Schema Objects of a Description into one type space MUST
+preserve the resource boundary as a scope boundary. It MUST NOT merge the
+type declarations of two schema resources into a single scope, and MUST NOT
+rename a declaration to resolve a collision that arises only from merging.
+Where the dialect cannot express the resulting scopes, tooling MUST report a
+diagnostic rather than choose a name on the author's behalf.
+
+This requirement is a stopgap for one dialect at a time. The problem is not
+specific to any dialect: two OAS-dialect Schema Objects can each define a
+`$defs/Pet`, and OAS is equally silent about what a generator should call
+them. A scoping framework belongs in OAS, where one definition would serve
+every dialect the extension point admits.
+
 ## Schema Inspection for Non-JSON Serializations {#serialization-inspection}
 
 For media types whose serialization is not self-describing as to type —
@@ -627,6 +668,7 @@ whose base dialect is one of those canonical URIs.
 | Identity comparison | Byte-exact; no normalization. |
 | Cross-document mechanism | `$import` and `$importdefs` {{JSTRUCT-IMPORT}}, whose values MUST be absolute URIs ({{cross-schema-reuse}}). |
 | Type determination | {{json-structure-serialization-inspection}}. |
+| Type naming and scope | A type is named by `name`; a resource's scope is its root namespace ({{aggregate-namespaces}}). |
 | Self-description | `name` is additionally required on every resource root ({{json-structure-materializing-name}}). |
 
 ## JSON Structure Meta-Schema URIs {#json-structure-meta-schema-uris}
@@ -672,7 +714,9 @@ stable for the same Description and JSON Pointer. If the derived name
 collides with a declared name in the extracted document, tooling MUST reject
 the extraction rather than silently rename either declaration. The OpenAPI
 component key remains the OAS address; it does not implicitly replace an
-explicit JSON Structure `name`.
+explicit JSON Structure `name`. A further uniqueness requirement applies
+across the schema resources of one Description when they are aggregated
+({{aggregate-namespaces}}).
 
 A JSON Pointer cannot be used as a name unchanged. JSON Structure restricts
 identifiers to `[A-Za-z_][A-Za-z0-9_]*` ({{JSTRUCT-CORE}}), which excludes
@@ -878,7 +922,8 @@ Object, an ordinary OAS `$ref` to `#/components/schemas/Pet` is used at that
 position instead of duplicating it. Only positions nested inside another
 Schema Object's `properties`, `items`, or `choices` require the local
 `definitions` copy, because those positions cannot carry an OAS `$ref` of
-their own.
+their own. {{aggregate-namespaces}} governs how such a copy relates to a
+like-named declaration in another schema resource.
 
 ## Cross-Schema Reuse with `$import` and `$importdefs` {#cross-schema-reuse}
 
@@ -916,6 +961,130 @@ errors, deduplication, and cycle rejection follow {{JSTRUCT-IMPORT}}
 unchanged; an importing entry MUST additionally activate, through its
 meta-schema or its own `$uses`, any add-ins used by the definitions it
 imports.
+
+## Namespaces Across Schema Resources {#aggregate-namespaces}
+
+This section supplies the type naming and scope declaration required by
+{{type-scope}}. A JSON Structure type is named by `name`, and a schema
+resource's scope is its root namespace ({{JSTRUCT-CORE}}).
+
+Two entries of one Description can therefore each declare a type named `Pet`
+without either being wrong, and {{reference-model-ref-placement}} makes that
+a routine outcome: a type needed at a nested `properties`, `items`, or
+`choices` position has to be copied into the containing resource's own
+`definitions`, because that position cannot carry an OAS `$ref`.
+
+The aggregate required by {{type-scope}} is a JSON Structure document whose
+root `definitions` carries one namespace per schema resource, named by that
+resource's `name` ({{json-structure-materializing-name}}). The resource's
+root type and everything under its own `definitions`, nested namespaces
+included, are placed in that namespace unchanged except for pointer
+rewriting: a document-local `$ref`, `$extends`, or `$root` that addressed
+`#/definitions/X` within the resource MUST be rewritten to address `X` under
+the resource's namespace. Definitions that `$import` or `$importdefs` copied
+into a resource ({{cross-schema-reuse}}) are already part of that resource's
+namespace hierarchy and move with it.
+
+Because the namespaces are keyed on `name`, a `name` MUST be unique across
+the schema resources of one Description for that Description to be
+aggregatable. OAS component keys are unique by construction, and step 1 of
+{{json-structure-materializing-name}} carries that uniqueness into the
+derived names, so a duplicate can only come from an explicit `name` that
+repeats another resource's. Tooling MUST reject such a Description when
+aggregating.
+
+The aggregate is a type library, not an instance schema: it declares no
+`type` and no `$root` of its own. It does not replace the individual
+resources, each of which remains addressable by its own `$id`
+({{default-id-construction}}).
+
+Consider a Description with a `Pet` entry and a `PetListResponse` entry that
+needs a pet type at a nested `items` position:
+
+~~~ yaml
+components:
+  schemas:
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+      required: [id, name]
+    PetListResponse:
+      name: PetListResponse
+      type: object
+      properties:
+        pets:
+          type: array
+          items:
+            type: { $ref: "#/definitions/Pet" }
+      required: [pets]
+      definitions:
+        Pet:
+          name: Pet
+          type: object
+          properties:
+            id: { type: uuid }
+            name: { type: string }
+            tags:
+              type: set
+              items: { type: string }
+          required: [id, name]
+~~~
+
+The two `Pet` declarations are different types: the nested one carries
+`tags` and the component entry does not. Each resource validates on its own.
+Aggregated, they occupy separate namespaces, and the inner `$ref` is
+rewritten to match:
+
+~~~ yaml
+$schema: https://json-structure.org/meta/core/v0/#
+$id: https://api.example.com/openapi.yaml#types
+name: PetstoreTypes
+definitions:
+  Pet:
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+      required: [id, name]
+  PetListResponse:
+    PetListResponse:
+      name: PetListResponse
+      type: object
+      properties:
+        pets:
+          type: array
+          items:
+            type: { $ref: "#/definitions/PetListResponse/Pet" }
+      required: [pets]
+    Pet:
+      name: Pet
+      type: object
+      properties:
+        id: { type: uuid }
+        name: { type: string }
+        tags:
+          type: set
+          items: { type: string }
+      required: [id, name]
+~~~
+
+The `$id` and `name` at the aggregate root are assigned by the aggregating
+tool; this document does not prescribe their form. How a namespace is then
+rendered in a target language — as a package, a module, a nested class, or a
+name prefix — is likewise outside the scope of this document. What is
+required is that the two `Pet` declarations stay distinguishable at the
+schema level, so that the choice remains available.
+
+An author who wants one `Pet` rather than two says so in the Description, by
+giving the shared type its own resource and pulling it in with `$import` or
+`$importdefs` ({{cross-schema-reuse}}) instead of copying it. The import
+names the namespace the copy lands in, so the scoping is the author's rather
+than the aggregating tool's.
 
 ## Activating Add-ins with `$uses` {#annotations-and-units}
 
