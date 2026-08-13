@@ -41,8 +41,8 @@ defined in [AVRO].
 | Cross-document mechanism | None. An Avro schema resource MUST be self-contained ([Reference Layers](#reference-layers)). |
 | Type determination | [Type Determination for Non-JSON Serializations](#type-determination-for-non-json-serializations). |
 | Data media types | Four framings, in [Encodings and Media Types](#encodings-and-media-types). Avro defines a wire encoding, so an Avro-framed body is decoded by the Avro codec and not by the type-determination procedure. |
-| Type naming and scope | A named type is named by its fullname. Scope is author-declared: it is the `namespace` in effect at the declaration ([Type Naming and Scope](#type-naming-and-scope)). |
-| Self-description | An inner named declaration inherits its namespace from the most tightly enclosing named schema. That value MUST be materialized on extraction ([Materializing the Inherited Namespace](#materializing-the-inherited-namespace)). |
+| Type naming and scope | A named type is named by its fullname. A declared namespace is binding; an undeclared one is materialized from the schema resource ([Type Naming and Scope](#type-naming-and-scope)). |
+| Self-description | Every named declaration MUST carry an explicit `namespace` on extraction or aggregation, whether it was declared, inherited, or absent ([Materializing Namespaces](#materializing-namespaces)). |
 | Usable schema forms | The JSON object form only ([Usable Schema Forms](#usable-schema-forms)). |
 
 # Avro Dialect URI
@@ -118,7 +118,7 @@ write it into an Avro Schema Object.
 Because there is no identity keyword, an extracted Avro Schema Object carries
 no identity. "Materializing Defaults for Standalone Processing" of [BINDING]
 reduces, for this binding, to `$schema` plus the namespace materialization of
-[Materializing the Inherited Namespace](#materializing-the-inherited-namespace).
+[Materializing Namespaces](#materializing-namespaces).
 
 # Reference Layers
 
@@ -163,15 +163,60 @@ named types. The anonymous forms, being `array`, `map`, `union`, and the
 primitives, name nothing, and the requirements of this section do not apply
 to them.
 
-Scope is author-declared, not derived from the schema resource. The scope of
-a named declaration is the `namespace` in effect at that declaration. A single
-Avro schema resource MAY populate several namespaces, and two schema resources
-of one Description MAY populate the same namespace.
+## Declared and Undeclared Namespaces
 
-Aggregating the Avro Schema Objects of a Description into one type space
-therefore places two declarations in one scope exactly when their fullnames
-agree. That is the author's own arrangement, and preserving it satisfies the
-aggregation requirement of [BINDING].
+A declaration's namespace is **declared** where the declaration itself or an
+enclosing named schema supplies it, through a `namespace` attribute or a
+dotted `name`. The empty string is a `namespace` attribute and declares the
+null namespace [AVRO].
+
+A declaration's namespace is **undeclared** where nothing in that chain
+supplies one. Avro resolves such a declaration to the null namespace.
+
+The two cases need opposite treatment, and conflating them is what makes Avro
+look like it has no scoping problem.
+
+## Declared Namespaces Are Binding
+
+Where a namespace is declared, scope is author-declared and is not derived
+from the schema resource. A single Avro schema resource MAY populate several
+namespaces. Two schema resources of one Description MAY populate the same
+namespace, and where they do, that is the author placing them in one scope
+deliberately.
+
+Tooling MUST preserve a declared namespace exactly. Tooling MUST NOT rewrite,
+prefix, or qualify it.
+
+## Undeclared Namespaces Are Not a Scoping Decision
+
+Every undeclared declaration in every schema resource of a Description
+resolves to the same null namespace. That is not the author choosing to share
+a scope. It is the absence of a choice, and it produces exactly the collision
+that two JSON Structure schema resources produce when their type spaces are
+flattened.
+
+Two `components.schemas` entries that each define a record named `Pet`,
+neither declaring a namespace, both hold the fullname `Pet`. Nothing either
+author wrote says the two are the same type. Aggregating them as one type
+would assert something the Description does not contain.
+
+Tooling MUST therefore materialize a namespace for every undeclared
+declaration before aggregating, per
+[Materializing Namespaces](#materializing-namespaces). The materialized
+namespace is derived from the schema resource, which is the scope boundary
+the Description's own structure implies.
+
+An Avro Schema Object SHOULD declare a namespace. Relying on materialization
+makes a type's identity depend on where the schema sits in the Description
+rather than on what the author intended, and moving a schema resource then
+changes the type.
+
+## Collisions After Materialization
+
+The rules below apply to fullnames as they stand once
+[Materializing Namespaces](#materializing-namespaces) has been applied. A
+collision that survives materialization is a collision between declared
+namespaces, and is therefore an author's arrangement rather than an artifact.
 
 Where two declarations across schema resources share a fullname and are
 identical, the aggregate holds one declaration. Avro admits no other outcome,
@@ -184,7 +229,7 @@ MUST NOT synthesize a disambiguating namespace, because a synthesized
 namespace changes a fullname that consumers of the original resource already
 depend on.
 
-# Materializing the Inherited Namespace
+# Materializing Namespaces
 
 This section supplies the self-description declaration required by
 "Materializing Defaults for Standalone Processing" of [BINDING].
@@ -199,17 +244,47 @@ Avro determines a named type's fullname in three ways [AVRO]:
    then taken from the most tightly enclosing named schema, or is the null
    namespace if there is none.
 
-The third case makes an inner declaration's identity depend on its container.
-Extracting the inner declaration changes its fullname.
+Case 3 makes a declaration's identity depend on its surroundings. Extracting
+such a declaration, or aggregating it with others, changes what its fullname
+resolves against.
 
-Tooling that extracts an Avro Schema Object, or any named declaration nested
-within one, MUST first write an explicit `namespace` onto every named
-declaration that would otherwise resolve its namespace by case 3. The
-materialized value MUST be the namespace in effect at that declaration's
-position in the originating document.
+On extraction or aggregation, every named declaration MUST carry an explicit
+`namespace`. Tooling MUST compute that value as follows:
 
-Tooling MUST NOT hand an extracted Avro declaration to an Avro tool with an
-inherited namespace left implicit.
+* Where the declaration's namespace is declared
+  ([Declared and Undeclared Namespaces](#declared-and-undeclared-namespaces)),
+  the materialized value is the namespace in effect at that declaration's
+  position in the originating document.
+* Where the declaration's namespace is undeclared, the materialized value is
+  the resource namespace of the schema resource that contains it.
+
+Tooling MUST NOT hand an extracted Avro declaration to an Avro tool with a
+namespace left implicit.
+
+## Deriving the Resource Namespace
+
+A resource namespace is a valid Avro namespace, so each of its dot-separated
+parts MUST start with `[A-Za-z_]` and MUST subsequently contain only
+`[A-Za-z0-9_]` [AVRO]. OAS component keys are less restrictive, being
+`^[a-zA-Z0-9\.\-_]+$` [OAS], so a key may contain a hyphen or begin with a
+digit and not be usable.
+
+Tooling MUST derive the resource namespace in this order:
+
+1. Where the Schema Object is a `components.schemas` entry whose component
+   key is a valid Avro namespace, use the component key. A key containing
+   dots yields a multi-part namespace.
+2. Otherwise, derive it from the identifying parts of the Schema Object's
+   position, being the path template, the HTTP method, and the role, reduced
+   to characters valid in a name.
+3. Where neither produces a valid Avro namespace, tooling MUST reject the
+   aggregation and require an explicit `namespace` on the Schema Object.
+
+The derivation MUST be deterministic for the same Description and JSON
+Pointer. Where two schema resources derive the same resource namespace,
+tooling MUST reject the aggregation.
+
+## Example: An Inherited Declared Namespace
 
 In the schema below, `LineItem` is `com.example.sales.LineItem`:
 
@@ -243,18 +318,38 @@ Extracting the inner record MUST produce:
 Extracting it without the `namespace` produces `LineItem` in the null
 namespace, which is a different type with the same field list.
 
+## Materialization and the Wire
+
+The two cases differ in whether they change the data on the wire, and tooling
+MUST NOT confuse them.
+
+Materializing a declared namespace does not change the fullname. The Parsing
+Canonical Form transformation already replaces short names with fullnames
+using the applicable namespaces [AVRO], so the schema as written and the
+schema with the namespace written out have the same canonical form and the
+same fingerprint. This materialization is wire-neutral.
+
+Materializing a resource namespace does change the fullname, and therefore
+changes the canonical form and the fingerprint.
+
+Resource-namespace materialization is for the aggregate type space and for
+code generation. Tooling MUST encode and decode message bodies against the
+schema as written, with declared namespaces materialized and undeclared ones
+left in the null namespace. Tooling MUST compute fingerprints against that
+same form. Tooling MUST NOT put a resource-namespace-materialized schema on
+the wire, and MUST NOT compute a fingerprint from one.
+
+Where a Description uses a media type of
+[Encodings and Media Types](#encodings-and-media-types), an author who leaves
+namespaces undeclared therefore gets one type identity for code generation
+and a different fullname on the wire. Declaring namespaces avoids the split.
+
 ## A Note on Parsing Canonical Form
 
 The Parsing Canonical Form transformation keeps only the attributes relevant
 to parsing data, which are `type`, `name`, `fields`, `symbols`, `items`,
 `values`, and `size`, and strips all others [AVRO]. A `$schema` attribute is
 therefore stripped, and adding one does not change a schema's fingerprint.
-
-The same transformation replaces short names with fullnames using the
-applicable namespaces. Two schemas that differ only in whether an inherited
-namespace was written explicitly have the same Parsing Canonical Form, and the
-same fingerprint. Materializing the namespace is therefore safe with respect
-to fingerprint-keyed lookup.
 
 # Encodings and Media Types
 
@@ -444,7 +539,7 @@ a value as follows. All steps operate on the schema alone.
 1. Resolve the starting point to a type definition. Follow a named-type
    reference to its definition within the same schema resource. Resolution is
    by fullname, with the namespace rules of
-   [Materializing the Inherited Namespace](#materializing-the-inherited-namespace)
+   [Materializing Namespaces](#materializing-namespaces)
    applied.
 2. Locate the value: a named field under `fields`, the item type under
    `items`, or the value type under `values`.
@@ -618,6 +713,56 @@ collision, and tooling MUST report a diagnostic per
 
 The author resolves it in the Description, by giving the inner record its own
 namespace or by making the two declarations identical.
+
+## Undeclared Namespaces Across Resources
+
+The same two entries with no `namespace` anywhere.
+
+~~~ yaml
+components:
+  schemas:
+    Pet:
+      type: record
+      name: Pet
+      fields:
+        - name: id
+          type: { type: string, logicalType: uuid }
+    PetListResponse:
+      type: record
+      name: PetListResponse
+      fields:
+        - name: pets
+          type:
+            type: array
+            items:
+              type: record
+              name: Pet
+              fields:
+                - name: id
+                  type: { type: string, logicalType: uuid }
+                - name: tags
+                  type: { type: array, items: string }
+~~~
+
+As written, every declaration is in the null namespace, and both entries hold
+the fullname `Pet`. Neither author wrote anything placing the two in one
+scope.
+
+Materialization derives a resource namespace from each component key and
+produces four distinct fullnames:
+
+| Resource | Declaration | Fullname after materialization |
+| ---- | ---- | ---- |
+| `Pet` | root record | `Pet.Pet` |
+| `PetListResponse` | root record | `PetListResponse.PetListResponse` |
+| `PetListResponse` | nested `Pet` | `PetListResponse.Pet` |
+
+The aggregate holds two distinct pet types, which is what the Description
+describes. No diagnostic is reported, because no collision survives.
+
+On the wire, both records remain `Pet` in the null namespace. Their
+fingerprints differ, because their field lists differ. An author who wants the
+type identity and the wire identity to agree declares namespaces explicitly.
 
 ## Operations Over Each Framing
 
