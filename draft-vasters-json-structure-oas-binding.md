@@ -589,9 +589,9 @@ diagnostic rather than choose a name on the author's behalf.
 
 This requirement is a stopgap for one dialect at a time. The problem is not
 specific to any dialect: two OAS-dialect Schema Objects can each define a
-`$defs/Pet`, and OAS is equally silent about what a generator should call
-them. A scoping framework belongs in OAS, where one definition would serve
-every dialect the extension point admits.
+`Pet` under `$defs`, and OAS is equally silent about what a generator should
+call them. A scoping framework belongs in OAS, where one definition would
+serve every dialect the extension point admits.
 
 ## Schema Inspection for Non-JSON Serializations {#serialization-inspection}
 

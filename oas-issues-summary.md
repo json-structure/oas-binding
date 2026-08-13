@@ -4,7 +4,60 @@
 **Target:** OAS 3.3, or 4.0 where a change is not backward compatible.
 **Baseline:** OpenAPI Specification 3.2.0, published 19 September 2025.
 
-## Why this document exists
+OAS 3.1 shipped a schema-dialect extension point and specified only how to
+**select** a dialect. Everything downstream of selection is undefined. This
+document proposes thirteen fixes.
+
+## Why it matters
+
+**The gaps produce undefined behavior today, before any new dialect is
+admitted.** OAS already sanctions dialects that are mutually incompatible with
+each other — JSON Schema draft-04 through 2020-12, several of whose
+transitions change validation outcomes silently. A `draft-07` Description is
+legal under
+[§4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects),
+and it has no defined identity handling, no defined behavior in a tool that
+has not implemented draft-07, and no published schema that validates it. See
+[Why this is not a JSON Structure problem](#why-this-is-not-a-json-structure-problem)
+for the evidence.
+
+**One gap needs no second dialect at all.** Nothing in OAS says what a code
+generator should name the types it emits, so the same Description yields
+different type names in different tools (gap 13).
+
+## The thirteen gaps at a glance
+
+Gaps 1 to 7 are foundational and build on each other: what a binding is, what
+object you are looking at, what unit carries a dialect, which dialect it is,
+which reference layer applies, and what the resource is called. Gaps 8 to 13
+are processing concerns that depend on the first seven being settled.
+
+| # | Undefined today | What goes wrong |
+|---|---|---|
+| [1](#1-dialect-processing-is-undefined) | What it means to *process* a non-OAS-dialect Schema Object | Every binding invents its own contract, differently |
+| [2](#2-reference-object-versus-schema-object-classification-is-not-ordered) | When Reference Object / Schema Object classification happens relative to dialect selection | A bare `$ref` is handed to a dialect processor that cannot read it |
+| [3](#3-what-counts-as-a-dialect-selection-unit-is-undefined) | Which Schema Objects are the units a dialect attaches to | The boundary is defined by a JSON Schema keyword, so a dialect without it has none |
+| [4](#4-unknown-dialects-have-no-defined-behavior) | What a tool does when it does not recognize the dialect URI | **Silently parsed as OAS dialect. Validation outcomes change with no error.** |
+| [5](#5-dialect-uri-matching-semantics-are-unspecified) | Whether URI matching is exact, and how a tool comes to support a dialect at all | Near-misses match in one tool and not the next |
+| [6](#6-the-two-reference-layers-are-not-separated) | Which reference layer a given reference belongs to | **A bundler inlines across the boundary and silently produces an invalid schema.** |
+| [7](#7-an-embedded-schema-resource-without-an-identity-has-no-defined-identity) | The identity of a Schema Object with no `$id`; how identities are compared; what extraction means | A schema cannot be named, matched, or lifted out for standalone validation |
+| [8](#8-type-determination-for-non-json-serializations-is-dialect-locked) | How to determine a value's type when the schema is not JSON Schema | **Non-JSON bodies cannot be parsed correctly. This breaks function, not tidiness.** |
+| [9](#9-no-published-schema-validates-a-description-that-uses-another-dialect) | Which published schema validates a multi-dialect Description | `schema-base` rejects a Description that OAS itself permits |
+| [10](#10-the-status-of-non-openapi-non-json-schema-documents-is-undefined) | The status of a type library pulled in by a dialect's own import mechanism | Undefined behavior for a mechanism OAS invited |
+| [11](#11-there-is-no-conformance-role-model) | What "tooling" means when tools do disjoint jobs | "Is this tool OAS-compliant?" has no answer |
+| [12](#12-external-retrieval-security-requirements-are-too-thin-to-implement) | Retrieval ordering, defaults, and limits | Every binding reinvents them, differently; the limits are what attackers find |
+| [13](#13-there-is-no-scoping-framework-for-the-schemas-of-a-description) | The relationship between the name scopes of a Description's schemas | One Description, different generated type names per tool |
+
+Three failure shapes. **Gaps 4, 6, and 8 fail silently** — wrong output, no
+error raised at the point of damage. Gap 9 fails loudly but blocks: a
+Description OAS permits will not validate against any published OAS schema.
+The remainder surface as divergence, visible only once a second tool is
+involved.
+
+Each section below states what OAS says today, what it leaves undefined, and a
+concrete proposal.
+
+## Where this comes from
 
 `draft-vasters-json-structure-oas-binding` binds JSON Structure into OpenAPI
 Descriptions through the `$schema` / `jsonSchemaDialect` mechanism. Writing it
@@ -17,22 +70,16 @@ is dialect-agnostic and parameterized by a handful of declarations a binding
 supplies. Part II binds JSON Structure to it. Part I exists only because OAS
 defines dialect *selection* and stops there.
 
-**The goal of this document is to make Part I unnecessary.** Each section
-below states what OAS says today, what it leaves undefined, why that matters,
-and a concrete proposal. The final section maps each proposal to the text it
-would let us delete.
+**The goal of this document is to make Part I unnecessary.** The
+[deletion table](#what-this-would-let-us-delete) maps each proposal to the
+text it would remove.
 
-## The underlying problem
+## Why it went unnoticed
 
-OAS 3.1 shipped `jsonSchemaDialect` and, with it, an extension point.
 [Section 4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects)
-says a Schema Object may declare a dialect, that tooling MUST support
-the OAS dialect, and that it MAY support others. Everything downstream of that
-sentence is undefined: what a tool does when it does not recognize the URI,
-whether URI matching is exact, what identity an embedded schema resource has
-when it declares none, how the OpenAPI reference layer relates to the
-dialect's own, how a non-JSON body is parsed when the schema is not JSON
-Schema, and what "conforming tooling" means when tools do disjoint jobs.
+says a Schema Object may declare a dialect, that tooling MUST support the OAS
+dialect, and that it MAY support others. The table above lists what is left
+undefined from there.
 
 That was survivable while the OAS dialect was the only dialect in practice.
 With one dialect there is nothing to disambiguate: the two reference layers
@@ -43,70 +90,9 @@ never arises.
 It bites the moment a second dialect exists. And if the next binding answers
 these questions independently, it will answer them differently — at which
 point a tool supporting two dialects has two contradictory conformance
-obligations for the same code path. Dialect bindings are where per-spec
+obligations for the same code path. **Dialect bindings are where per-spec
 divergence costs most, because the point of a binding is that one reader
-handles all of them.
-
-## OAS already admits mutually incompatible dialects
-
-OAS specifies how to select a non-default dialect.
-[§4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects)
-says `$schema`
-"MAY be present in any Schema Object that is a schema resource root, and if
-present MUST be used to determine which dialect should be used when
-processing the schema," that this "allows use of Schema Objects which comply
-with **other drafts of JSON Schema** than the default Draft 2020-12 support,"
-and that tooling "MAY support additional values of `$schema`."
-`jsonSchemaDialect` extends the same choice to a whole document. An OAS
-editor confirmed the intended usage in September 2025 (#4147): a Description
-may set `jsonSchemaDialect: http://json-schema.org/draft-07/schema#`.
-
-Those drafts are not variations on a theme. JSON Schema's own release notes
-document each transition as breaking, and several of the breaks are silent —
-the same document validates differently under the new draft, with no error:
-
-| Transition | Change (per JSON Schema release notes) | Effect on an unmodified document |
-|---|---|---|
-| draft-04 → 06 | `id` renamed `$id` | The base URI declaration stops being recognized |
-| draft-04 → 06 | `exclusiveMinimum`/`exclusiveMaximum` change from boolean to number | Schema becomes meta-schema-invalid, or the bound is silently dropped |
-| draft-04 → 06 | `"integer"` redefined as "any number with a zero fractional part" | `1.0` is invalid before, valid after — **silent** |
-| draft-07 → 2019-09 | `$ref` changes from replacing the schema to an applicator whose siblings apply | Adjacent keywords go from ignored to enforced — **silent** |
-| draft-07 → 2019-09 | `format` stops being an assertion by default | Constraints stop being enforced — **silent** |
-| draft-07 → 2019-09 | `definitions` → `$defs`; `dependencies` split into `dependentSchemas`/`dependentRequired`; `$id` may no longer carry a fragment | Reference targets and constraints stop being recognized |
-| 2019-09 → 2020-12 | Array-form `items` becomes `prefixItems`; `items` takes over `additionalItems` | "The meaning of `items` has changed, the syntax for defining arrays remains the same" — **silent** |
-| 2019-09 → 2020-12 | `contains` now marks items evaluated for `unevaluatedItems` | The spec's own example flips from fail to pass — **silent** |
-| 2019-09 → 2020-12 | `$recursiveRef`/`$recursiveAnchor` replaced by `$dynamicRef`/`$dynamicAnchor` | Recursive references stop resolving |
-
-Nothing commits JSON Schema to stopping. `$schema` exists because drafts are
-not interchangeable, and the 2020-12 notes are explicit about the
-consequence: "Implementations need to be prepared to switch processing modes
-or throw an error if they don't support the `$schema` of the referenced
-schema." JSON Schema mandates the no-fallback behavior that OAS leaves
-undefined (gap 3 below).
-
-The gaps in this document are therefore not hypothetical, and not specific to
-JSON Structure. They already produce undefined behavior for the drafts OAS
-already sanctions:
-
-- [Appendix F](https://spec.openapis.org/oas/v3.2.0.html#appendix-f-examples-of-base-uri-determination-and-reference-resolution)
-  and [§4.1.2.1](https://spec.openapis.org/oas/v3.2.0.html#parsing-documents)
-  name `$id` as the Schema Object's identity keyword.
-  A draft-04 Schema Object declares `id`. OAS's base-URI machinery does not
-  apply to a dialect OAS permits. (Gap 5.)
-- A tool that has not implemented draft-07 has no defined behavior on
-  encountering it. (Gap 3.)
-- Nothing says whether `http://json-schema.org/draft-07/schema#` and
-  `https://json-schema.org/draft-07/schema` select the same dialect. JSON
-  Schema's own URIs vary in scheme and trailing `#` across drafts. (Gap 4.)
-- `schema-base` pins `jsonSchemaDialect` to the OAS dialect, so a draft-07
-  Description already fails it. (Gap 7.)
-
-JSON Structure sits on the same axis: another dialect, selected by the same
-keyword, assigning its own meanings to shared keyword spellings. Admitting it
-introduces no category of risk that admitting draft-07 did not. The proposals
-below are not accommodations for JSON Structure. They are what the existing
-extension point needs in order to work for the dialects OAS already
-sanctions.
+handles all of them.**
 
 ---
 
@@ -134,7 +120,7 @@ term and requiring a binding to declare:
 | Identity keyword | Which keyword carries a schema resource's identity (JSON Schema: `$id`), or that the dialect has none. |
 | Identity comparison | Byte-exact, or a declared normalization. |
 | Cross-document mechanism | Which keyword(s), if any, incorporate definitions from another resource, and whether their values must be absolute URIs. |
-| Type determination | The procedure yielding a value's JSON data type from the schema, for non-JSON serializations (see gap 6 below). |
+| Type determination | The procedure yielding a value's JSON data type from the schema, for non-JSON serializations (see gap 8). |
 | Self-description | Which keywords must be materialized when a resource is extracted from the Description. |
 
 Everything else in this document is expressible in terms of those six
@@ -179,7 +165,50 @@ reclassifying it as a Schema Object — is worse than either, because it hands a
 dialect processor an object the author plainly wrote as a reference. Rejection
 is the reading this binding assumes, and OAS should state it explicitly.
 
-## 3. Unknown dialects have no defined behavior
+## 3. What counts as a dialect-selection unit is undefined
+
+**Today.**
+[Section 4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects)
+says `$schema` "MAY be present in any Schema Object that is a **schema
+resource root**," and links that term to the JSON Schema Draft 2020-12
+definition, which delimits a schema resource by `$id`.
+
+**Gap.** The boundary that dialect selection attaches to is defined by a JSON
+Schema keyword. A dialect with a different identity keyword, or with none at
+all — which the binding declarations of gap 1 explicitly permit — has no
+defined resource boundary in OAS, and therefore nothing for a dialect to
+attach to.
+
+Four further questions have no answer in the text:
+
+- Which OAS positions hold a schema resource root. `components.schemas`
+  entries plainly do. Whether an inline Schema Object at a request body,
+  response, parameter, callback, or webhook position does is never stated.
+- Whether a Schema Object nested inside an already-selected resource can open
+  a second selection context.
+- What a nested `$schema` means: override, error, or ignored.
+- Whether selection is per root or per document, and therefore whether one
+  Description may mix the OAS dialect with others.
+
+The last one matters most in practice. **A Description that mixes dialects is
+either the ordinary case or a malformed one, and OAS does not say which.**
+
+**Proposal.** In
+[§4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects):
+
+1. Define "schema resource root" in dialect-neutral terms rather than by
+   reference to JSON Schema's `$id`-based definition, and enumerate the OAS
+   positions that hold one.
+2. State that dialect selection happens per schema resource root, that a
+   Description MAY contain Schema Objects in more than one dialect, and that
+   tooling MUST apply the effective dialect independently at each root.
+3. State that a Schema Object nested inside a selected resource is part of
+   that resource and does not establish a second selection context; that a
+   nested `$schema` MUST NOT override the root's dialect; and that tooling
+   MUST reject a nested `$schema` that would make the nested object's dialect
+   ambiguous.
+
+## 4. Unknown dialects have no defined behavior
 
 **Today.** "Tooling MUST support the OAS dialect schema id, and MAY support
 additional values of `$schema`"
@@ -206,7 +235,7 @@ validation outcomes without any error.
 This is the change worth making first. It is small and backward compatible,
 and without it a multi-dialect ecosystem fails silently instead of loudly.
 
-## 4. Dialect URI matching semantics are unspecified
+## 5. Dialect URI matching semantics are unspecified
 
 **Today.** Nothing states how a `$schema` or `jsonSchemaDialect` value is
 compared against a dialect a tool supports.
@@ -233,10 +262,54 @@ incorporating a declared meta-schema's definitions — and no exact match can
 anticipate such a URI. OAS should say that recognizing one is an explicit,
 out-of-band configuration decision; that a tool so configured processes the
 Schema Object under the dialect the derived meta-schema extends; and that a
-tool not so configured applies the no-fallback rule of §3 rather than
+tool not so configured applies the no-fallback rule of gap 4 rather than
 guessing from the URI's shape or resolving it at read time.
 
-## 5. An embedded schema resource without an identity has no defined identity
+## 6. The two reference layers are not separated
+
+**Today.**
+[Section 4.23](https://spec.openapis.org/oas/v3.2.0.html#reference-object)
+defines the Reference Object and
+[§4.24](https://spec.openapis.org/oas/v3.2.0.html#schema-object)
+the Schema Object, whose `$ref` is JSON Schema's.
+[Appendix F](https://spec.openapis.org/oas/v3.2.0.html#appendix-f-examples-of-base-uri-determination-and-reference-resolution)
+specifies resolution for both. Every rule is written for a single referencing
+mechanism.
+
+**Gap.** A Schema Object in another dialect brings its own referencing
+keywords, which need not be spelled `$ref`, need not mean what `$ref` means,
+and need not be able to reach OAS component addresses at all. Two layers now
+coexist in one document:
+
+- **The OpenAPI layer.** An OAS `$ref` targeting a Schema Object as a whole,
+  resolving per OAS, at any position in the Description.
+- **The dialect layer.** Whatever referencing keywords the dialect defines,
+  used *within* a Schema Object that has adopted that dialect.
+
+OAS says nothing about which layer a given reference belongs to, or when that
+determination is made, because with one dialect both layers are the same
+machinery. **The concrete failure is a bundler that corrupts a valid
+Description:** inlining an OAS `$ref` target into the body of a Schema Object
+in another dialect yields a schema that is invalid in its own dialect, with
+no error raised at the point of damage.
+
+**Proposal.** State in
+[§4.23](https://spec.openapis.org/oas/v3.2.0.html#reference-object) or
+[§4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects):
+
+1. Tooling MUST determine which reference layer a reference belongs to before
+   resolving it, and that determination follows from the effective dialect of
+   the containing schema resource.
+2. An OAS `$ref` that targets a schema resource from outside it stays on the
+   OpenAPI layer and is resolved by OAS rules unchanged — including where it
+   sits inside a Schema Object that has not adopted a non-OAS dialect.
+3. A reference inside the body of a resource that has adopted a dialect is
+   governed by that dialect, and is valid only where the dialect permits it.
+4. A reader MUST NOT reinterpret an OAS reference target as dialect content
+   until that target has independently undergone dialect selection. Bundling
+   and inlining MUST preserve this boundary.
+
+## 7. An embedded schema resource without an identity has no defined identity
 
 **Today.**
 [Appendix F](https://spec.openapis.org/oas/v3.2.0.html#appendix-f-examples-of-base-uri-determination-and-reference-resolution)
@@ -271,8 +344,14 @@ standalone validator for its dialect. Extraction drops exactly the context
 - Require that tooling extracting a Schema Object for standalone processing
   first materialize `$schema` (the effective dialect) and the identity keyword
   as literal properties, plus any further keywords the binding declares.
+- Specify how identities are compared when matching a reference,
+  distinguishing the **resource identity** — the declared value including any
+  fragment, used as the base URI within that resource — from the **lookup
+  key**, its fragment-free form, used only for matching. Require that two
+  registered identities reducing to the same lookup key be rejected as
+  ambiguous, and that the same resource identity registered twice be rejected.
 
-## 6. Type determination for non-JSON serializations is dialect-locked
+## 8. Type determination for non-JSON serializations is dialect-locked
 
 **Today.**
 [Section 4.24.4.2](https://spec.openapis.org/oas/v3.2.0.html#non-json-data)
@@ -306,7 +385,7 @@ Then require each binding to supply its own implementation, and state that a
 dialect whose binding supplies none MUST NOT be used at the affected
 positions.
 
-## 7. No published schema validates a Description that uses another dialect
+## 9. No published schema validates a Description that uses another dialect
 
 **Today.** Two JSON Schemas are published per OAS minor version. `schema`
 deliberately does not validate Schema Objects, "as they make no assumptions
@@ -332,7 +411,7 @@ dialect is not the OAS dialect. Until then, document in the specification text
 that `schema-base` failures arising solely from a non-OAS dialect URI are
 expected and are not defects.
 
-## 8. The status of non-OpenAPI, non-JSON-Schema documents is undefined
+## 10. The status of non-OpenAPI, non-JSON-Schema documents is undefined
 
 **Today.**
 [Section 4.1.2](https://spec.openapis.org/oas/v3.2.0.html#openapi-description-structure)
@@ -357,7 +436,7 @@ requirements do not apply to it; tooling MUST NOT parse it as an OpenAPI
 document and MUST NOT expose its contents at OAS component addresses. This
 costs OAS nothing and removes an unnecessary conformance cliff.
 
-## 9. There is no conformance role model
+## 11. There is no conformance role model
 
 **Today.** OAS uses "tooling" throughout without distinguishing what a given
 tool does. There is no conformance section.
@@ -380,7 +459,7 @@ schema.
 This has the broadest benefit outside the dialect question, and the largest
 editorial cost.
 
-## 10. External retrieval security requirements are too thin to implement
+## 12. External retrieval security requirements are too thin to implement
 
 **Today.**
 [Section 6.5](https://spec.openapis.org/oas/v3.2.0.html#handling-external-resources),
@@ -420,7 +499,7 @@ and
 
 The limits are the part implementations skip and attackers find.
 
-## 11. There is no scoping framework for the schemas of a Description
+## 13. There is no scoping framework for the schemas of a Description
 
 **Today.** A Description holds many schema resources: every
 [`components.schemas`](https://spec.openapis.org/oas/v3.2.0.html#components-object)
@@ -454,9 +533,9 @@ under the same name. Neither is in the other's scope, so neither is wrong. The
 collision exists only for a consumer that flattens the Description into a
 single type space — which is what a code generator does.
 
-This is the one gap in this document that bites the OAS dialect itself with no
-other dialect involved. Two Schema Objects can each declare a `$defs/Pet` of a
-different shape, and nothing in the specification constrains what a generator
+This is the one gap in this document that needs no second dialect. Two
+`components.schemas` entries can each define a `Pet` under `$defs`, with
+different shapes, and nothing in the specification constrains what a generator
 should call them. Each generator therefore picks its own answer, so one
 Description yields different type names in different tools, and adding an
 unrelated schema can rename an existing generated type.
@@ -489,50 +568,110 @@ point already admits.
 
 ---
 
+## Why this is not a JSON Structure problem
+
+**OAS already admits dialects that are mutually incompatible with each
+other.**
+[§4.24.7](https://spec.openapis.org/oas/v3.2.0.html#specifying-schema-dialects)
+says `$schema`
+"MAY be present in any Schema Object that is a schema resource root, and if
+present MUST be used to determine which dialect should be used when
+processing the schema," that this "allows use of Schema Objects which comply
+with **other drafts of JSON Schema** than the default Draft 2020-12 support,"
+and that tooling "MAY support additional values of `$schema`."
+`jsonSchemaDialect` extends the same choice to a whole document. An OAS
+editor confirmed the intended usage in September 2025 (#4147): a Description
+may set `jsonSchemaDialect: http://json-schema.org/draft-07/schema#`.
+
+Those drafts are not variations on a theme. JSON Schema's own release notes
+document each transition as breaking, and several of the breaks are silent —
+the same document validates differently under the new draft, with no error:
+
+| Transition | Change (per JSON Schema release notes) | Effect on an unmodified document |
+|---|---|---|
+| draft-04 → 06 | `id` renamed `$id` | The base URI declaration stops being recognized |
+| draft-04 → 06 | `exclusiveMinimum`/`exclusiveMaximum` change from boolean to number | Schema becomes meta-schema-invalid, or the bound is silently dropped |
+| draft-04 → 06 | `"integer"` redefined as "any number with a zero fractional part" | `1.0` is invalid before, valid after — **silent** |
+| draft-07 → 2019-09 | `$ref` changes from replacing the schema to an applicator whose siblings apply | Adjacent keywords go from ignored to enforced — **silent** |
+| draft-07 → 2019-09 | `format` stops being an assertion by default | Constraints stop being enforced — **silent** |
+| draft-07 → 2019-09 | `definitions` → `$defs`; `dependencies` split into `dependentSchemas`/`dependentRequired`; `$id` may no longer carry a fragment | Reference targets and constraints stop being recognized |
+| 2019-09 → 2020-12 | Array-form `items` becomes `prefixItems`; `items` takes over `additionalItems` | "The meaning of `items` has changed, the syntax for defining arrays remains the same" — **silent** |
+| 2019-09 → 2020-12 | `contains` now marks items evaluated for `unevaluatedItems` | The spec's own example flips from fail to pass — **silent** |
+| 2019-09 → 2020-12 | `$recursiveRef`/`$recursiveAnchor` replaced by `$dynamicRef`/`$dynamicAnchor` | Recursive references stop resolving |
+
+Nothing commits JSON Schema to stopping. `$schema` exists because drafts are
+not interchangeable, and the 2020-12 notes are explicit about the
+consequence: "Implementations need to be prepared to switch processing modes
+or throw an error if they don't support the `$schema` of the referenced
+schema." **JSON Schema mandates the no-fallback behavior that OAS leaves
+undefined** (gap 4).
+
+Four of the gaps above already produce undefined behavior for the drafts OAS
+sanctions today:
+
+- [Appendix F](https://spec.openapis.org/oas/v3.2.0.html#appendix-f-examples-of-base-uri-determination-and-reference-resolution)
+  and [§4.1.2.1](https://spec.openapis.org/oas/v3.2.0.html#parsing-documents)
+  name `$id` as the Schema Object's identity keyword.
+  A draft-04 Schema Object declares `id`. OAS's base-URI machinery does not
+  apply to a dialect OAS permits. (Gap 7.)
+- A tool that has not implemented draft-07 has no defined behavior on
+  encountering it. (Gap 4.)
+- Nothing says whether `http://json-schema.org/draft-07/schema#` and
+  `https://json-schema.org/draft-07/schema` select the same dialect. JSON
+  Schema's own URIs vary in scheme and trailing `#` across drafts. (Gap 5.)
+- `schema-base` pins `jsonSchemaDialect` to the OAS dialect, so a draft-07
+  Description already fails it. (Gap 9.)
+
+JSON Structure sits on the same axis: another dialect, selected by the same
+keyword, assigning its own meanings to shared keyword spellings. Admitting it
+introduces no category of risk that admitting draft-07 did not. **The
+proposals above are not accommodations for JSON Structure. They are what the
+existing extension point needs in order to work for the dialects OAS already
+sanctions.**
+
+---
+
 ## What this would let us delete
 
 | Proposal | Binding text it removes |
 |---|---|
 | 1. Dialect bindings | "Binding Parameters" — replaced by a reference; the JSON Structure parameter table stays. |
 | 2. Classification ordering | "Reference Object Classification" in full. |
-| 3. Unknown-dialect no-fallback | Two bullets of "Recognizing and Rejecting Dialects." |
-| 4. URI matching and configured recognition | Two bullets of "Recognizing and Rejecting Dialects." |
-| 5. Embedded identity and extraction | "Default Resource Identity" and "Materializing Defaults for Standalone Processing" in full — the largest single block. |
-| 6. Type determination contract | "Schema Inspection for Non-JSON Serializations" in full; the JSON Structure procedure stays. |
-| 7. Third published schema | "Validating the Description Itself" in full. |
-| 8. Non-OAD resources | One paragraph of "Resolving Cross-Document References." |
-| 9. Conformance roles | The role definitions in "Conformance"; the JSON Structure specifics stay. |
-| 10. Retrieval security | The ordering and limits text in "Resolving Cross-Document References" and most of "Security Considerations." |
-| 11. Scoping framework | "Type Identity and Scope" in full; the JSON Structure namespace construction stays. |
+| 3. Selection units | "Dialect Selection" in full. |
+| 4. Unknown-dialect no-fallback | Two bullets of "Recognizing and Rejecting Dialects." |
+| 5. URI matching and configured recognition | Two bullets of "Recognizing and Rejecting Dialects." |
+| 6. Reference layers | "Reference Layer Separation" in full. |
+| 7. Embedded identity, comparison, and extraction | "Default Resource Identity" and "Materializing Defaults for Standalone Processing" in full, plus the identity and lookup-key rules in "Resolving Cross-Document References" — the largest single block. |
+| 8. Type determination contract | "Schema Inspection for Non-JSON Serializations" in full; the JSON Structure procedure stays. |
+| 9. Third published schema | "Validating the Description Itself" in full. |
+| 10. Non-OAD resources | One paragraph of "Resolving Cross-Document References." |
+| 11. Conformance roles | The role definitions in "Conformance"; the JSON Structure specifics stay. |
+| 12. Retrieval security | The ordering and limits text in "Resolving Cross-Document References" and most of "Security Considerations." |
+| 13. Scoping framework | "Type Identity and Scope" in full; the JSON Structure namespace construction stays. |
 
-Adopting all eleven would reduce the binding to a dialect URI table, a type
+Adopting all thirteen would reduce the binding to a dialect URI table, a type
 system mapping, the reference and import rules peculiar to JSON Structure, and
 a parameter table. Roughly a third of its current normative weight.
 
-Adopting only 3, 6, and 7 would remove the cases where the absence of a rule
-produces silently wrong output rather than inconsistent output. If appetite is
-limited, those are the three.
+## Change cost
 
-## Sequencing
+Gaps 4, 5, 6, 10, and 12 constrain behavior that is currently undefined rather
+than changing behavior that is currently defined. They are additive and appear
+backward compatible.
 
-Proposals 3, 4, 8, and 10 are additive clarifications and appear
-backward compatible; they constrain behavior that is currently undefined
-rather than changing behavior that is currently defined. They are candidates
-for 3.3.
+Gap 9 is a publishing change rather than a specification change, and is already
+under discussion in #4147.
 
-Proposal 7 is a publishing change, not a specification change, and is already
-under discussion in #4147. It could land independently of any of the others.
+Gaps 1, 3, 7, 8, 11, and 13 require structural edits. Gap 3 redefines a term
+OAS currently delegates to JSON Schema. Gap 8 means refactoring existing
+normative text in
+[§4.24.4.2](https://spec.openapis.org/oas/v3.2.0.html#non-json-data).
+Gap 11 introduces a vocabulary that ripples through the document. Gap 13
+changes output authors see today.
 
-Proposals 1, 5, 6, 9, and 11 are structural. Proposal 6 in particular requires
-refactoring existing normative text in
-[§4.24.4.2](https://spec.openapis.org/oas/v3.2.0.html#non-json-data),
-and proposal 9 introduces a
-vocabulary that would ripple through the document. Proposal 11 is the one that
-would change output authors see today, since it settles type naming for the
-OAS dialect itself. These fit the Moonwalk
-principle of loose coupling between "HTTP interfaces" and "content schema
-formats" and may be better placed there — with the caveat that Moonwalk has
-no planned end date, and these problems exist in shipping tooling today.
+That structural set fits the Moonwalk principle of loose coupling between
+"HTTP interfaces" and "content schema formats." Moonwalk has no planned end
+date; these problems exist in shipping tooling now.
 
 ## References
 
