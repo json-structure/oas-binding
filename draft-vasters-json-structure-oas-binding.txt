@@ -91,7 +91,6 @@ Table of Contents
        5.4.1.  Inheritance
        5.4.2.  Discriminated Unions
        5.4.3.  Conditional Composition
-       5.4.4.  Construct Mapping
      5.5.  JSON Structure Reference Layer
        5.5.1.  $ref Names a Type, Not a Node
      5.6.  Cross-Schema Reuse with $import and $importdefs
@@ -107,6 +106,7 @@ Table of Contents
    8.  Security Considerations
    9.  IANA Considerations
    10. Normative References
+   Appendix A.  Migrating a Schema Object from the OAS Dialect
    Acknowledgments
    Author's Address
 
@@ -794,6 +794,89 @@ Table of Contents
    declaration.  The OpenAPI component key remains the OAS address; it
    does not implicitly replace an explicit JSON Structure name.
 
+   A JSON Pointer cannot be used as a name unchanged.  JSON Structure
+   restricts identifiers to [A-Za-z_][A-Za-z0-9_]* ([JSTRUCT-CORE]),
+   which excludes the / and ~ a pointer is built from.  Reproducing the
+   whole pointer is also unnecessary: $id already records the exact
+   location, so name only has to be a stable, readable identifier that
+   is unique within the extracted document.  Tooling SHOULD derive one
+   in this order:
+
+   1.  If the Schema Object is a components.schemas entry whose
+       component key is already a valid JSON Structure identifier, use
+       the component key.  OAS constrains component keys to ^[a-zA-
+       Z0-9\.\-_]+$ ([OAS]), so most keys in existing Descriptions
+       qualify unchanged.
+
+   2.  Otherwise, derive from the identifying parts of the position —
+       for a request body or response, the path template, the HTTP
+       method, and the role — rather than from every reference-token of
+       the pointer.
+
+   3.  If neither produces a valid identifier, reject the extraction and
+       require an explicit name.
+
+   Consider a Description that selects the JSON Structure Core dialect
+   for the whole document and carries an anonymous inline Schema Object
+   at a request body position:
+
+   openapi: 3.2.0
+   $self: https://example.com/api/openapi.yaml
+   jsonSchemaDialect: https://json-structure.org/meta/core/v0/#
+   paths:
+     /orders:
+       post:
+         requestBody:
+           content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   orderId:
+                     type: uuid
+                   total:
+                     type: decimal
+
+   The Schema Object declares no $schema, no $id, and no name.  None of
+   the three is needed while it is read in place, because the dialect
+   comes from jsonSchemaDialect and the position within the Description
+   supplies the address.  Extraction for standalone validation removes
+   both, so all three MUST be materialized:
+
+   $schema: https://json-structure.org/meta/core/v0/#
+   $id: https://example.com/api/openapi.yaml#/paths/~1orders/post/requestBody/content/application~1json/schema
+   name: OrdersPostRequestBody
+   type: object
+   properties:
+     orderId:
+       type: uuid
+     total:
+       type: decimal
+
+   $schema is the effective dialect inherited from jsonSchemaDialect.
+   $id is the default identity of Section 4.5, in which /orders and
+   application/json appear as the escaped reference-tokens ~1orders and
+   application~1json. name comes from step 2: the path template /orders,
+   the method post, and the role requestBody, with the characters
+   outside the identifier set removed.
+
+   Distinct positions can still derive the same name.  Two media types
+   under the same operation — application/json and application/xml at
+   POST /orders — occupy different pointers but share path, method, and
+   role; so do the path templates /orders and /Orders, which differ in
+   the Description but not after the leading character is capitalized.
+   Tooling MAY append further distinguishing segments, such as the media
+   type, provided the result stays deterministic.  Where it cannot, it
+   MUST reject the extraction rather than emit the same name twice; the
+   author resolves the conflict by declaring an explicit name on one of
+   the Schema Objects.
+
+   A components.schemas entry usually needs none of this.  An entry
+   stored under TelemetryMessage derives TelemetryMessage by step 1.
+   The component key remains the OAS address rather than the JSON
+   Structure name, so an explicit name on the Schema Object still takes
+   precedence and the two need not be equal.
+
 5.4.  Type System
 
    Within a JSON Structure Schema Object, keywords are interpreted per
@@ -833,82 +916,8 @@ Table of Contents
    interpreted as structural composition.  Structural reuse is expressed
    exclusively with $extends (Section 5.4.1) and $import (Section 5.6).
 
-5.4.4.  Construct Mapping
-
-   For readers migrating a Schema Object from the OAS dialect, the
-   following constructs change meaning:
-
-    +======================+==========================================+
-    | OAS / JSON Schema    | JSON Structure equivalent                |
-    | construct            |                                          |
-    +======================+==========================================+
-    | type: string +       | dedicated types datetime, uuid, binary   |
-    | format: date-time /  |                                          |
-    | uuid / binary        |                                          |
-    +----------------------+------------------------------------------+
-    | type: integer +      | int64 (and the other precise numeric     |
-    | format: int64        | types); note that int64, uint64, int128, |
-    |                      | uint128, and decimal are represented as  |
-    |                      | JSON strings, not numbers                |
-    +----------------------+------------------------------------------+
-    | nullable: true       | type union including "null"              |
-    +----------------------+------------------------------------------+
-    | discriminator +      | abstract + $extends                      |
-    | allOf for subtyping  |                                          |
-    +----------------------+------------------------------------------+
-    | oneOf of variants +  | choice with a choices map (tagged union, |
-    | discriminator,       | Section 5.4.2)                           |
-    | variants unrelated   |                                          |
-    +----------------------+------------------------------------------+
-    | oneOf of variants +  | choice with $extends and selector        |
-    | discriminator,       | (inline union, Section 5.4.2)            |
-    | variants share a     |                                          |
-    | base                 |                                          |
-    +----------------------+------------------------------------------+
-    | allOf / anyOf /      | not used for composition; conditional-   |
-    | oneOf as structural  | composition add-in is validation-only    |
-    | composition          |                                          |
-    +----------------------+------------------------------------------+
-    | additionalProperties | additionalProperties (unchanged:         |
-    | (boolean or schema)  | boolean, or a schema constraining        |
-    |                      | additional members)                      |
-    +----------------------+------------------------------------------+
-    | required array       | required (unchanged; MAY also be an      |
-    |                      | array of arrays for mutually exclusive   |
-    |                      | alternative required sets)               |
-    +----------------------+------------------------------------------+
-    | enum                 | enum (unchanged)                         |
-    +----------------------+------------------------------------------+
-    | const                | const (unchanged)                        |
-    +----------------------+------------------------------------------+
-    | readOnly / writeOnly | not part of the JSON Structure type      |
-    |                      | system; retained as annotations on       |
-    |                      | individual properties entries            |
-    +----------------------+------------------------------------------+
-    | deprecated on a      | not part of the JSON Structure type      |
-    | property             | system; retained as an annotation on     |
-    |                      | that property                            |
-    +----------------------+------------------------------------------+
-    | $ref to another      | $import / $importdefs (Section 5.6)      |
-    | components.schemas   |                                          |
-    | entry                |                                          |
-    +----------------------+------------------------------------------+
-
-                                  Table 4
-
-   The three OAS annotation keywords above remain usable when they
-   annotate an individual member inside properties, because the JSON
-   Structure member type definitions permit additional properties beyond
-   the JSON Structure keyword set [JSTRUCT-CORE].  They MUST NOT be
-   placed at the root of a JSON Structure Schema Object (for example,
-   deprecated: true describing the entire schema resource): the root of
-   a JSON Structure schema document is a closed object type that permits
-   only the keywords JSON Structure Core defines for it, and validating
-   such a root against its meta-schema fails if an OAS-only annotation
-   is added there.  A resource-level deprecation notice MUST instead be
-   conveyed through description prose or a x--prefixed OAS specification
-   extension on the Schema Object, not by adding deprecated as a root
-   sibling of $schema/type/name.
+   Appendix A tabulates the OAS-dialect constructs that change meaning
+   in this dialect, for readers migrating an existing Schema Object.
 
 5.5.  JSON Structure Reference Layer
 
@@ -1498,6 +1507,86 @@ Table of Contents
               Interchange Format", STD 90, RFC 8259,
               DOI 10.17487/RFC8259, December 2017,
               <https://www.rfc-editor.org/rfc/rfc8259>.
+
+Appendix A.  Migrating a Schema Object from the OAS Dialect
+
+   This appendix is informative except where it restates a requirement
+   stated normatively elsewhere in this document.
+
+   For readers migrating a Schema Object from the OAS dialect, the
+   following constructs change meaning:
+
+    +======================+==========================================+
+    | OAS / JSON Schema    | JSON Structure equivalent                |
+    | construct            |                                          |
+    +======================+==========================================+
+    | type: string +       | dedicated types datetime, uuid, binary   |
+    | format: date-time /  |                                          |
+    | uuid / binary        |                                          |
+    +----------------------+------------------------------------------+
+    | type: integer +      | int64 (and the other precise numeric     |
+    | format: int64        | types); note that int64, uint64, int128, |
+    |                      | uint128, and decimal are represented as  |
+    |                      | JSON strings, not numbers                |
+    +----------------------+------------------------------------------+
+    | nullable: true       | type union including "null"              |
+    +----------------------+------------------------------------------+
+    | discriminator +      | abstract + $extends                      |
+    | allOf for subtyping  |                                          |
+    +----------------------+------------------------------------------+
+    | oneOf of variants +  | choice with a choices map (tagged union, |
+    | discriminator,       | Section 5.4.2)                           |
+    | variants unrelated   |                                          |
+    +----------------------+------------------------------------------+
+    | oneOf of variants +  | choice with $extends and selector        |
+    | discriminator,       | (inline union, Section 5.4.2)            |
+    | variants share a     |                                          |
+    | base                 |                                          |
+    +----------------------+------------------------------------------+
+    | allOf / anyOf /      | not used for composition; conditional-   |
+    | oneOf as structural  | composition add-in is validation-only    |
+    | composition          |                                          |
+    +----------------------+------------------------------------------+
+    | additionalProperties | additionalProperties (unchanged:         |
+    | (boolean or schema)  | boolean, or a schema constraining        |
+    |                      | additional members)                      |
+    +----------------------+------------------------------------------+
+    | required array       | required (unchanged; MAY also be an      |
+    |                      | array of arrays for mutually exclusive   |
+    |                      | alternative required sets)               |
+    +----------------------+------------------------------------------+
+    | enum                 | enum (unchanged)                         |
+    +----------------------+------------------------------------------+
+    | const                | const (unchanged)                        |
+    +----------------------+------------------------------------------+
+    | readOnly / writeOnly | not part of the JSON Structure type      |
+    |                      | system; retained as annotations on       |
+    |                      | individual properties entries            |
+    +----------------------+------------------------------------------+
+    | deprecated on a      | not part of the JSON Structure type      |
+    | property             | system; retained as an annotation on     |
+    |                      | that property                            |
+    +----------------------+------------------------------------------+
+    | $ref to another      | $import / $importdefs (Section 5.6)      |
+    | components.schemas   |                                          |
+    | entry                |                                          |
+    +----------------------+------------------------------------------+
+
+                                  Table 4
+
+   The three OAS annotation keywords above remain usable when they
+   annotate an individual member inside properties, because the JSON
+   Structure member type definitions permit additional properties beyond
+   the JSON Structure keyword set [JSTRUCT-CORE].  They MUST NOT be
+   placed at the root of a JSON Structure Schema Object (for example,
+   deprecated: true describing the entire schema resource): the root of
+   a JSON Structure schema document is a closed object type that permits
+   only the keywords JSON Structure Core defines for it, and validating
+   such a root against its meta-schema fails if an OAS-only annotation
+   is added there.  A resource-level deprecation notice MUST instead be
+   conveyed through description prose or a x--prefixed OAS specification
+   extension on the Schema Object, not by adding deprecated as a root
+   sibling of $schema/type/name.
 
 Acknowledgments
 

@@ -1218,9 +1218,6 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4.2.3">
                     <p id="section-toc.1-1.5.2.4.2.3.1"><a href="#section-5.4.3" class="auto internal xref">5.4.3</a>.  <a href="#name-conditional-composition" class="internal xref">Conditional Composition</a></p>
 </li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4.2.4">
-                    <p id="section-toc.1-1.5.2.4.2.4.1"><a href="#section-5.4.4" class="auto internal xref">5.4.4</a>.  <a href="#name-construct-mapping" class="internal xref">Construct Mapping</a></p>
-</li>
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
@@ -1275,10 +1272,13 @@ does not modify, fork, or republish the OpenAPI Specification.<a href="#section-
             <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-migrating-a-schema-object-f" class="internal xref">Migrating a Schema Object from the OAS Dialect</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -2043,6 +2043,90 @@ collides with a declared name in the extracted document, tooling <span class="bc
 the extraction rather than silently rename either declaration. The OpenAPI
 component key remains the OAS address; it does not implicitly replace an
 explicit JSON Structure <code>name</code>.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
+<p id="section-5.3-3">A JSON Pointer cannot be used as a name unchanged. JSON Structure restricts
+identifiers to <code>[A-Za-z_][A-Za-z0-9_]*</code> (<span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>), which excludes
+the <code>/</code> and <code>~</code> a pointer is built from. Reproducing the whole pointer is
+also unnecessary: <code>$id</code> already records the exact location, so <code>name</code> only
+has to be a stable, readable identifier that is unique within the extracted
+document. Tooling <span class="bcp14">SHOULD</span> derive one in this order:<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3-4">
+<li id="section-5.3-4.1">
+            <p id="section-5.3-4.1.1">If the Schema Object is a <code>components.schemas</code> entry whose component key
+is already a valid JSON Structure identifier, use the component key. OAS
+constrains component keys to <code>^[a-zA-Z0-9\.\-_]+$</code> (<span>[<a href="#OAS" class="cite xref">OAS</a>]</span>), so most
+keys in existing Descriptions qualify unchanged.<a href="#section-5.3-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-4.2">
+            <p id="section-5.3-4.2.1">Otherwise, derive from the identifying parts of the position — for a
+request body or response, the path template, the HTTP method, and the
+role — rather than from every reference-token of the pointer.<a href="#section-5.3-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-4.3">
+            <p id="section-5.3-4.3.1">If neither produces a valid identifier, reject the extraction and require
+an explicit <code>name</code>.<a href="#section-5.3-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.3-5">Consider a Description that selects the JSON Structure Core dialect for the
+whole document and carries an anonymous inline Schema Object at a request
+body position:<a href="#section-5.3-5" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.3-6">
+<pre>
+openapi: 3.2.0
+$self: https://example.com/api/openapi.yaml
+jsonSchemaDialect: https://json-structure.org/meta/core/v0/#
+paths:
+  /orders:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: uuid
+                total:
+                  type: decimal
+</pre><a href="#section-5.3-6" class="pilcrow">¶</a>
+</div>
+<p id="section-5.3-7">The Schema Object declares no <code>$schema</code>, no <code>$id</code>, and no <code>name</code>. None of the
+three is needed while it is read in place, because the dialect comes from
+<code>jsonSchemaDialect</code> and the position within the Description supplies the
+address. Extraction for standalone validation removes both, so all three <span class="bcp14">MUST</span>
+be materialized:<a href="#section-5.3-7" class="pilcrow">¶</a></p>
+<div class="lang-yaml sourcecode" id="section-5.3-8">
+<pre>
+$schema: https://json-structure.org/meta/core/v0/#
+$id: https://example.com/api/openapi.yaml#/paths/~1orders/post/requestBody/content/application~1json/schema
+name: OrdersPostRequestBody
+type: object
+properties:
+  orderId:
+    type: uuid
+  total:
+    type: decimal
+</pre><a href="#section-5.3-8" class="pilcrow">¶</a>
+</div>
+<p id="section-5.3-9"><code>$schema</code> is the effective dialect inherited from <code>jsonSchemaDialect</code>. <code>$id</code>
+is the default identity of <a href="#default-id-construction" class="auto internal xref">Section 4.5</a>, in which <code>/orders</code>
+and <code>application/json</code> appear as the escaped reference-tokens <code>~1orders</code> and
+<code>application~1json</code>. <code>name</code> comes from step 2: the path template <code>/orders</code>,
+the method <code>post</code>, and the role <code>requestBody</code>, with the characters outside
+the identifier set removed.<a href="#section-5.3-9" class="pilcrow">¶</a></p>
+<p id="section-5.3-10">Distinct positions can still derive the same name. Two media types under the
+same operation — <code>application/json</code> and <code>application/xml</code> at <code>POST /orders</code> —
+occupy different pointers but share path, method, and role; so do the path
+templates <code>/orders</code> and <code>/Orders</code>, which differ in the Description but not
+after the leading character is capitalized. Tooling <span class="bcp14">MAY</span> append further
+distinguishing segments, such as the media type, provided the result stays
+deterministic. Where it cannot, it <span class="bcp14">MUST</span> reject the extraction rather than
+emit the same name twice; the author resolves the conflict by declaring an
+explicit <code>name</code> on one of the Schema Objects.<a href="#section-5.3-10" class="pilcrow">¶</a></p>
+<p id="section-5.3-11">A <code>components.schemas</code> entry usually needs none of this. An entry stored
+under <code>TelemetryMessage</code> derives <code>TelemetryMessage</code> by step 1. The component
+key remains the OAS address rather than the JSON Structure name, so an
+explicit <code>name</code> on the Schema Object still takes precedence and the two need
+not be equal.<a href="#section-5.3-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="type-system">
@@ -2094,126 +2178,8 @@ are boolean validation combinators only. They do not merge or intersect type
 definitions and <span class="bcp14">MUST NOT</span> be interpreted as structural composition. Structural
 reuse is expressed exclusively with <code>$extends</code> (<a href="#inheritance" class="auto internal xref">Section 5.4.1</a>) and <code>$import</code>
 (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>).<a href="#section-5.4.3-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="construct-mapping">
-<section id="section-5.4.4">
-          <h4 id="name-construct-mapping">
-<a href="#section-5.4.4" class="section-number selfRef">5.4.4. </a><a href="#name-construct-mapping" class="section-name selfRef">Construct Mapping</a>
-          </h4>
-<p id="section-5.4.4-1">For readers migrating a Schema Object from the OAS dialect, the following
-constructs change meaning:<a href="#section-5.4.4-1" class="pilcrow">¶</a></p>
-<table class="center" id="table-4">
-            <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
-<thead>
-              <tr>
-                <th class="text-left" rowspan="1" colspan="1">OAS / JSON Schema construct</th>
-                <th class="text-left" rowspan="1" colspan="1">JSON Structure equivalent</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>type: string</code> + <code>format: date-time</code> / <code>uuid</code> / <code>binary</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">dedicated types <code>datetime</code>, <code>uuid</code>, <code>binary</code>
-</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>type: integer</code> + <code>format: int64</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>int64</code> (and the other precise numeric types); note that <code>int64</code>, <code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> are represented as JSON strings, not numbers</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>nullable: true</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">type union including <code>"null"</code>
-</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>discriminator</code> + <code>allOf</code> for subtyping</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>abstract</code> + <code>$extends</code>
-</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>oneOf</code> of variants + <code>discriminator</code>, variants unrelated</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>choice</code> with a <code>choices</code> map (tagged union, <a href="#discriminated-unions" class="auto internal xref">Section 5.4.2</a>)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>oneOf</code> of variants + <code>discriminator</code>, variants share a base</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>choice</code> with <code>$extends</code> and <code>selector</code> (inline union, <a href="#discriminated-unions" class="auto internal xref">Section 5.4.2</a>)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>allOf</code> / <code>anyOf</code> / <code>oneOf</code> as structural composition</td>
-                <td class="text-left" rowspan="1" colspan="1">not used for composition; conditional-composition add-in is validation-only</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>additionalProperties</code> (boolean or schema)</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>additionalProperties</code> (unchanged: boolean, or a schema constraining additional members)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>required</code> array</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>required</code> (unchanged; <span class="bcp14">MAY</span> also be an array of arrays for mutually exclusive alternative required sets)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>enum</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>enum</code> (unchanged)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>const</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>const</code> (unchanged)</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>readOnly</code> / <code>writeOnly</code>
-</td>
-                <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as annotations on individual <code>properties</code> entries</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>deprecated</code> on a property</td>
-                <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as an annotation on that property</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>$ref</code> to another <code>components.schemas</code> entry</td>
-                <td class="text-left" rowspan="1" colspan="1">
-                  <code>$import</code> / <code>$importdefs</code> (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>)</td>
-              </tr>
-            </tbody>
-          </table>
-<p id="section-5.4.4-3">The three OAS annotation keywords above remain usable when they annotate an
-individual member inside <code>properties</code>, because the JSON Structure member
-type definitions permit additional properties beyond the JSON Structure
-keyword set <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. They <span class="bcp14">MUST NOT</span> be placed at the root of a
-JSON Structure Schema Object (for example, <code>deprecated: true</code> describing the
-entire schema resource): the root of a JSON Structure schema document is a
-closed object type that permits only the keywords JSON Structure Core
-defines for it, and validating such a root against its meta-schema fails if
-an OAS-only annotation is added there. A resource-level deprecation notice
-<span class="bcp14">MUST</span> instead be conveyed through <code>description</code> prose or a <code>x-</code>-prefixed OAS
-specification extension on the Schema Object, not by adding <code>deprecated</code> as
-a root sibling of <code>$schema</code>/<code>type</code>/<code>name</code>.<a href="#section-5.4.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4.3-2"><a href="#construct-mapping" class="auto internal xref">Appendix A</a> tabulates the OAS-dialect constructs that change meaning
+in this dialect, for readers migrating an existing Schema Object.<a href="#section-5.4.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2899,16 +2865,138 @@ document.<a href="#section-8-1.10.1" class="pilcrow">¶</a></p>
 </dl>
 </section>
 </div>
-<div id="acknowledgments">
+<div id="construct-mapping">
 <section id="appendix-A">
+      <h2 id="name-migrating-a-schema-object-f">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-migrating-a-schema-object-f" class="section-name selfRef">Migrating a Schema Object from the OAS Dialect</a>
+      </h2>
+<p id="appendix-A-1">This appendix is informative except where it restates a requirement stated
+normatively elsewhere in this document.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">For readers migrating a Schema Object from the OAS dialect, the following
+constructs change meaning:<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-4">
+        <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">OAS / JSON Schema construct</th>
+            <th class="text-left" rowspan="1" colspan="1">JSON Structure equivalent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>type: string</code> + <code>format: date-time</code> / <code>uuid</code> / <code>binary</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">dedicated types <code>datetime</code>, <code>uuid</code>, <code>binary</code>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>type: integer</code> + <code>format: int64</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>int64</code> (and the other precise numeric types); note that <code>int64</code>, <code>uint64</code>, <code>int128</code>, <code>uint128</code>, and <code>decimal</code> are represented as JSON strings, not numbers</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>nullable: true</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">type union including <code>"null"</code>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>discriminator</code> + <code>allOf</code> for subtyping</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>abstract</code> + <code>$extends</code>
+</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>oneOf</code> of variants + <code>discriminator</code>, variants unrelated</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>choice</code> with a <code>choices</code> map (tagged union, <a href="#discriminated-unions" class="auto internal xref">Section 5.4.2</a>)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>oneOf</code> of variants + <code>discriminator</code>, variants share a base</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>choice</code> with <code>$extends</code> and <code>selector</code> (inline union, <a href="#discriminated-unions" class="auto internal xref">Section 5.4.2</a>)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>allOf</code> / <code>anyOf</code> / <code>oneOf</code> as structural composition</td>
+            <td class="text-left" rowspan="1" colspan="1">not used for composition; conditional-composition add-in is validation-only</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>additionalProperties</code> (boolean or schema)</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>additionalProperties</code> (unchanged: boolean, or a schema constraining additional members)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>required</code> array</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>required</code> (unchanged; <span class="bcp14">MAY</span> also be an array of arrays for mutually exclusive alternative required sets)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>enum</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>enum</code> (unchanged)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>const</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>const</code> (unchanged)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>readOnly</code> / <code>writeOnly</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as annotations on individual <code>properties</code> entries</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>deprecated</code> on a property</td>
+            <td class="text-left" rowspan="1" colspan="1">not part of the JSON Structure type system; retained as an annotation on that property</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>$ref</code> to another <code>components.schemas</code> entry</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>$import</code> / <code>$importdefs</code> (<a href="#cross-schema-reuse" class="auto internal xref">Section 5.6</a>)</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="appendix-A-4">The three OAS annotation keywords above remain usable when they annotate an
+individual member inside <code>properties</code>, because the JSON Structure member
+type definitions permit additional properties beyond the JSON Structure
+keyword set <span>[<a href="#JSTRUCT-CORE" class="cite xref">JSTRUCT-CORE</a>]</span>. They <span class="bcp14">MUST NOT</span> be placed at the root of a
+JSON Structure Schema Object (for example, <code>deprecated: true</code> describing the
+entire schema resource): the root of a JSON Structure schema document is a
+closed object type that permits only the keywords JSON Structure Core
+defines for it, and validating such a root against its meta-schema fails if
+an OAS-only annotation is added there. A resource-level deprecation notice
+<span class="bcp14">MUST</span> instead be conveyed through <code>description</code> prose or a <code>x-</code>-prefixed OAS
+specification extension on the Schema Object, not by adding <code>deprecated</code> as
+a root sibling of <code>$schema</code>/<code>type</code>/<code>name</code>.<a href="#appendix-A-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-B">
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">TODO acknowledge.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-1">TODO acknowledge.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authors-addresses">
-<section id="appendix-B">
+<section id="appendix-C">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>
