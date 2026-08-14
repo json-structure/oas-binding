@@ -3,6 +3,7 @@
 title: "JSON Structure: OpenAPI Binding"
 abbrev: "JSON Structure OAS Binding"
 category: std
+ipr: none
 
 docname: draft-vasters-json-structure-oas-binding-latest
 submissiontype: IETF  # also: "independent", "editorial", "IAB", or "IRTF"
@@ -80,6 +81,26 @@ the `$schema` keyword and the `jsonSchemaDialect` field, introduced in OAS
 3.1. The binding is strictly additive and opt-in on a per-Schema-Object
 basis. It introduces no new OpenAPI keywords, objects, or namespaces, and it
 does not modify, fork, or republish the OpenAPI Specification.
+
+--- note_Copyright_Notice
+
+Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+
+This is a pre-submission working draft, published for public review and
+comment. It is not a standard, it does not represent a commitment by Microsoft
+Corporation, and its content may change or be withdrawn at any time.
+
+Permission is granted to read, reproduce, and redistribute this document in
+unmodified form, in whole or in part, for the purpose of review and comment,
+provided that this notice is retained. No other rights are granted, whether by
+implication, estoppel, or otherwise, and no licence to any patent, trademark,
+or other intellectual property right is granted by this document.
+
+Microsoft Corporation intends to submit this document to a standards body. On
+submission, the contribution and intellectual property policies of that body
+govern this document and supersede this notice.
+
+This document is provided "as is", without warranty of any kind.
 
 --- middle
 
