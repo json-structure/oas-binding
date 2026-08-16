@@ -1,0 +1,83 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2026-08-16T00:58:35.469024+00:00",
+  "repo": "json-structure/oas-binding",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [],
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOT2k9P87-MO5W",
+      "title": "Add draft-vasters-json-structure-oas-binding.md for review",
+      "url": "https://github.com/json-structure/oas-binding/pull/1",
+      "state": "MERGED",
+      "author": "clemensv",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Adds the full Internet-Draft text as a standalone commit so it can be reviewed and commented on line-by-line, separate from the repository scaffold and OpenAPI sample corpus already on main.",
+      "createdAt": "2026-08-12T17:43:11Z",
+      "updatedAt": "2026-08-12T17:49:28Z",
+      "baseRepository": "json-structure/oas-binding",
+      "baseRefName": "main",
+      "baseRefOid": "40a32f34ac51e76bc8e0051fa1442af7c55d3cef",
+      "headRepository": "json-structure/oas-binding",
+      "headRefName": "add-oas-binding-draft",
+      "headRefOid": "b248ca1073463ec1883107fb4af514dfda214c3d",
+      "closedAt": "2026-08-12T17:49:28Z",
+      "mergedAt": "2026-08-12T17:49:28Z",
+      "mergedBy": "clemensv",
+      "mergeCommit": {
+        "oid": "9b6c737072eead60f417eb983a7da94945182f27"
+      },
+      "comments": [],
+      "reviews": []
+    }
+  ]
+}
